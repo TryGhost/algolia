@@ -23,5 +23,7 @@
     "should": "13.2.3",
     "sinon": "9.0.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "algolia-html-extractor": "0.0.1"
+  }
 }
