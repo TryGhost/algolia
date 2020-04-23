@@ -9,7 +9,9 @@
     "dev": "echo \"Implement me!\"",
     "test": "NODE_ENV=testing mocha './test/**/*.test.js'",
     "lint": "eslint . --ext .js --cache",
-    "posttest": "yarn lint"
+    "posttest": "yarn lint",
+    "serve": "netlify-lambda serve src/functions ",
+    "build": "mkdir -p build/site && netlify-lambda build src/functions"
   },
   "files": [
     "index.js",
@@ -23,5 +25,7 @@
     "should": "13.2.3",
     "sinon": "9.0.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "netlify-lambda": "1.6.3"
+  }
 }
