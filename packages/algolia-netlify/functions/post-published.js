@@ -1,5 +1,5 @@
-const indexFactory = require('@tryghost/algolia-indexer');
-const parserFactory = require('@tryghost/algolia-fragmenter');
+import indexFactory from '@tryghost/algolia-indexer';
+import parserFactory from '@tryghost/algolia-fragmenter';
 
 exports.handler = (event, context, callback) => {
     const algoliaSettings = {
