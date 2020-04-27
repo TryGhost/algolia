@@ -1,23 +1,6 @@
 const HtmlExtractor = require(`algolia-html-extractor`);
 const Extractor = new HtmlExtractor();
 
-const chunkString = (str, length) => str.match(new RegExp(`(.|[\r\n]){1,` + length + `}`, `g`));
-
-/**
- * Chunk Transformer
- * breaks down large strings into chunks small enough for algolia to handle
- * currently unused, but keeping it around just in cases
- */
-module.exports.chunkTransformer = (chunksTotal, node) => {
-    const htmlChunks = chunkString(node.html, 5000);
-    const recordChunks = htmlChunks.reduce((recordChunksTotal, htmlChunksItem, idx) => [
-        ...recordChunksTotal,
-        {...node, ...{html: htmlChunksItem}, objectID: `${node.objectID}_${idx}`}
-    ], []);
-
-    return [...chunksTotal, ...recordChunks];
-};
-
 /**
  * Utility function, takes the output of HTML Extractor, and reduces it back down
  * So that there is a group of HTML/content per heading
