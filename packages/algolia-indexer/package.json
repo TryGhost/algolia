@@ -1,6 +1,6 @@
 {
   "name": "@tryghost/algolia-indexer",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia-indexer",
   "author": "Ghost Foundation",
   "license": "MIT",
