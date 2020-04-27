@@ -1,38 +1,50 @@
 const algoliaSearch = require('algoliasearch');
 
-const indexFactory = (algoliaSettings) => {
-    return {
-        index: [],
-        connect() {
-            if (algoliaSettings && algoliaSettings.active === true) {
-                if (algoliaSettings.applicationID && algoliaSettings.apiKey && algoliaSettings.index) {
-                    const client = algoliaSearch(algoliaSettings.applicationID, algoliaSettings.apiKey);
-
-                    this.index = client.initIndex(algoliaSettings.index);
-                    return true;
-                }
-                // TODO better error output on frontend
-                console.log(
-                    'Please check your Algolia settings for a missing configuration option: applicationID, apiKey, index.'
-                );
-                return false;
-            }
-            console.log('Algolia indexing deactivated.');
-            return false;
-        },
-        save(fragments) {
-            return this.index.addObjects(fragments);
-        },
-        // TODO
-        delete(post) {
-            return this.index.deleteBy(post.attributes.uuid, {
-                restrictSearchableAttributes: 'post_uuid'
-            });
-        },
-        countRecords() {
-            return this.index.search({query: '', hitsPerPage: 0}).then(queryResult => queryResult.nbHits);
-        }
-    };
+// Any defined settings will override those in the algolia UI
+const REQUIRED_SETTINGS = {
+    // We chunk our pages into small algolia entries, and mark them as distinct by slug
+    // This ensures we get one result per page, whichever is ranked highest
+    distinct: true,
+    attributeForDistinct: `slug`,
+    // This ensures that chunks higher up on a page rank higher
+    customRanking: [`desc(customRanking.heading)`, `asc(customRanking.position)`],
+    // Defines the order algolia ranks various attributes in
+    searchableAttributes: [`title`, `headings`, `html`, `url`, `tags.name`, `tags`]
 };
 
-module.exports = indexFactory;
+class IndexFactory {
+    constructor(algoliaSettings = {}) {
+        if (!algoliaSettings.apiKey || !algoliaSettings.appId || !algoliaSettings.index || algoliaSettings.index.length < 1) {
+            throw new Error('Algolia appId, apiKey, and index is required!');
+        }
+        this.index = [];
+        this.options = algoliaSettings;
+
+        this.options.indexSettings = algoliaSettings.indexSettings || REQUIRED_SETTINGS;
+    }
+    initClient() {
+        this.client = algoliaSearch(this.options.appId, this.options.apiKey);
+    }
+    initIndex() {
+        this.initClient();
+        this.index = this.client.initIndex(this.options.index);
+    }
+    async setSettingsForIndex() {
+        this.initIndex();
+        return await this.index.setSettings(this.options.indexSettings)
+            .then(() => this.index.getSettings());
+    }
+    save(fragments) {
+        return this.index.addObjects(fragments);
+    }
+    delete(post) {
+        return this.index.deleteBy(post.attributes.uuid, {
+            restrictSearchableAttributes: 'post_uuid'
+        });
+    }
+    countRecords() {
+        return this.index.search({query: '', hitsPerPage: 0}).then(queryResult => queryResult.nbHits);
+    }
+}
+
+module.exports = IndexFactory;
