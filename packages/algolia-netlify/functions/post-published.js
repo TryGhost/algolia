@@ -1,28 +1,35 @@
-import indexFactory from '@tryghost/algolia-indexer';
-import parserFactory from '@tryghost/algolia-fragmenter';
+const IndexFactory = require('@tryghost/algolia-indexer');
+const transforms = require('@tryghost/algolia-fragmenter');
 
 exports.handler = (event, context, callback) => {
+    if (!process.env.ALGOLIA_ACTIVE === 'TRUE') {
+        return;
+    }
+
     const algoliaSettings = {
-        active: process.env.ALGOLIA_ACTIVE === 'TRUE',
-        applicationID: process.env.ALGOLIA_APP_ID,
+        appId: process.env.ALGOLIA_APP_ID,
         apiKey: process.env.ALGOLIA_API_KEY,
         index: process.env.ALGOLIA_INDEX
     };
 
     const post = JSON.parse(event.body).post.current;
-    const index = indexFactory(algoliaSettings);
+    const node = [];
+    node.push(post);
+    const index = new IndexFactory(algoliaSettings);
+    const fragments = node.reduce(transforms.fragmentTransformer, []);
 
-    if (index.connect() && parserFactory().parse(post, index)) {
-        index
-            .save()
-            .then(() => {
-                callback(null, {
-                    statusCode: 200,
-                    body: `GhostAlgolia: post "${post.title}" has been added to the index.`
+    index
+        .setSettingsForIndex()
+        .then(() => {
+            index
+                .save(fragments).then(() => {
+                    callback(null, {
+                        statusCode: 200,
+                        body: `GhostAlgolia: post "${post.title}" has been added to the index.`
+                    });
                 });
-            })
-            .catch((err) => {
-                callback(err);
-            });
-    }
+        })
+        .catch((err) => {
+            callback(err);
+        });
 };
