@@ -11,6 +11,8 @@ or
 
 ## Usage
 
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TryGhost/algolia/tree/master/packages/algolia-netlify)
+
 
 ## Develop
 
@@ -34,6 +36,6 @@ Follow the instructions for the top-level repo.
 
 
 
-# Copyright & License 
+# Copyright & License
 
 Copyright (c) 2020 Ghost Foundation - Released under the [MIT license](LICENSE).
