@@ -5,6 +5,10 @@
 
 ## Usage
 
+### Algolia-Netlify package
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TryGhost/algolia/)
+
 
 ## Develop
 
@@ -38,6 +42,6 @@ To add a new package to the repo:
     - Also updates any packages which depend on changed packages
 
 
-# Copyright & License 
+# Copyright & License
 
 Copyright (c) 2020 Ghost Foundation - Released under the [MIT license](LICENSE).
