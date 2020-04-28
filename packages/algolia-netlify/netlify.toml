@@ -1,6 +1,6 @@
 [build]
   base = "packages/algolia-netlify"
-  command = "cd packages/algolia-netlify && yarn build"
+  command = "yarn build"
   publish = "build/site"
   functions = "build/functions"
 
