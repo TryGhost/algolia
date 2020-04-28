@@ -49,13 +49,13 @@ module.exports.fragmentTransformer = (recordAccumulator, node) => {
         delete fragment.content;
         // If we have an anchor, change the URL to be a deep link
         if (fragment.anchor) {
-            fragment.url = `${node.slug}#${fragment.anchor}`;
+            fragment.url = `${node.url}#${fragment.anchor}`;
         }
 
         let objectID = `${node.objectID}_${index}`;
 
         // If fragments are too long, we need this to see which fragment it was
-        console.log(`Created fragment: `, objectID, fragment.url || node.slug, fragment.html.length); // eslint-disable-line no-console
+        console.log(`Created fragment: `, objectID, fragment.url || node.url, fragment.html.length); // eslint-disable-line no-console
 
         return [
             ...fragmentAccumulator,

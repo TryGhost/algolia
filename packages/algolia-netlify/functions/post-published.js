@@ -18,6 +18,7 @@ exports.handler = (event, context, callback) => {
     const algoliaPost = {
         objectID: post.uuid,
         slug: post.slug,
+        url: post.url,
         html: post.html,
         image: post.feature_image,
         title: post.title,
@@ -42,13 +43,12 @@ exports.handler = (event, context, callback) => {
     index
         .setSettingsForIndex()
         .then((settings) => {
-            console.log('Index set up with following settings: ', settings); // eslint-disable-line no-console
-
+            console.log('Algolia index setup with following settings: ', settings); // eslint-disable-line no-console
             return index
                 .save(fragments).then(() => {
                     callback(null, {
                         statusCode: 200,
-                        body: `GhostAlgolia: post "${post.title}" has been added to the index.`
+                        body: `GhostAlgolia: post "${algoliaPost.title}" has been added to the index.`
                     });
                 });
         })
