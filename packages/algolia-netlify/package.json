@@ -30,7 +30,8 @@
     ]
   },
   "eslintIgnore": [
-    "webpack.functions.js"
+    "webpack.functions.js",
+    "build/*.js"
   ],
   "devDependencies": {
     "eslint": "6.8.0",

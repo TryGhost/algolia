@@ -1,8 +1,8 @@
 [build]
-  base = "packages/algolia-netlify/"
-  command = "yarn build"
-  publish = "build/site"
-  functions = "build/functions"
+  base = "packages/algolia-netlify"
+  command = "cd packages/algolia-netlify && yarn build"
+  publish = "packages/algolia-netlify/build/site"
+  functions = "packages/algolia-netlify/build/functions"
 
 [template.environment]
   ALGOLIA_ACTIVE = "TRUE or FALSE. Set to TRUE to trigger indexing."
