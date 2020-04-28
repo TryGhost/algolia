@@ -1,8 +1,12 @@
 [build]
   base = "packages/algolia-netlify"
-  command = "yarn build"
+  command = "NODE_ENV=production yarn build"
   publish = "build/site"
   functions = "build/functions"
+
+[build.environment]
+  NODE_VERSION = "12"
+  AWS_LAMBDA_JS_RUNTIME = "nodejs12.x"
 
 [template.environment]
   ALGOLIA_ACTIVE = "TRUE or FALSE. Set to TRUE to trigger indexing."
