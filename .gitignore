@@ -69,3 +69,4 @@ typings/
 .DS_Store
 
 # Algolia Custom
+packages/*/build/*
