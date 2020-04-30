@@ -57,7 +57,8 @@ class IndexFactory {
     async delete(slug) {
         console.log(`Deleting all fragments with slug "${slug}"`); // eslint-disable-line no-console
         try {
-            await this.index.deleteBy({filters: `slug:${slug}`});
+            const res = await this.index.deleteBy({filters: `slug:${slug}`});
+            console.log('deleteBy result: ', res);
         } catch (error) {
             throw new Error('Error, deleting from Algolia', error);
         }
