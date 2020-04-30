@@ -15,6 +15,22 @@ const REQUIRED_SETTINGS = {
     attributesForFaceting: [`filterOnly(slug)`]
 };
 
+const AlgoliaError = ({code, statusCode, originalError}) => {
+    let error = new Error('Error processing Algolia');
+
+    error.errorType = 'AlgoliaError';
+    error.code = code;
+    if (statusCode) {
+        error.status = statusCode;
+    }
+    if (originalError.message) {
+        error.message = originalError.message;
+    }
+    error.originalError = originalError;
+
+    return error;
+};
+
 class IndexFactory {
     constructor(algoliaSettings = {}) {
         if (!algoliaSettings.apiKey || !algoliaSettings.appId || !algoliaSettings.index || algoliaSettings.index.length < 1) {
@@ -41,7 +57,7 @@ class IndexFactory {
             await this.index.setSettings(this.options.indexSettings);
             return await this.index.getSettings();
         } catch (error) {
-            throw new Error('Couldn\'t setup Algolia index', error);
+            throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
         }
     }
 
@@ -50,7 +66,7 @@ class IndexFactory {
         try {
             await this.index.saveObjects(fragments);
         } catch (error) {
-            throw new Error('Error, saving to Algolia', error);
+            throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
         }
     }
 
@@ -59,7 +75,7 @@ class IndexFactory {
         try {
             await this.index.deleteBy({filters: `slug:${slug}`});
         } catch (error) {
-            throw new Error('Error, deleting from Algolia', error);
+            throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
         }
     }
 }
