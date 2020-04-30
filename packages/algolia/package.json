@@ -1,0 +1,33 @@
+{
+  "name": "@tryghost/algolia",
+  "version": "0.0.0",
+  "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia",
+  "author": "Ghost Foundation",
+  "license": "MIT",
+  "bin": {
+    "algolia": "./bin/cli.js"
+  },
+  "scripts": {
+    "dev": "algolia",
+    "algolia": "algolia",
+    "test": "NODE_ENV=testing mocha './test/**/*.test.js'",
+    "lint": "eslint . --ext .js --cache",
+    "posttest": "yarn lint"
+  },
+  "files": [
+    "bin",
+    "index.js",
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "mocha": "7.1.2",
+    "should": "13.2.3",
+    "sinon": "9.0.2"
+  },
+  "dependencies": {
+    "@tryghost/pretty-cli": "1.2.5"
+  }
+}
