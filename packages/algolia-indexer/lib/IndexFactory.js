@@ -1,6 +1,7 @@
 const algoliaSearch = require('algoliasearch');
 
 // Any defined settings will override those in the algolia UI
+// TODO: make this a custom setting
 const REQUIRED_SETTINGS = {
     // We chunk our pages into small algolia entries, and mark them as distinct by slug
     // This ensures we get one result per page, whichever is ranked highest
@@ -9,7 +10,9 @@ const REQUIRED_SETTINGS = {
     // This ensures that chunks higher up on a page rank higher
     customRanking: [`desc(customRanking.heading)`, `asc(customRanking.position)`],
     // Defines the order algolia ranks various attributes in
-    searchableAttributes: [`title`, `headings`, `html`, `url`, `tags.name`, `tags`]
+    searchableAttributes: [`title`, `headings`, `html`, `url`, `tags.name`, `tags`],
+    // Add slug to attributes we can filter by in order to find fragments to remove/delete
+    attributesForFaceting: [`filterOnly(slug)`]
 };
 
 class IndexFactory {
@@ -22,13 +25,16 @@ class IndexFactory {
 
         this.options.indexSettings = algoliaSettings.indexSettings || REQUIRED_SETTINGS;
     }
+
     initClient() {
         this.client = algoliaSearch(this.options.appId, this.options.apiKey);
     }
+
     initIndex() {
         this.initClient();
         this.index = this.client.initIndex(this.options.index);
     }
+
     async setSettingsForIndex() {
         try {
             await this.initIndex(); //initiate client
@@ -38,6 +44,7 @@ class IndexFactory {
             throw new Error('Couldn\'t setup Algolia index', error);
         }
     }
+
     async save(fragments) {
         console.log(`Saving ${fragments.length} fragments`); // eslint-disable-line no-console
         try {
@@ -46,13 +53,14 @@ class IndexFactory {
             throw new Error('Error, saving to Algolia', error);
         }
     }
-    delete(post) {
-        return this.index.deleteBy(post.attributes.uuid, {
-            restrictSearchableAttributes: 'post_uuid'
-        });
-    }
-    countRecords() {
-        return this.index.search({query: '', hitsPerPage: 0}).then(queryResult => queryResult.nbHits);
+
+    async delete(slug) {
+        console.log(`Deleting all fragments with slug "${slug}"`); // eslint-disable-line no-console
+        try {
+            await this.index.deleteBy({filters: `slug:${slug}`});
+        } catch (error) {
+            throw new Error('Error, deleting from Algolia', error);
+        }
     }
 }
 
