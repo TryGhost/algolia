@@ -17,8 +17,8 @@ exports.handler = async (event) => {
     const {post} = JSON.parse(event.body);
 
     // Updated posts are in `post.current`, deleted are in `post.previous`
-    const {slug} = (Object.keys(post.current).length && post.current)
-                   || (Object.keys(post.previous).length && post.previous);
+    const {slug} = (post.current && Object.keys(post.current).length && post.current)
+                   || (post.previous && Object.keys(post.previous).length && post.previous);
 
     if (!slug) {
         return {

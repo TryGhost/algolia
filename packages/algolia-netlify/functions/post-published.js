@@ -15,7 +15,7 @@ exports.handler = async (event) => {
         index: process.env.ALGOLIA_INDEX
     };
 
-    const {current: post} = event.body && event.body.post && JSON.parse(event.body).post;
+    const post = event.body && event.body.post && JSON.parse(event.body).post.current;
 
     if (!post || Object.keys(post).length < 1) {
         return {
