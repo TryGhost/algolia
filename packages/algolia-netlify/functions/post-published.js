@@ -28,7 +28,7 @@ exports.handler = async (event) => {
     // Define the properties we need for Algolia
     // TODO: make this a custom setting
     const algoliaPost = {
-        objectID: post.uuid,
+        objectID: post.id,
         slug: post.slug,
         url: post.url,
         html: post.html,
