@@ -43,14 +43,12 @@ exports.handler = async (event) => {
         // Instanciate the Algolia indexer, which connects to Algolia and
         // sets up the settings for the index.
         const index = new IndexFactory(algoliaSettings);
-        console.log('Algolia instanciated'); // eslint-disable-line no-console
         await index.setSettingsForIndex();
-        console.log('Settings setup'); // eslint-disable-line no-console
         await index.save(fragments);
         console.log('Fragments successfully saved to Algolia index'); // eslint-disable-line no-console
         return {
             statusCode: 200,
-            body: `GhostAlgolia: post "${algoliaPost.title}" has been added to the index.`
+            body: `Post "${algoliaPost.title}" has been added to the index.`
         };
     } catch (error) {
         console.log(error); // eslint-disable-line no-console
