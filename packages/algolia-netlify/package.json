@@ -10,6 +10,7 @@
     "test": "NODE_ENV=testing mocha './test/**/*.test.js'",
     "lint": "eslint . --ext .js --cache",
     "posttest": "yarn lint",
+    "postinstall": "netlify-lambda install functions",
     "serve": "netlify-lambda serve --config ./webpack.functions.js functions ",
     "build": "mkdir -p build/site && netlify-lambda build functions"
   },

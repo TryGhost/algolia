@@ -29,14 +29,22 @@ class IndexFactory {
         this.initClient();
         this.index = this.client.initIndex(this.options.index);
     }
-    setSettingsForIndex() {
-        this.initIndex();
-        return this.index.setSettings(this.options.indexSettings)
-            .then(() => this.index.getSettings());
+    async setSettingsForIndex() {
+        try {
+            await this.initIndex(); //initiate client
+            await this.index.setSettings(this.options.indexSettings);
+            return await this.index.getSettings();
+        } catch (error) {
+            throw new Error('Couldn\'t setup Algolia index', error);
+        }
     }
-    save(fragments) {
-        return this.index.saveObjects(fragments)
-            .then(({objectIDs}) => console.log(`Saved to Algolia: `, objectIDs)); // eslint-disable-line no-console
+    async save(fragments) {
+        console.log(`Saving ${fragments.length} fragments`); // eslint-disable-line no-console
+        try {
+            await this.index.saveObjects(fragments);
+        } catch (error) {
+            throw new Error('Error, saving to Algolia', error);
+        }
     }
     delete(post) {
         return this.index.deleteBy(post.attributes.uuid, {

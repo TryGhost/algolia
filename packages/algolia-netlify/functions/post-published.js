@@ -1,9 +1,12 @@
-const IndexFactory = require('@tryghost/algolia-indexer');
-const transforms = require('@tryghost/algolia-fragmenter');
+import IndexFactory from '@tryghost/algolia-indexer';
+import transforms from '@tryghost/algolia-fragmenter';
 
-exports.handler = (event, context, callback) => {
+exports.handler = async (event) => {
     if (!process.env.ALGOLIA_ACTIVE === 'TRUE') {
-        return;
+        return {
+            statusCode: 200,
+            body: `Algolia is not activated`
+        };
     }
 
     const algoliaSettings = {
@@ -33,26 +36,27 @@ exports.handler = (event, context, callback) => {
 
     node.push(algoliaPost);
 
-    // Instanciate the Algolia indexer, which connects to Algolia and
-    // sets up the settings for the index.
-    const index = new IndexFactory(algoliaSettings);
-
     // Fragmenter needs an Array to reduce
     const fragments = node.reduce(transforms.fragmentTransformer, []);
 
-    index
-        .setSettingsForIndex()
-        .then((settings) => {
-            console.log('Algolia index setup with following settings: ', settings); // eslint-disable-line no-console
-            return index
-                .save(fragments).then(() => {
-                    callback(null, {
-                        statusCode: 200,
-                        body: `GhostAlgolia: post "${algoliaPost.title}" has been added to the index.`
-                    });
-                });
-        })
-        .catch((err) => {
-            callback(err);
-        });
+    try {
+        // Instanciate the Algolia indexer, which connects to Algolia and
+        // sets up the settings for the index.
+        const index = new IndexFactory(algoliaSettings);
+        console.log('Algolia instanciated'); // eslint-disable-line no-console
+        await index.setSettingsForIndex();
+        console.log('Settings setup'); // eslint-disable-line no-console
+        await index.save(fragments);
+        console.log('Fragments successfully saved to Algolia index'); // eslint-disable-line no-console
+        return {
+            statusCode: 200,
+            body: `GhostAlgolia: post "${algoliaPost.title}" has been added to the index.`
+        };
+    } catch (error) {
+        console.log(error); // eslint-disable-line no-console
+        return {
+            statusCode: 500,
+            body: JSON.stringify({msg: error.message})
+        };
+    }
 };
