@@ -15,9 +15,17 @@ exports.handler = async (event) => {
         index: process.env.ALGOLIA_INDEX
     };
 
-    const post = JSON.parse(event.body).post.current;
+    const {current: post} = event.body && event.body.post && JSON.parse(event.body).post;
 
-    // TODO: move to a util
+    if (!post || Object.keys(post).length < 1) {
+        return {
+            statusCode: 200,
+            body: `No valid request body detected`
+        };
+    }
+
+    // Define the properties we need for Algolia
+    // TODO: make this a custom setting
     const algoliaPost = {
         objectID: post.uuid,
         slug: post.slug,
@@ -25,11 +33,16 @@ exports.handler = async (event) => {
         html: post.html,
         image: post.feature_image,
         title: post.title,
-        tags: []
+        tags: [],
+        authors: []
     };
 
     post.tags.forEach((tag) => {
         algoliaPost.tags.push({name: tag.name, slug: tag.slug});
+    });
+
+    post.authors.forEach((author) => {
+        algoliaPost.authors.push({name: author.name, slug: author.slug});
     });
 
     const node = [];
