@@ -28,6 +28,9 @@
     "sinon": "9.0.2"
   },
   "dependencies": {
-    "@tryghost/pretty-cli": "1.2.5"
+    "@tryghost/algolia-fragmenter": "0.0.3",
+    "@tryghost/content-api": "1.4.1",
+    "@tryghost/pretty-cli": "1.2.5",
+    "fs-extra": "9.0.0"
   }
 }
