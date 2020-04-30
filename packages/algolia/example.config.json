@@ -1,0 +1,30 @@
+{
+  "ghost": {
+    "apiKey": "",
+    "apiUrl": ""
+  },
+  "algolia": {
+    "index": "",
+    "apiKey": "",
+    "appId": "",
+    "indexSettings": {
+      "distinct": true,
+      "attributeForDistinct": "slug",
+      "customRanking": [
+        "desc(customRanking.heading)",
+        "asc(customRanking.position)"
+      ],
+      "searchableAttributes": [
+        "title",
+        "headings",
+        "html",
+        "url",
+        "tags.name",
+        "tags",
+        "authors.name",
+        "authors"
+      ],
+      "attributesForFaceting": ["filterOnly(slug)"]
+    }
+  }
+}
