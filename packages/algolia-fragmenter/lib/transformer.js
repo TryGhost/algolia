@@ -54,8 +54,9 @@ module.exports.fragmentTransformer = (recordAccumulator, node) => {
 
         let objectID = `${node.objectID}_${index}`;
 
-        // If fragments are too long, we need this to see which fragment it was
-        console.log(`Created fragment: `, objectID, fragment.url || node.url, fragment.html.length); // eslint-disable-line no-console
+        // TODO: switch this on in verbose mode only
+        // // If fragments are too long, we need this to see which fragment it was
+        // console.log(`Created fragment: `, objectID, fragment.url || node.url, fragment.html.length); // eslint-disable-line no-console
 
         return [
             ...fragmentAccumulator,
