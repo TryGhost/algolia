@@ -53,7 +53,7 @@ class IndexFactory {
 
     async setSettingsForIndex() {
         try {
-            await this.initIndex(); //initiate client
+            await this.initIndex();
             await this.index.setSettings(this.options.indexSettings);
             return await this.index.getSettings();
         } catch (error) {
@@ -62,7 +62,7 @@ class IndexFactory {
     }
 
     async save(fragments) {
-        console.log(`Saving ${fragments.length} fragments`); // eslint-disable-line no-console
+        console.log(`Saving ${fragments.length} fragments to Algolia index...`); // eslint-disable-line no-console
         try {
             await this.index.saveObjects(fragments);
         } catch (error) {
@@ -71,7 +71,7 @@ class IndexFactory {
     }
 
     async delete(slug) {
-        console.log(`Deleting all fragments with slug "${slug}"`); // eslint-disable-line no-console
+        console.log(`Removing all fragments with post slug "${slug}"...`); // eslint-disable-line no-console
         try {
             await this.index.deleteBy({filters: `slug:${slug}`});
         } catch (error) {

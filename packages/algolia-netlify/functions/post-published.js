@@ -25,33 +25,16 @@ exports.handler = async (event) => {
         };
     }
 
-    // Define the properties we need for Algolia
-    // TODO: make this a custom setting
-    const algoliaPost = {
-        objectID: post.id,
-        slug: post.slug,
-        url: post.url,
-        html: post.html,
-        image: post.feature_image,
-        title: post.title,
-        tags: [],
-        authors: []
-    };
-
-    post.tags.forEach((tag) => {
-        algoliaPost.tags.push({name: tag.name, slug: tag.slug});
-    });
-
-    post.authors.forEach((author) => {
-        algoliaPost.authors.push({name: author.name, slug: author.slug});
-    });
-
     const node = [];
 
-    node.push(algoliaPost);
+    // Transformer methods need an Array of Objects
+    node.push(post);
 
-    // Fragmenter needs an Array to reduce
-    const fragments = node.reduce(transforms.fragmentTransformer, []);
+    // Transform into Algolia object with the properties we need
+    const algoliaObject = transforms.transformToAlgoliaObject(node);
+
+    // Create fragments of the post
+    const fragments = algoliaObject.reduce(transforms.fragmentTransformer, []);
 
     try {
         // Instanciate the Algolia indexer, which connects to Algolia and
@@ -62,7 +45,7 @@ exports.handler = async (event) => {
         console.log('Fragments successfully saved to Algolia index'); // eslint-disable-line no-console
         return {
             statusCode: 200,
-            body: `Post "${algoliaPost.title}" has been added to the index.`
+            body: `Post "${post.title}" has been added to the index.`
         };
     } catch (error) {
         console.log(error); // eslint-disable-line no-console

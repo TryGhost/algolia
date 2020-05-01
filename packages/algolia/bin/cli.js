@@ -21,100 +21,89 @@ prettyCLI.command({
         });
     },
     run: async (argv) => {
-        let posts = [];
-        const timer = Date.now();
-        let context = {errors: []};
+        const mainTimer = Date.now();
+        let context = {errors: [], posts: []};
 
         if (argv.verbose) {
             ui.log.info(`Received config file ${argv.pathToConfig}`);
         }
 
+        // 1. Read the config files and verify everything
         try {
-            // 1. Read the config files and verify everything
             const config = await fs.readJSON(argv.pathToConfig);
             context = Object.assign(context, config);
+
             utils.verifyConfig(context);
         } catch (error) {
             context.errors.push(error);
-            return ui.log.info('Failed loading JSON config file:', context.errors);
+            return ui.log.error('Failed loading JSON config file:', context.errors);
         }
 
+        // 2. Fetch all posts from the Ghost instance
         try {
-            // 2. Fetch all posts from the Ghost instance
+            const timer = Date.now();
             const ghost = new GhostContentAPI({
                 url: context.ghost.apiUrl,
                 key: context.ghost.apiKey,
-                version: 'v3'
+                version: 'canary'
             });
 
-            // TODO: This should be done in batches of 100 or so for performance reasons
-            // // Get pagination information
-            // const {meta} = await ghost.posts.browse({limit: 1});
+            ui.log.info('Fetching all posts from Ghost...');
 
-            // // With the total on hand, calculate the amount of times we have to
-            // // fetch from the API
-            // const {total} = meta.pagination;
-            // const calls = Math.ceil(parseInt(total) / 100);
-            console.time('Ghost API fetch'); // eslint-disable-line no-console
-            posts = await ghost.posts.browse({limit: 'all', include: 'tags,authors'});
-            console.timeEnd('Ghost API fetch'); // eslint-disable-line no-console
+            context.posts = await ghost.posts.browse({limit: 'all', include: 'tags,authors'});
+
+            ui.log.info(`Done fetching posts in ${Date.now() - timer}ms.`);
         } catch (error) {
             context.errors.push(error);
-            return ui.log.warn('Could not fetch posts from Ghost', context.errors);
+            return ui.log.error('Could not fetch posts from Ghost', context.errors);
         }
 
+        // 3. Transform into Algolia objects and create fragments
         try {
-            // 3. Run the fragmenter
-            context.posts = [];
-            // TODO: make this a util
-            posts.map((post) => {
-                // Define the properties we need for Algolia
-                // TODO: make this a custom setting
-                const algoliaPost = {
-                    objectID: post.id,
-                    slug: post.slug,
-                    url: post.url,
-                    html: post.html,
-                    image: post.feature_image,
-                    title: post.title,
-                    tags: [],
-                    authors: []
-                };
+            const timer = Date.now();
 
-                post.tags.forEach((tag) => {
-                    algoliaPost.tags.push({name: tag.name, slug: tag.slug});
-                });
+            ui.log.info('Transforming and fragmenting posts...');
 
-                post.authors.forEach((author) => {
-                    algoliaPost.authors.push({name: author.name, slug: author.slug});
-                });
+            context.posts = transforms.transformToAlgoliaObject(context.posts);
 
-                context.posts.push(algoliaPost);
-            });
-
-            // Fragmenter needs an Array to reduce
             context.fragments = context.posts.reduce(transforms.fragmentTransformer, []);
+
+            // we don't need the posts anymore
+            delete context.posts;
+
+            ui.log.info(`Done transforming and fragmenting posts in ${Date.now() - timer}ms.`);
         } catch (error) {
             context.errors.push(error);
-            return ui.log.warn('Error fragmenting posts', context.errors);
+            return ui.log.error('Error fragmenting posts', context.errors);
         }
 
+        // 4. Save to Algolia
         try {
-            // 4. Save to Algolia
+            let timer = Date.now();
+
+            ui.log.info('Connecting to Algolia index and setting it up...');
 
             // Instanciate the Algolia indexer, which connects to Algolia and
-            // sets up the settings for the index.
             const index = new IndexFactory(context.algolia);
+            // sets up the settings for the index.
             await index.setSettingsForIndex();
+
+            ui.log.info(`Done setting up Alolia index in ${Date.now() - timer}ms.`);
+
+            timer = Date.now();
+
+            ui.log.info('Saving fragments to Algolia...');
+
             await index.save(context.fragments);
-            ui.log.ok(`${context.fragments.length} Fragments successfully saved to Algolia index`);
+
+            ui.log.ok(`${context.fragments.length} Fragments successfully saved to Algolia index in ${Date.now() - timer}ms.`);
         } catch (error) {
             context.errors.push(error);
-            return ui.log.warn('Error saving fragments', context.errors);
+            return ui.log.error('Error saving fragments', context.errors);
         }
 
         // Report success
-        ui.log.ok(`Successfully indexed all the things in ${Date.now() - timer}ms.`);
+        ui.log.ok(`Successfully indexed all the things in ${Date.now() - mainTimer}ms.`);
     }
 });
 
