@@ -19,6 +19,10 @@ prettyCLI.command({
             defaultValue: false,
             desc: 'Show verbose output'
         });
+        sywac.array('-s --skip', {
+            defaultValue: [],
+            desc: 'Comma separated list of post slugs to exclude from indexing'
+        });
     },
     run: async (argv) => {
         const mainTimer = Date.now();
@@ -42,6 +46,7 @@ prettyCLI.command({
         // 2. Fetch all posts from the Ghost instance
         try {
             const timer = Date.now();
+            const params = {limit: 'all', include: 'tags,authors'};
             const ghost = new GhostContentAPI({
                 url: context.ghost.apiUrl,
                 key: context.ghost.apiKey,
@@ -50,7 +55,13 @@ prettyCLI.command({
 
             ui.log.info('Fetching all posts from Ghost...');
 
-            context.posts = await ghost.posts.browse({limit: 'all', include: 'tags,authors'});
+            if (argv.skip && argv.skip.length > 0) {
+                const filterSlugs = argv.skip.join(',');
+
+                params.filter = `slug:-[${filterSlugs}]`;
+            }
+
+            context.posts = await ghost.posts.browse(params);
 
             ui.log.info(`Done fetching posts in ${Date.now() - timer}ms.`);
         } catch (error) {
