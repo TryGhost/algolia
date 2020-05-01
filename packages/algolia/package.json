@@ -1,6 +1,6 @@
 {
   "name": "@tryghost/algolia",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia",
   "author": "Ghost Foundation",
   "license": "MIT",
@@ -28,7 +28,7 @@
     "sinon": "9.0.2"
   },
   "dependencies": {
-    "@tryghost/algolia-fragmenter": "^0.1.0",
+    "@tryghost/algolia-fragmenter": "^0.1.1",
     "@tryghost/content-api": "1.4.1",
     "@tryghost/pretty-cli": "1.2.5",
     "fs-extra": "9.0.0"
