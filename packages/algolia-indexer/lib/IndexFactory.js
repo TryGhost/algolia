@@ -46,9 +46,9 @@ class IndexFactory {
         this.client = algoliaSearch(this.options.appId, this.options.apiKey);
     }
 
-    initIndex() {
+    async initIndex() {
         this.initClient();
-        this.index = this.client.initIndex(this.options.index);
+        this.index = await this.client.initIndex(this.options.index);
     }
 
     async setSettingsForIndex() {
