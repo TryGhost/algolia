@@ -67,3 +67,39 @@ module.exports.fragmentTransformer = (recordAccumulator, node) => {
 };
 
 module.exports._testReduceFragmentsUnderHeadings = reduceFragmentsUnderHeadings;
+
+/**
+ * Algolia Object Transformer
+ * takes a Ghost post and selects the properties needed to send to Algolia
+ *
+ *  @param {Array} posts
+ */
+module.exports.transformToAlgoliaObject = (posts) => {
+    const algoliaObjects = [];
+
+    posts.map((post) => {
+        // Define the properties we need for Algolia
+        const algoliaPost = {
+            objectID: post.id,
+            slug: post.slug,
+            url: post.url,
+            html: post.html,
+            image: post.feature_image,
+            title: post.title,
+            tags: [],
+            authors: []
+        };
+
+        post.tags.forEach((tag) => {
+            algoliaPost.tags.push({name: tag.name, slug: tag.slug});
+        });
+
+        post.authors.forEach((author) => {
+            algoliaPost.authors.push({name: author.name, slug: author.slug});
+        });
+
+        algoliaObjects.push(algoliaPost);
+    });
+
+    return algoliaObjects;
+};
