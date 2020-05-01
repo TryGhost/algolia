@@ -1,5 +1,7 @@
 # Algolia Indexer
 
+IndexFactory that takes over the part of talking to the Algolia API.
+
 ## Install
 
 `npm install @tryghost/algolia-indexer --save`
@@ -34,6 +36,6 @@ Follow the instructions for the top-level repo.
 
 
 
-# Copyright & License 
+# Copyright & License
 
 Copyright (c) 2020 Ghost Foundation - Released under the [MIT license](LICENSE).

@@ -1,14 +1,22 @@
-# Algolia
+# Ghost Algolia tools
 
-## Install
+Ghost Algolia tools offers tools to index and fragment Ghost posts to an Algolia index. It consists of two user facing tools:
+
+- `algolia`, which is a CLI tool to batch index the full content of a Ghost install to a defined Algolia index
+- `algolia-netlify`, which uses Netlify Functions to listen to Ghost webhooks and add, update, and remove posts to an Algolia index
 
 
 ## Usage
 
-### Algolia-Netlify package
+### Algolia Netlify package
+
+You can start using the Algolia Netlify package by clicking on this deplooy button. You can find the detailed install and user instructions over [here](https://github.com/TryGhost/algolia/tree/master/packages/algolia-netlify).
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TryGhost/algolia)
 
+### Ghost Algolia CLI
+
+While the Algolia Netlify tool is useful to maintain your search index, the Ghost Algolia CLI is good for the initial indexing of the full post content of a site. See full install und user instructions in the package description [here](https://github.com/TryGhost/algolia/tree/master/packages/algolia).
 
 ## Develop
 

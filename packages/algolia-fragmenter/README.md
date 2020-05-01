@@ -1,5 +1,7 @@
 # Algolia Fragmenter
 
+Fragment transformer converts a Ghost post into an Algolia Object and breaks down large HTML strings into sensible fragments based on headings.
+
 ## Install
 
 `npm install @tryghost/algolia-fragmenter --save`
@@ -34,6 +36,6 @@ Follow the instructions for the top-level repo.
 
 
 
-# Copyright & License 
+# Copyright & License
 
 Copyright (c) 2020 Ghost Foundation - Released under the [MIT license](LICENSE).
