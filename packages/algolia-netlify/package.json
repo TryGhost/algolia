@@ -1,6 +1,6 @@
 {
   "name": "@tryghost/algolia-netlify",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia-netlify",
   "author": "Ghost Foundation",
   "license": "MIT",
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.1.1",
-    "@tryghost/algolia-indexer": "^0.1.2",
+    "@tryghost/algolia-indexer": "^0.1.3",
     "dotenv-webpack": "1.7.0",
     "netlify-lambda": "1.6.3"
   }
