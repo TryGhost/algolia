@@ -71,4 +71,4 @@ typings/
 # Algolia Custom
 packages/*/build/*
 
-packages/algolia/config.json
+packages/algolia/config*.json
