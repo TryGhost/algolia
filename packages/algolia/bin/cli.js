@@ -23,6 +23,10 @@ prettyCLI.command({
             defaultValue: [],
             desc: 'Comma separated list of post slugs to exclude from indexing'
         });
+        sywac.array('-sjs --skipjsonslugs', {
+            defaultValue: false,
+            desc: 'Exclude post slugs from config JSON file'
+        });
     },
     run: async (argv) => {
         const mainTimer = Date.now();
@@ -75,7 +79,13 @@ prettyCLI.command({
 
             ui.log.info('Transforming and fragmenting posts...');
 
-            context.posts = transforms.transformToAlgoliaObject(context.posts);
+            if (argv.skipjsonslugs) {
+                const ignoreSlugsCount = context.ignore_slugs.length;
+
+                ui.log.info(`Skipping the ${ignoreSlugsCount} slugs in ${argv.pathToConfig}`);
+            }
+
+            context.posts = transforms.transformToAlgoliaObject(context.posts, context.ignore_slugs);
 
             context.fragments = context.posts.reduce(transforms.fragmentTransformer, []);
 

@@ -75,7 +75,7 @@ module.exports._testReduceFragmentsUnderHeadings = reduceFragmentsUnderHeadings;
  *
  *  @param {Array} posts
  */
-module.exports.transformToAlgoliaObject = (posts) => {
+module.exports.transformToAlgoliaObject = (posts, ignoreSlugs) => {
     const algoliaObjects = [];
 
     posts.map((post) => {
@@ -90,6 +90,14 @@ module.exports.transformToAlgoliaObject = (posts) => {
             tags: [],
             authors: []
         };
+
+        // If we have an array of slugs to ignore, and the current
+        // post slug is in that list, skip this loop iteration
+        if (ignoreSlugs) {
+            if (ignoreSlugs.includes(post.slug)) {
+                return false;
+            }
+        }
 
         post.tags.forEach((tag) => {
             algoliaPost.tags.push({name: tag.name, slug: tag.slug});
