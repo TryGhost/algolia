@@ -3,6 +3,9 @@
     "apiKey": "",
     "apiUrl": ""
   },
+  "ignore_slugs": [
+    "the-slug-of-a-post-with-a-huge-amount-of-content-that-will-cause-errors"
+  ],
   "algolia": {
     "index": "",
     "apiKey": "",
@@ -24,7 +27,9 @@
         "authors.name",
         "authors"
       ],
-      "attributesForFaceting": ["filterOnly(slug)"]
+      "attributesForFaceting": [
+        "filterOnly(slug)"
+      ]
     }
   }
 }
