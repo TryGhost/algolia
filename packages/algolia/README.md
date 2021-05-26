@@ -39,7 +39,8 @@ yarn algolia index <pathToConfig> -s post-slug-to-exclude,and-another-post-slug-
 - `-s, --skip`, takes a comma separated list of post slugs that need to be **excluded** from the index (see [caveats](#caveats) above)
 
 - `-V, --verbose`, switches on verbose mode, but there's not much too see here (yet)
-
+- `-l, --limit`, limit the amount of posts to receive. Default is 'all'
+- `-p --page`, define the page to fetch posts from. To be used in combination with `limit`.
 - `-sjs --skipjsonslugs`, uses a list of slugs in `config.json` to skip before they're uploaded. This method will request all data from Ghost and skip at the point it would normally upload to Algolia. If you're getting `414 Request-URI Too Large` errors using `-s`, this is the method to use.
 
 ## Develop

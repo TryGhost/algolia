@@ -23,6 +23,12 @@ prettyCLI.command({
             defaultValue: [],
             desc: 'Comma separated list of post slugs to exclude from indexing'
         });
+        sywac.number('-l --limit', {
+            desc: 'Amount of posts we want to fetch from Ghost'
+        });
+        sywac.number('-p --page', {
+            desc: 'Use page to navigate through posts when setting a limit'
+        });
         sywac.array('-sjs --skipjsonslugs', {
             defaultValue: false,
             desc: 'Exclude post slugs from config JSON file'
@@ -57,12 +63,21 @@ prettyCLI.command({
                 version: 'canary'
             });
 
-            ui.log.info('Fetching all posts from Ghost...');
-
             if (argv.skip && argv.skip.length > 0) {
                 const filterSlugs = argv.skip.join(',');
 
                 params.filter = `slug:-[${filterSlugs}]`;
+            }
+
+            if (argv.limit) {
+                params.limit = argv.limit;
+            }
+
+            ui.log.info(`Fetching ${params.limit} posts from Ghost...`);
+
+            if (argv.page) {
+                ui.log.info(`...from page #${argv.page}.`);
+                params.page = argv.page;
             }
 
             context.posts = await ghost.posts.browse(params);
