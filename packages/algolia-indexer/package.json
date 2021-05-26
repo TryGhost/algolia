@@ -24,6 +24,6 @@
     "sinon": "9.0.2"
   },
   "dependencies": {
-    "algoliasearch": "4.2.0"
+    "algoliasearch": "4.9.1"
   }
 }
