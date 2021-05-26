@@ -39,7 +39,7 @@
     "eslint-config-airbnb-base": "14.2.1",
     "eslint-plugin-ghost": "2.2.0",
     "eslint-plugin-import": "2.23.3",
-    "mocha": "7.1.2",
+    "mocha": "7.2.0",
     "should": "13.2.3",
     "sinon": "9.0.2"
   },
