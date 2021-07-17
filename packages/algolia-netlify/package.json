@@ -35,7 +35,7 @@
     "build/*"
   ],
   "devDependencies": {
-    "eslint": "7.27.0",
+    "eslint": "7.31.0",
     "eslint-config-airbnb-base": "14.2.1",
     "eslint-plugin-ghost": "2.2.0",
     "eslint-plugin-import": "2.23.3",
