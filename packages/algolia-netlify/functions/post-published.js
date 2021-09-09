@@ -2,7 +2,7 @@ import IndexFactory from '@tryghost/algolia-indexer';
 import transforms from '@tryghost/algolia-fragmenter';
 
 exports.handler = async (event) => {
-    if (!process.env.ALGOLIA_ACTIVE === 'TRUE') {
+    if (process.env.ALGOLIA_ACTIVE !== 'TRUE') {
         return {
             statusCode: 200,
             body: `Algolia is not activated`
