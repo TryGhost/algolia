@@ -1,4 +1,5 @@
 const algoliaSearch = require('algoliasearch');
+const errors = require('@tryghost/errors');
 
 // Any defined settings will override those in the algolia UI
 // TODO: make this a custom setting
@@ -16,7 +17,7 @@ const REQUIRED_SETTINGS = {
 };
 
 const AlgoliaError = ({code, statusCode, originalError}) => {
-    let error = new Error('Error processing Algolia');
+    let error = new errors.InternalServerError({message: 'Error processing Algolia'});
 
     error.errorType = 'AlgoliaError';
     error.code = code;
@@ -34,7 +35,7 @@ const AlgoliaError = ({code, statusCode, originalError}) => {
 class IndexFactory {
     constructor(algoliaSettings = {}) {
         if (!algoliaSettings.apiKey || !algoliaSettings.appId || !algoliaSettings.index || algoliaSettings.index.length < 1) {
-            throw new Error('Algolia appId, apiKey, and index is required!');
+            throw new errors.BadRequestError({message: 'Algolia appId, apiKey, and index is required!'});
         }
         this.index = [];
         this.options = algoliaSettings;

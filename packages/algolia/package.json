@@ -23,13 +23,14 @@
     "access": "public"
   },
   "devDependencies": {
-    "mocha": "7.1.2",
+    "mocha": "9.1.1",
     "should": "13.2.3",
-    "sinon": "9.0.2"
+    "sinon": "11.1.2"
   },
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.2.1",
     "@tryghost/content-api": "1.5.13",
+    "@tryghost/errors": "^0.2.13",
     "@tryghost/pretty-cli": "1.2.18",
     "fs-extra": "10.0.0"
   }
