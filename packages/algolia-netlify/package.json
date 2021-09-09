@@ -46,8 +46,8 @@
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.2.1",
     "@tryghost/algolia-indexer": "^0.1.5",
-    "dotenv-webpack": "7.0.2",
-    "netlify-lambda": "2.0.7",
-    "webpack": "5.37.1"
+    "dotenv-webpack": "7.0.3",
+    "netlify-lambda": "2.0.14",
+    "webpack": "5.52.0"
   }
 }
