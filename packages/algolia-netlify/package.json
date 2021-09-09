@@ -1,6 +1,6 @@
 {
   "name": "@tryghost/algolia-netlify",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia-netlify",
   "author": "Ghost Foundation",
   "license": "MIT",
