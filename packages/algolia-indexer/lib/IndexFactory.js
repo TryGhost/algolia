@@ -34,7 +34,7 @@ const AlgoliaError = ({code, statusCode, originalError}) => {
 class IndexFactory {
     constructor(algoliaSettings = {}) {
         if (!algoliaSettings.apiKey || !algoliaSettings.appId || !algoliaSettings.index || algoliaSettings.index.length < 1) {
-            throw new Error({message: 'Algolia appId, apiKey, and index is required!'}); // eslint-disable-line
+            throw new Error('Algolia appId, apiKey, and index is required!'); // eslint-disable-line
         }
         this.index = [];
         this.options = algoliaSettings;

@@ -1,5 +1,5 @@
-import IndexFactory from '@tryghost/algolia-indexer';
-import transforms from '@tryghost/algolia-fragmenter';
+const IndexFactory = require('@tryghost/algolia-indexer');
+const transforms = require('@tryghost/algolia-fragmenter');
 
 exports.handler = async (event) => {
     if (process.env.ALGOLIA_ACTIVE !== 'TRUE') {

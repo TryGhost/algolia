@@ -1,4 +1,4 @@
-import IndexFactory from '@tryghost/algolia-indexer';
+const IndexFactory = require('@tryghost/algolia-indexer');
 
 exports.handler = async (event) => {
     if (process.env.ALGOLIA_ACTIVE !== 'TRUE') {
