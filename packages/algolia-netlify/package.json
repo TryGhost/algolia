@@ -12,7 +12,7 @@
     "posttest": "yarn lint",
     "postinstall": "netlify-lambda install functions",
     "serve": "yarn build && netlify dev",
-    "build": "netlify-lambda build functions"
+    "build": "mkdir -p build/site && netlify-lambda build functions"
   },
   "files": [
     "index.js",
