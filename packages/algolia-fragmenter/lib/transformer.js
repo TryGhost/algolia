@@ -99,13 +99,17 @@ module.exports.transformToAlgoliaObject = (posts, ignoreSlugs) => {
             }
         }
 
-        post.tags.forEach((tag) => {
-            algoliaPost.tags.push({name: tag.name, slug: tag.slug});
-        });
+        if (post.tags && post.tags.length) {
+            post.tags.forEach((tag) => {
+                algoliaPost.tags.push({name: tag.name, slug: tag.slug});
+            });
+        }
 
-        post.authors.forEach((author) => {
-            algoliaPost.authors.push({name: author.name, slug: author.slug});
-        });
+        if (post.authors && post.authors.length) {
+            post.authors.forEach((author) => {
+                algoliaPost.authors.push({name: author.name, slug: author.slug});
+            });
+        }
 
         algoliaObjects.push(algoliaPost);
     });
