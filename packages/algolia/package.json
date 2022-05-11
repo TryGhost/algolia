@@ -31,7 +31,7 @@
     "@tryghost/algolia-fragmenter": "^0.2.3",
     "@tryghost/algolia-indexer": "^0.1.7",
     "@tryghost/content-api": "1.9.5",
-    "@tryghost/errors": "0.2.17",
+    "@tryghost/errors": "1.2.12",
     "@tryghost/pretty-cli": "1.2.27",
     "fs-extra": "10.0.0"
   }
