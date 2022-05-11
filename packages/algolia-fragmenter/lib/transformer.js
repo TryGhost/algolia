@@ -112,6 +112,8 @@ module.exports.transformToAlgoliaObject = (posts, ignoreSlugs) => {
         }
 
         algoliaObjects.push(algoliaPost);
+
+        return algoliaPost;
     });
 
     return algoliaObjects;
