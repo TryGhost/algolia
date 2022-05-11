@@ -47,7 +47,7 @@
     "@tryghost/algolia-fragmenter": "^0.2.3",
     "@tryghost/algolia-indexer": "^0.1.7",
     "dotenv-webpack": "7.0.3",
-    "netlify-lambda": "2.0.14",
+    "netlify-lambda": "2.0.15",
     "webpack": "5.72.1"
   }
 }
