@@ -48,6 +48,6 @@
     "@tryghost/algolia-indexer": "^0.1.7",
     "dotenv-webpack": "7.1.0",
     "netlify-lambda": "2.0.15",
-    "webpack": "5.72.1"
+    "webpack": "5.73.0"
   }
 }
