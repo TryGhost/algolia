@@ -35,9 +35,9 @@
     "build/*"
   ],
   "devDependencies": {
-    "eslint": "8.15.0",
+    "eslint": "8.22.0",
     "eslint-config-airbnb-base": "15.0.0",
-    "eslint-plugin-ghost": "2.13.0",
+    "eslint-plugin-ghost": "2.15.1",
     "eslint-plugin-import": "2.26.0",
     "mocha": "10.0.0",
     "should": "13.2.3",
@@ -46,8 +46,8 @@
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.2.3",
     "@tryghost/algolia-indexer": "^0.1.7",
-    "dotenv-webpack": "7.1.0",
+    "dotenv-webpack": "8.0.1",
     "netlify-lambda": "2.0.15",
-    "webpack": "5.72.1"
+    "webpack": "5.74.0"
   }
 }

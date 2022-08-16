@@ -24,7 +24,7 @@
     "sinon": "14.0.0"
   },
   "dependencies": {
-    "@tryghost/errors": "^1.0.0",
-    "algoliasearch": "4.13.0"
+    "@tryghost/errors": "1.2.15",
+    "algoliasearch": "4.14.2"
   }
 }
