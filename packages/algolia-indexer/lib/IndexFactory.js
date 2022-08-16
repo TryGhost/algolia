@@ -82,7 +82,7 @@ class IndexFactory {
     async deleteObjects(fragments) {
         console.log(`Deleting ${fragments.length} fragments from Algolia index...`); // eslint-disable-line no-console
         try {
-            await this.index.delete(fragments);
+            await this.index.deleteObjects(fragments);
         } catch (error) {
             throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
         }
