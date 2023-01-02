@@ -41,7 +41,7 @@
     "eslint-plugin-import": "2.26.0",
     "mocha": "10.0.0",
     "should": "13.2.3",
-    "sinon": "14.0.0"
+    "sinon": "14.0.2"
   },
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.2.4",
