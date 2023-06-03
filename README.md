@@ -12,7 +12,7 @@ Ghost Algolia tools offers tools to index and fragment Ghost posts to an Algolia
 
 You can start using the Algolia Netlify package by clicking on this deplooy button. You can find the detailed install and user instructions over [here](https://github.com/TryGhost/algolia/tree/master/packages/algolia-netlify).
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Prathap-puthran/algolia-custom)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TryGhost/algolia)
 
 ### Ghost Algolia CLI
 
