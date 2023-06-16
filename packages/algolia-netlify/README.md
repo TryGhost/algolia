@@ -31,6 +31,7 @@ The Ghost Algolia tooling uses [Ghost Webhooks](https://ghost.org/docs/api/webho
     - Algolia Application ID
     - The Algolia Admin API key or and API key with the permissions as described above
     - The name of the index you want to use
+    - Set a key to be used with the target URL 
 
 ### Set up Ghost Webhooks
 
@@ -39,22 +40,22 @@ Ghost webhooks will initiate posts to be indexed to Algolia. This can be a new e
 1. `post.published`
    - Name: Post published
    - Event: Post published
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=xyz)
 
 2. `post.published.edited`
    - Name: Post updated
    - Event: Published post updated
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=xyz)
 
 3. `post.unpublished`
    - Name: Post unpublished
    - Event: Post unpublished
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=xyz)
 
-4. `post.updated`
+4. `post.deleted`
    - Name: Post deleted
    - Event: Post deleted
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=xyz)
 
 These webhooks will trigger an index on every **future change of posts**.
 
