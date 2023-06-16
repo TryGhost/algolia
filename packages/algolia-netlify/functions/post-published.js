@@ -2,6 +2,15 @@ const IndexFactory = require('@tryghost/algolia-indexer');
 const transforms = require('@tryghost/algolia-fragmenter');
 
 exports.handler = async (event) => {
+    const {key} = event.queryStringParameters;
+
+    if (key !== process.env.NETLIFY_KEY) {
+        return {
+            statusCode: 401,
+            body: `Unauthorized`
+        };
+    }
+
     if (process.env.ALGOLIA_ACTIVE !== 'TRUE') {
         return {
             statusCode: 200,
