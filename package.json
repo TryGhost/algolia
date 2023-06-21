@@ -11,8 +11,7 @@
   ],
   "scripts": {
     "dev": "echo \"Implement me!\"",
-    "presetup": "yarn",
-    "setup": "lerna bootstrap",
+    "setup": "yarn",
     "test:parent": "NODE_ENV=testing mocha './test/**/*.test.js'",
     "test": "yarn test:parent && lerna run test",
     "lint": "lerna run lint",
