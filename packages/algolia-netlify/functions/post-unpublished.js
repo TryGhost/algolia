@@ -8,6 +8,13 @@ exports.handler = async (event) => {
         };
     }
 
+    if (!event.headers['user-agent'].includes('https://github.com/TryGhost/Ghost')) {
+        return {
+            statusCode: 401,
+            body: `Unauthorized`
+        };
+    }
+
     const algoliaSettings = {
         appId: process.env.ALGOLIA_APP_ID,
         apiKey: process.env.ALGOLIA_API_KEY,
