@@ -72,3 +72,6 @@ typings/
 packages/*/build/*
 
 packages/algolia/config*.json
+
+# Local Netlify folder
+.netlify
