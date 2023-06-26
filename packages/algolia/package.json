@@ -32,7 +32,7 @@
     "@tryghost/algolia-indexer": "^0.2.1",
     "@tryghost/content-api": "1.11.13",
     "@tryghost/errors": "1.2.25",
-    "@tryghost/pretty-cli": "1.2.33",
+    "@tryghost/pretty-cli": "1.2.37",
     "fs-extra": "11.1.0"
   }
 }
