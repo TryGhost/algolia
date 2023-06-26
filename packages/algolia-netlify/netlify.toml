@@ -1,6 +1,6 @@
 [build]
   base = "packages/algolia-netlify"
-  command = "NODE_ENV=production yarn build"
+  command = "yarn start"
   functions = "build/functions"
   publish = ""
 
