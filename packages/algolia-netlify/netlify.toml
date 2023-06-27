@@ -1,6 +1,6 @@
 [build]
   base = "packages/algolia-netlify"
-  command = "yarn start"
+  command = "yarn build"
   functions = "build/functions"
   publish = ""
 
@@ -13,3 +13,4 @@
   ALGOLIA_APP_ID = "Algolia Application ID"
   ALGOLIA_API_KEY = "An Algolia Admin API Key or a generated one"
   ALGOLIA_INDEX = "Name of the Algolia index"
+  NETLIFY_KEY = "User-defined key to authorize post requests to the Netlify function"
