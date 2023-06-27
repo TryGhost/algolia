@@ -6,7 +6,7 @@
 
 ### Set up Algolia
 
-First step is to grap the API keys and Application ID from Algolia. For the setup we need both, the "Search-Only API Key" as well as the "Admin API Key".
+First step is to grab the API keys and Application ID from Algolia. For the setup we need both, the "Search-Only API Key" as well as the "Admin API Key".
 
 The Admin API Key can either be the general one, or can be created just for this specific search index.
 
@@ -31,7 +31,7 @@ The Ghost Algolia tooling uses [Ghost Webhooks](https://ghost.org/docs/api/webho
     - Algolia Application ID
     - The Algolia Admin API key or and API key with the permissions as described above
     - The name of the index you want to use
-    - Set a key to be used with the target URL 
+    - Set the `NETLIFY_KEY` to be used with the target URL
 
 ### Set up Ghost Webhooks
 
@@ -40,22 +40,22 @@ Ghost webhooks will initiate posts to be indexed to Algolia. This can be a new e
 1. `post.published`
    - Name: Post published
    - Event: Post published
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=xyz)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=NETLIFY_KEY)
 
 2. `post.published.edited`
    - Name: Post updated
    - Event: Published post updated
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=xyz)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=NETLIFY_KEY)
 
 3. `post.unpublished`
    - Name: Post unpublished
    - Event: Post unpublished
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=xyz)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=NETLIFY_KEY)
 
 4. `post.deleted`
    - Name: Post deleted
    - Event: Post deleted
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=xyz)
+   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=NETLIFY_KEY)
 
 These webhooks will trigger an index on every **future change of posts**.
 
@@ -87,4 +87,4 @@ you will create a server on `localhost:9000` where your functions will be expose
 
 # Copyright & License
 
-Copyright (c) 2013-2022 Ghost Foundation - Released under the [MIT license](LICENSE).
+Copyright (c) 2013-2023 Ghost Foundation - Released under the [MIT license](LICENSE).

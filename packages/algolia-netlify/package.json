@@ -6,12 +6,11 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "dev": "yarn serve",
+    "dev": "yarn build && netlify dev",
     "test": "NODE_ENV=testing mocha './test/**/*.test.js'",
     "lint": "eslint . --ext .js --cache",
     "posttest": "yarn lint",
-    "serve": "netlify dev",
-    "start": "NODE_ENV=production netlify functions:build --functions build/functions --src functions"
+    "build": "NODE_ENV=production netlify functions:build --functions build/functions --src functions"
   },
   "files": [
     "index.js",

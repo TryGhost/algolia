@@ -3,7 +3,8 @@ const IndexFactory = require('@tryghost/algolia-indexer');
 exports.handler = async (event) => {
     const {key} = event.queryStringParameters;
 
-    if (key !== process.env.NETLIFY_KEY) {
+    // TODO: Deprecate this in the future and make the key mandatory
+    if (key && key !== process.env.NETLIFY_KEY) {
         return {
             statusCode: 401,
             body: `Unauthorized`
