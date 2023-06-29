@@ -62,6 +62,10 @@ These webhooks will trigger an index on every **future change of posts**.
 > To run an initial index of all the content, you can use the handy CLI from our Ghost Algolia tooling. Head over [here](https://github.com/TryGhost/algolia/tree/master/packages/algolia) and follow the instructions from there.
 
 
+## Security
+
+To avoid unauthorized access to the Netlify functions endpoints, we highly recommend to setup the `NETLIFY_KEY` variable. This key is currently optional but will be enforced in the future.
+
 ## Develop
 
 This is a mono repository, managed with [lerna](https://lernajs.io/).
