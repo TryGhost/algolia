@@ -35,7 +35,7 @@
   "devDependencies": {
     "eslint": "8.45.0",
     "eslint-config-airbnb-base": "15.0.0",
-    "eslint-plugin-ghost": "3.2.0",
+    "eslint-plugin-ghost": "3.3.0",
     "eslint-plugin-import": "2.27.5",
     "mocha": "10.2.0",
     "netlify-cli": "15.7.0",
