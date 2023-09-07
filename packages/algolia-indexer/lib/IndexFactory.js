@@ -15,6 +15,13 @@ const REQUIRED_SETTINGS = {
     attributesForFaceting: [`filterOnly(slug)`]
 };
 
+/**
+ * @param {options} options
+ * @param {string} options.code
+ * @param {number} options.statusCode
+ * @param {object} options.originalError
+ * @returns {Error}
+ */
 const AlgoliaError = ({code, statusCode, originalError}) => {
     let error = new Error({ message: 'Error processing Algolia' }); // eslint-disable-line
 
@@ -31,7 +38,34 @@ const AlgoliaError = ({code, statusCode, originalError}) => {
     return error;
 };
 
+/**
+ * @typedef {object} AlgoliaSettings
+ * @property {string} apiKey
+ * @property {string} appId
+ * @property {string} index
+ * @property {object} indexSettings
+ * @property {string} indexSettings.distinct
+ * @property {string} indexSettings.attributeForDistinct
+ * @property {string} indexSettings.customRanking
+ * @property {string} indexSettings.searchableAttributes
+ * @property {string} indexSettings.attributesForFaceting
+ */
+
+/**
+ * @typedef IIndexFactory
+ * @property {() => void} initClient
+ * @property {() => Promise<void>} initIndex
+ * @property {({updateSettings?: boolean}) => Promise<object>} setSettingsForIndex
+ * @property {(fragments: object[]) => Promise<void>} save
+ * @property {(slug: string) => Promise<void>} delete
+ * @property {(fragments: object[]) => Promise<void>} deleteObjects
+ */
+
+/** @implements IIndexFactory */
 class IndexFactory {
+    /**
+     * @param {AlgoliaSettings} algoliaSettings
+     */
     constructor(algoliaSettings = {}) {
         if (!algoliaSettings.apiKey || !algoliaSettings.appId || !algoliaSettings.index || algoliaSettings.index.length < 1) {
             throw new Error('Algolia appId, apiKey, and index is required!'); // eslint-disable-line
@@ -42,25 +76,41 @@ class IndexFactory {
         this.options.indexSettings = algoliaSettings.indexSettings || REQUIRED_SETTINGS;
     }
 
+    /**
+     * @returns {void}
+     */
     initClient() {
         this.client = algoliaSearch(this.options.appId, this.options.apiKey);
     }
 
+    /**
+     * @returns {Promise<void>}
+     */
     async initIndex() {
         this.initClient();
         this.index = await this.client.initIndex(this.options.index);
     }
 
-    async setSettingsForIndex() {
+    /**
+     * @param {{updateSettings?: boolean}} options
+     * @returns {Promise<object>}
+     */
+    async setSettingsForIndex({updateSettings = true}) {
         try {
             await this.initIndex();
-            await this.index.setSettings(this.options.indexSettings);
+            if (updateSettings) {
+                await this.index.setSettings(this.options.indexSettings);
+            }
             return await this.index.getSettings();
         } catch (error) {
             throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
         }
     }
 
+    /**
+     * @param {object[]} fragments
+     * @returns {Promise<void>}
+     */
     async save(fragments) {
         console.log(`Saving ${fragments.length} fragments to Algolia index...`); // eslint-disable-line no-console
         try {
@@ -70,6 +120,10 @@ class IndexFactory {
         }
     }
 
+    /**
+     * @param {string} slug
+     * @returns {Promise<void>}
+     */
     async delete(slug) {
         console.log(`Removing all fragments with post slug "${slug}"...`); // eslint-disable-line no-console
         try {
@@ -79,6 +133,10 @@ class IndexFactory {
         }
     }
 
+    /**
+     * @param {object[]} fragments
+     * @returns {Promise<void>}
+     */
     async deleteObjects(fragments) {
         console.log(`Deleting ${fragments.length} fragments from Algolia index...`); // eslint-disable-line no-console
         try {
