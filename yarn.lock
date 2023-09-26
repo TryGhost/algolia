@@ -2516,10 +2516,10 @@
   resolved "https://registry.yarnpkg.com/@tokenizer/token/-/token-0.3.0.tgz#fe98a93fe789247e998c75e74e9c7c63217aa276"
   integrity sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==
 
-"@tryghost/content-api@1.11.16":
-  version "1.11.16"
-  resolved "https://registry.yarnpkg.com/@tryghost/content-api/-/content-api-1.11.16.tgz#2fc8b1d03ee15dd16970ae1e340992a11ecbf4f1"
-  integrity sha512-sssD96EQj4W8uSZqL9+TlWP/2YS7ysA9jFMLqfAiJXkcXP1+kCsFAWOkZ3DeS5QZ5PKQSti+L69yYGmkMVfzxA==
+"@tryghost/content-api@1.11.17":
+  version "1.11.17"
+  resolved "https://registry.yarnpkg.com/@tryghost/content-api/-/content-api-1.11.17.tgz#c62b9509eca6ac62439a94a9bcea49f72cf03754"
+  integrity sha512-n4hWUzrVYevZioJCyaSoWt9SaDajbjrLQ20/A6p34OO3G/VvrV2hWZPW78L8TPtPjLacXspIdS7XX5b85goUkA==
   dependencies:
     axios "^1.0.0"
 
