@@ -92,13 +92,16 @@ class IndexFactory {
     }
 
     /**
-     * @param {{updateSettings?: boolean}} options
+     * @param {object} options
+     * @param {boolean?} options.updateSettings
      * @returns {Promise<object>}
      */
-    async setSettingsForIndex({updateSettings = true}) {
+    async setSettingsForIndex(options = {}) {
+        options.updateSettings = options?.updateSettings ?? true;
+
         try {
             await this.initIndex();
-            if (updateSettings) {
+            if (options.updateSettings) {
                 await this.index.setSettings(this.options.indexSettings);
             }
             return await this.index.getSettings();
