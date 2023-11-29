@@ -33,6 +33,6 @@
     "@tryghost/content-api": "1.11.20",
     "@tryghost/errors": "1.2.27",
     "@tryghost/pretty-cli": "1.2.39",
-    "fs-extra": "11.1.1"
+    "fs-extra": "11.2.0"
   }
 }
