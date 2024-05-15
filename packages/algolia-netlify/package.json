@@ -40,7 +40,7 @@
     "mocha": "10.2.0",
     "netlify-cli": "16.3.1",
     "should": "13.2.3",
-    "sinon": "17.0.1"
+    "sinon": "18.0.0"
   },
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.2.7",
