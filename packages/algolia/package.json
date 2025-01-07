@@ -30,7 +30,7 @@
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.2.7",
     "@tryghost/algolia-indexer": "^0.3.1",
-    "@tryghost/content-api": "1.11.20",
+    "@tryghost/content-api": "1.11.21",
     "@tryghost/errors": "1.2.27",
     "@tryghost/pretty-cli": "1.2.39",
     "fs-extra": "11.1.1"
