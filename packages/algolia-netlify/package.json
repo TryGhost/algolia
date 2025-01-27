@@ -38,7 +38,7 @@
     "eslint-plugin-ghost": "3.4.0",
     "eslint-plugin-import": "2.29.0",
     "mocha": "10.2.0",
-    "netlify-cli": "16.3.1",
+    "netlify-cli": "18.0.3",
     "should": "13.2.3",
     "sinon": "17.0.1"
   },
