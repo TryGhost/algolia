@@ -1,3 +1,9 @@
+# Deprecated
+
+This project is no longer maintained.
+
+---
+
 # Ghost Algolia tools
 
 Ghost Algolia tools offers tools to index and fragment Ghost posts to an Algolia index. It consists of two user facing tools:
