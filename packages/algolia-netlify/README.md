@@ -22,14 +22,10 @@ The functions need the Algolia Application ID and an API key that can update the
 
 ### Deploy the Netlify Functions
 
-Continue only after mandatory authentication is implemented or access is restricted outside the handlers:
+Deploy manually, and do not expose the deployed functions publicly until mandatory authentication is implemented or access is restricted outside the handlers:
 
-1. Deploy this repository to Netlify:
-
-   [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TryGhost/algolia)
-
-2. Connect the repository and configure the site.
-3. Set the environment variables described in [`.env.example`](.env.example):
+1. Create a Netlify site and connect this repository manually.
+2. Configure the site and set the environment variables described in [`.env.example`](.env.example):
    - Set `ALGOLIA_ACTIVE` to `TRUE` to enable indexing.
    - Set the Algolia Application ID, API key, and index name.
    - Choose a `NETLIFY_KEY` for the webhook query parameter. Setting it does not protect current handlers when the parameter is omitted.
