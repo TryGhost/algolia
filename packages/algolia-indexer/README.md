@@ -1,41 +1,52 @@
 # Algolia Indexer
 
-IndexFactory that takes over the part of talking to the Algolia API.
+`@tryghost/algolia-indexer` configures an Algolia index and saves or removes the records produced by the Ghost Algolia tools.
 
 ## Install
 
-`npm install @tryghost/algolia-indexer --save`
+```sh
+npm install @tryghost/algolia-indexer
+```
 
 or
 
-`yarn add @tryghost/algolia-indexer`
-
+```sh
+yarn add @tryghost/algolia-indexer
+```
 
 ## Usage
 
+Create an indexer with an Algolia application ID, Admin API key, and index name:
 
-## Develop
+```js
+const IndexFactory = require('@tryghost/algolia-indexer');
 
-This is a mono repository, managed with [lerna](https://lernajs.io/).
+async function indexFragments(fragments) {
+    const index = new IndexFactory({
+        appId: process.env.ALGOLIA_APP_ID,
+        apiKey: process.env.ALGOLIA_API_KEY,
+        index: process.env.ALGOLIA_INDEX
+    });
 
-Follow the instructions for the top-level repo.
-1. `git clone` this repo & `cd` into it as usual
-2. Run `yarn` to install top-level dependencies.
+    await index.setSettingsForIndex();
+    await index.save(fragments);
+}
+```
 
+Call `initIndex()` before `delete(slug)` when removing every fragment associated with a post slug. `setSettingsForIndex()` initializes the index and applies the package's required settings unless custom `indexSettings` are supplied to the constructor.
 
-## Run
+## Development
 
-- `yarn dev`
+Install dependencies from the repository root with `yarn`. From the root, run this package's tests and ESLint checks with:
 
+```sh
+yarn workspace @tryghost/algolia-indexer test
+```
 
-## Test
+Run the full monorepo suite with `yarn test`.
 
-- `yarn lint` run just eslint
-- `yarn test` run lint and tests
+---
 
+## Copyright & License
 
-
-
-# Copyright & License
-
-Copyright (c) 2013-2025 Ghost Foundation - Released under the [MIT license](LICENSE).
+Copyright (c) 2013-2026 Ghost Foundation - Released under the [MIT license](LICENSE). Ghost and the Ghost Logo are trademarks of Ghost Foundation Ltd. Please see our [trademark policy](https://ghost.org/trademark/) for info on acceptable usage.

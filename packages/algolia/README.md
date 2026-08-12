@@ -1,70 +1,74 @@
 # Algolia Ghost CLI
 
-CLI tool to initially index the full Ghost post content into an Algolia index.
+`@tryghost/algolia` is a CLI for initially indexing the full published content of a Ghost site in Algolia.
+
+> [!WARNING]
+> Ghost 6 removed support for `limit=all`, so the current CLI releases index only the first 100 posts from a Ghost 6 site. Follow [#163](https://github.com/TryGhost/algolia/issues/163) for the compatibility work.
 
 ## Install
 
-`npm install @tryghost/algolia --save`
+Add the CLI to a project:
+
+```sh
+npm install @tryghost/algolia
+```
 
 or
 
-`yarn add @tryghost/algolia`
-
+```sh
+yarn add @tryghost/algolia
+```
 
 ## Usage
 
-To use the CLI, install the dependencies with `yarn install` or `npm install`.
+Copy [`example.config.json`](example.config.json) to a local file such as `config.json`, then set the Ghost Content API and Algolia credentials. `indexSettings` contains the current defaults and can be customized or removed.
 
-Copy the existing `example.config.json` to e. g. `config.json` and replace the relevant values for Ghost and Algolia.
-`indexSettings` reflects the current default settings and can either be overwritten, or removed from the config file.
+Configuration files contain secrets and should not be committed. Files matching `packages/algolia/config*.json` are ignored by this repository.
 
-To run the batch index, run
+After installing the package in another project, run its binary through that project's package runner:
 
-```bash
-yarn algolia index <pathToConfig> [options]
+```sh
+npx algolia index config.json [options]
 ```
 
-### Caveats
+From this repository, invoke the entrypoint directly:
 
-The [Fragmenter](https://github.com/TryGhost/algolia/tree/master/packages/algolia-fragmenter) breaks down large HTML pieces into smaller chunks by its headings. Sometimes the fragment is still too big and Algolia will throw an error listing the post id that caused the large fragment. The post id can be used to get the post slug, which then can be excluded from the batch run like this:
-
-```bash
-yarn algolia index <pathToConfig> -s post-slug-to-exclude,and-another-post-slug-to-exclude
+```sh
+cd packages/algolia
+node bin/cli.js index config.json [options]
 ```
 
-### Flags
+### Options
 
-- `pathToConfig`, needs to be the relative (from this package) path to the config JSON file that contains the Ghost and Algolia API keys and settings (see [usage](#usage) above)
+- `pathToConfig` is the path, relative to the current directory, to the JSON configuration file.
+- `-s, --skip` excludes a comma-separated list of post slugs from the index.
+- `-V, --verbose` enables verbose output.
+- `-l, --limit` limits the number of posts requested.
+- `-p, --page` selects a page and is intended for use with `--limit`.
+- `-sjs, --skipjsonslugs` currently controls only a log message about `ignore_slugs`; it does not control exclusion. Configured `ignore_slugs` are always excluded after posts are fetched.
 
-- `-s, --skip`, takes a comma separated list of post slugs that need to be **excluded** from the index (see [caveats](#caveats) above)
+### Large fragments
 
-- `-V, --verbose`, switches on verbose mode, but there's not much too see here (yet)
-- `-l, --limit`, limit the amount of posts to receive. Default is 'all'
-- `-p --page`, define the page to fetch posts from. To be used in combination with `limit`.
-- `-sjs --skipjsonslugs`, uses a list of slugs in `config.json` to skip before they're uploaded. This method will request all data from Ghost and skip at the point it would normally upload to Algolia. If you're getting `414 Request-URI Too Large` errors using `-s`, this is the method to use.
+The [Fragmenter](../algolia-fragmenter/README.md) splits large HTML strings by heading. A fragment can still exceed Algolia's record-size limit; the resulting error includes the post ID. Resolve the ID to a slug and exclude it from the batch:
 
-## Develop
+```sh
+npx algolia index config.json --skip post-slug,another-post-slug
+```
 
-This is a mono repository, managed with [lerna](https://lernajs.io/).
+If a long `--skip` filter causes a `414 Request-URI Too Large` response, put the slugs in the configuration file's `ignore_slugs` array. The CLI always applies that array after fetching posts; `--skipjsonslugs` is not required and currently affects logging only.
 
-Follow the instructions for the top-level repo.
-1. `git clone` this repo & `cd` into it as usual
-2. Run `yarn` to install top-level dependencies.
+## Development
 
+Install dependencies from the repository root with `yarn`. From the root, run this package's tests and ESLint checks with:
 
-## Run
+```sh
+yarn workspace @tryghost/algolia test
+```
 
-- `yarn dev`
+Run the full monorepo suite with `yarn test`.
 
+---
 
-## Test
+## Copyright & License
 
-- `yarn lint` run just eslint
-- `yarn test` run lint and tests
-
-
-
-
-# Copyright & License
-
-Copyright (c) 2013-2025 Ghost Foundation - Released under the [MIT license](LICENSE).
+Copyright (c) 2013-2026 Ghost Foundation - Released under the [MIT license](LICENSE). Ghost and the Ghost Logo are trademarks of Ghost Foundation Ltd. Please see our [trademark policy](https://ghost.org/trademark/) for info on acceptable usage.

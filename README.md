@@ -1,61 +1,66 @@
-# Deprecated
-
-This project is no longer maintained.
-
----
-
 # Ghost Algolia tools
 
-Ghost Algolia tools offers tools to index and fragment Ghost posts to an Algolia index. It consists of two user facing tools:
+JavaScript tools for turning Ghost posts into records and keeping an Algolia search index up to date.
 
-- `algolia`, which is a CLI tool to batch index the full content of a Ghost install to a defined Algolia index
-- `algolia-netlify`, which uses Netlify Functions to listen to Ghost webhooks and add, update, and remove posts to an Algolia index
+> [!IMPORTANT]
+> Maintenance of this repository is resuming. Ghost 6 removed support for `limit=all`, so the current CLI releases index only the first 100 posts from a Ghost 6 site. Follow [#163](https://github.com/TryGhost/algolia/issues/163) for the compatibility work; Ghost 6 compatibility is not yet complete.
 
+## Tools
+
+This Yarn and Lerna monorepo contains four public packages:
+
+- [`@tryghost/algolia`](packages/algolia/README.md) provides a CLI for initially indexing a Ghost site's published posts.
+- [`@tryghost/algolia-netlify`](packages/algolia-netlify/README.md) provides Netlify Functions that process Ghost post webhooks and update an index.
+- [`@tryghost/algolia-fragmenter`](packages/algolia-fragmenter/README.md) converts Ghost posts into Algolia records and splits their HTML by heading.
+- [`@tryghost/algolia-indexer`](packages/algolia-indexer/README.md) manages Algolia index settings, records, and deletions.
 
 ## Usage
 
-### Algolia Netlify package
+### Netlify Functions
 
-You can start using the Algolia Netlify package by clicking on this deplooy button. You can find the detailed install and user instructions over [here](https://github.com/TryGhost/algolia/tree/master/packages/algolia-netlify).
+> [!WARNING]
+> The current handlers do not enforce authentication when the `key` query parameter is omitted. A public function URL is not a secret; do not expose these functions publicly until authentication is enforced or access is restricted outside the handlers.
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TryGhost/algolia)
+Deployment, Algolia configuration, and Ghost webhook setup are described in the [`@tryghost/algolia-netlify` guide](packages/algolia-netlify/README.md).
 
-### Ghost Algolia CLI
+### CLI
 
-While the Algolia Netlify tool is useful to maintain your search index, the Ghost Algolia CLI is good for the initial indexing of the full post content of a site. See full install and user instructions in the package description [here](https://github.com/TryGhost/algolia/tree/master/packages/algolia).
+Use the CLI for the initial batch index of a site's published posts. Installation, configuration, and command options are documented in the [`@tryghost/algolia` guide](packages/algolia/README.md).
 
-## Develop
+## Development
 
-This is a mono repository, managed with [lerna](https://lernajs.io/).
+Use the Node version declared in [`.nvmrc`](.nvmrc), then install the monorepo dependencies and link its workspaces:
 
-1. `git clone` this repo & `cd` into it as usual
-2. `yarn setup` is mapped to `lerna bootstrap`
-   - installs all external dependencies
-   - links all internal dependencies
+```sh
+yarn
+```
 
-To add a new package to the repo:
-   - install [slimer](https://github.com/TryGhost/slimer)
-   - run `slimer new <package name>`
+Run the full test suite, including package lint checks:
 
+```sh
+yarn test
+```
 
-## Run
+Run only ESLint across the packages:
 
-- `yarn dev`
+```sh
+yarn lint
+```
 
+Package-specific development and verification commands are documented in each package README.
 
-## Test
+## Publishing
 
-- `yarn lint` run just eslint
-- `yarn test` run lint and tests
+The repository currently publishes changed packages through Lerna:
 
+```sh
+yarn ship
+```
 
-## Publish
+This is a maintainer-only release operation for public npm packages and runs the full test suite first.
 
-- `yarn ship` is an alias for `lerna publish`
-    - Publishes all packages which have changed
-    - Also updates any packages which depend on changed packages
+---
 
+## Copyright & License
 
-# Copyright & License
-
-Copyright (c) 2013-2025 Ghost Foundation - Released under the [MIT license](LICENSE).
+Copyright (c) 2013-2026 Ghost Foundation - Released under the [MIT license](LICENSE). Ghost and the Ghost Logo are trademarks of Ghost Foundation Ltd. Please see our [trademark policy](https://ghost.org/trademark/) for info on acceptable usage.
