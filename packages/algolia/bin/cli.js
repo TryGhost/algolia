@@ -3,6 +3,7 @@ const prettyCLI = require('@tryghost/pretty-cli');
 const ui = require('@tryghost/pretty-cli').ui;
 const fs = require('fs-extra');
 const utils = require('../lib/utils');
+const {fetchPosts} = require('../lib/fetch-posts');
 const GhostContentAPI = require('@tryghost/content-api');
 const transforms = require('@tryghost/algolia-fragmenter');
 const IndexFactory = require('@tryghost/algolia-indexer');
@@ -24,14 +25,27 @@ prettyCLI.command({
             desc: 'Comma separated list of post slugs to exclude from indexing'
         });
         sywac.number('-l --limit', {
-            desc: 'Amount of posts we want to fetch from Ghost'
+            desc: 'Fetch one page containing 1 to 100 posts'
         });
         sywac.number('-p --page', {
-            desc: 'Use page to navigate through posts when setting a limit'
+            desc: 'Select a page; requires --limit'
         });
         sywac.array('-sjs --skipjsonslugs', {
             defaultValue: false,
             desc: 'Exclude post slugs from config JSON file'
+        });
+        sywac.check((argv, context) => {
+            if (argv.limit !== undefined && (!Number.isInteger(argv.limit) || argv.limit < 1 || argv.limit > 100)) {
+                context.cliMessage('--limit must be an integer from 1 to 100.');
+            }
+
+            if (argv.page !== undefined && argv.limit === undefined) {
+                context.cliMessage('--page requires --limit.');
+            }
+
+            if (argv.page !== undefined && (!Number.isInteger(argv.page) || argv.page < 1)) {
+                context.cliMessage('--page must be a positive integer.');
+            }
         });
     },
     run: async (argv) => {
@@ -56,31 +70,31 @@ prettyCLI.command({
         // 2. Fetch all posts from the Ghost instance
         try {
             const timer = Date.now();
-            const params = {limit: 'all', include: 'tags,authors'};
+            const fetchOptions = {};
             const ghost = new GhostContentAPI({
                 url: context.ghost.apiUrl,
                 key: context.ghost.apiKey,
-                version: 'canary'
+                version: 'v6.0'
             });
 
             if (argv.skip && argv.skip.length > 0) {
                 const filterSlugs = argv.skip.join(',');
 
-                params.filter = `slug:-[${filterSlugs}]`;
+                fetchOptions.filter = `slug:-[${filterSlugs}]`;
             }
 
-            if (argv.limit) {
-                params.limit = argv.limit;
+            if (argv.limit !== undefined) {
+                fetchOptions.limit = argv.limit;
             }
 
-            ui.log.info(`Fetching ${params.limit} posts from Ghost...`);
+            ui.log.info(`Fetching ${argv.limit === undefined ? 'all' : argv.limit} posts from Ghost...`);
 
-            if (argv.page) {
+            if (argv.page !== undefined) {
                 ui.log.info(`...from page #${argv.page}.`);
-                params.page = argv.page;
+                fetchOptions.page = argv.page;
             }
 
-            context.posts = await ghost.posts.browse(params);
+            context.posts = await fetchPosts(ghost.posts.browse.bind(ghost.posts), fetchOptions);
 
             ui.log.info(`Done fetching posts in ${Date.now() - timer}ms.`);
         } catch (error) {

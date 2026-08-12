@@ -3,7 +3,7 @@
 JavaScript tools for turning Ghost posts into records and keeping an Algolia search index up to date.
 
 > [!IMPORTANT]
-> Maintenance of this repository is resuming. Ghost 6 removed support for `limit=all`, so the current CLI releases index only the first 100 posts from a Ghost 6 site. Follow [#163](https://github.com/TryGhost/algolia/issues/163) for the compatibility work; Ghost 6 compatibility is not yet complete.
+> Maintenance of this repository has resumed. The CLI supports Ghost 6 by requesting up to 100 posts at a time and following Ghost's pagination metadata until every post has been fetched.
 
 ## Tools
 
