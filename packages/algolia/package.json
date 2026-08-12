@@ -4,6 +4,9 @@
   "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia",
   "author": "Ghost Foundation",
   "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "bin": {
     "algolia": "./bin/cli.js"
   },

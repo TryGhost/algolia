@@ -4,6 +4,9 @@
   "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia-netlify",
   "author": "Ghost Foundation",
   "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "main": "index.js",
   "scripts": {
     "dev": "yarn build && netlify dev",
