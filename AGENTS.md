@@ -5,7 +5,8 @@ This repository contains the Ghost-to-Algolia CLI, Netlify Functions, and their 
 ## Revival and Ghost 6 compatibility
 
 - Maintenance is resuming because these tools are still in active use.
-- The current CLI relies on the removed Ghost 6 `limit=all` behavior and can fetch only the first 100 posts. Treat [#163](https://github.com/TryGhost/algolia/issues/163) as the compatibility source of truth and keep the limitation visible until pagination is implemented and tested.
+- The CLI uses the Ghost 6 Content API. Without `--limit`, it requests 100 posts per page, follows `meta.pagination.next`, and waits 100ms between pages until `next` is `null`.
+- `--limit` accepts only integers from 1 to 100 and makes one request. `--page` requires `--limit`; together they select one page rather than enabling automatic pagination.
 - Preserve the existing Ghost Content API, Algolia record, CLI, and webhook contracts unless the task explicitly changes them.
 
 ## Verification

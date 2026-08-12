@@ -2,8 +2,7 @@
 
 `@tryghost/algolia` is a CLI for initially indexing the full published content of a Ghost site in Algolia.
 
-> [!WARNING]
-> Ghost 6 removed support for `limit=all`, so the current CLI releases index only the first 100 posts from a Ghost 6 site. Follow [#163](https://github.com/TryGhost/algolia/issues/163) for the compatibility work.
+The CLI uses the Ghost 6 Content API. By default, it requests the [maximum 100 posts](https://docs.ghost.org/content-api/parameters#limit) at a time, follows Ghost's [`meta.pagination.next`](https://docs.ghost.org/content-api/pagination) value, and pauses briefly between pages until the full site has been fetched.
 
 ## Install
 
@@ -43,8 +42,8 @@ node bin/cli.js index config.json [options]
 - `pathToConfig` is the path, relative to the current directory, to the JSON configuration file.
 - `-s, --skip` excludes a comma-separated list of post slugs from the index.
 - `-V, --verbose` enables verbose output.
-- `-l, --limit` limits the number of posts requested.
-- `-p, --page` selects a page and is intended for use with `--limit`.
+- `-l, --limit` makes a single request for 1 to 100 posts instead of fetching every page.
+- `-p, --page` selects the page for that single request and requires `--limit`.
 - `-sjs, --skipjsonslugs` currently controls only a log message about `ignore_slugs`; it does not control exclusion. Configured `ignore_slugs` are always excluded after posts are fetched.
 
 ### Large fragments
