@@ -4,6 +4,9 @@
   "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia-fragmenter",
   "author": "Ghost Foundation",
   "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "main": "index.js",
   "scripts": {
     "dev": "echo \"Implement me!\"",
