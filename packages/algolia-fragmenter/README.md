@@ -1,41 +1,44 @@
 # Algolia Fragmenter
 
-Fragment transformer converts a Ghost post into an Algolia Object and breaks down large HTML strings into sensible fragments based on headings.
+`@tryghost/algolia-fragmenter` converts Ghost posts into Algolia records and breaks long HTML into heading-based fragments.
 
 ## Install
 
-`npm install @tryghost/algolia-fragmenter --save`
+```sh
+npm install @tryghost/algolia-fragmenter
+```
 
 or
 
-`yarn add @tryghost/algolia-fragmenter`
-
+```sh
+yarn add @tryghost/algolia-fragmenter
+```
 
 ## Usage
 
+Convert Ghost Content API posts, then reduce the resulting records into fragments:
 
-## Develop
+```js
+const transforms = require('@tryghost/algolia-fragmenter');
 
-This is a mono repository, managed with [lerna](https://lernajs.io/).
+const records = transforms.transformToAlgoliaObject(posts);
+const fragments = records.reduce(transforms.fragmentTransformer, []);
+```
 
-Follow the instructions for the top-level repo.
-1. `git clone` this repo & `cd` into it as usual
-2. Run `yarn` to install top-level dependencies.
+`transformToAlgoliaObject` accepts an optional array of post slugs to exclude as its second argument. `fragmentTransformer` is designed to be passed directly to `Array#reduce`.
 
+## Development
 
-## Run
+Install dependencies from the repository root with `yarn`. From the root, run this package's tests and ESLint checks with:
 
-- `yarn dev`
+```sh
+yarn workspace @tryghost/algolia-fragmenter test
+```
 
+Run the full monorepo suite with `yarn test`.
 
-## Test
+---
 
-- `yarn lint` run just eslint
-- `yarn test` run lint and tests
+## Copyright & License
 
-
-
-
-# Copyright & License
-
-Copyright (c) 2013-2025 Ghost Foundation - Released under the [MIT license](LICENSE).
+Copyright (c) 2013-2026 Ghost Foundation - Released under the [MIT license](LICENSE). Ghost and the Ghost Logo are trademarks of Ghost Foundation Ltd. Please see our [trademark policy](https://ghost.org/trademark/) for info on acceptable usage.

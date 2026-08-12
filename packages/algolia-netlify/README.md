@@ -1,94 +1,83 @@
 # Algolia Netlify
 
-[Netlify Functions](https://www.netlify.com/products/functions/) to listen to [Ghost Webhooks](https://ghost.org/docs/api/webhooks/) on post changes and update defined [Algolia](https://www.algolia.com/) search index.
+`@tryghost/algolia-netlify` provides Netlify Functions that listen to Ghost post webhooks and update an Algolia search index.
+
+## Security
+
+> [!WARNING]
+> The current handlers do not enforce authentication when the `key` query parameter is omitted; they reject only a supplied key that does not match `NETLIFY_KEY`. Netlify Function URLs are public endpoints, not secrets, and the user-agent check can be spoofed. Pause or restrict exposure outside the handlers until mandatory authentication is implemented before public use.
+
+Use a restricted Algolia API key to limit the impact of unauthorized requests.
 
 ## Usage
 
 ### Set up Algolia
 
-First step is to grab the API keys and Application ID from Algolia. For the setup we need both, the "Search-Only API Key" as well as the "Admin API Key".
+The functions need the Algolia Application ID and an API key that can update the target index. The general Admin API key works, but a key scoped to this index is preferable. A scoped key needs these permissions:
 
-The Admin API Key can either be the general one, or can be created just for this specific search index.
-
-If you decide to create a new API key, you want to make sure that the generated key has the following authorizations on your index:
-
-- Search (`search`)
 - Add records (`addObject`)
-- Delete records (`deleteObject`)
-- List indexes (`listIndexes`)
-- Delete index (`deleteIndex`)
+- Delete records matching a filter (`deleteIndex`)
+- Get index settings (`settings`)
+- Set index settings (`editSettings`)
 
-### Set up Netlify Functions
+### Deploy the Netlify Functions
 
-The Ghost Algolia tooling uses [Ghost Webhooks](https://ghost.org/docs/api/webhooks/) to index and update posts. The scripts that receive and process the webhooks are hosted by [Netlify Functions](https://www.netlify.com/products/functions/):
+Continue only after mandatory authentication is implemented or access is restricted outside the handlers:
 
-1. Deploy to Netlify by clicking on this button:
+1. Deploy this repository to Netlify:
+
    [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TryGhost/algolia)
-2. Click 'Connect to Github' and give Netlify permission
-3. Configure your site
-    - Choose a repository name
-    - Set 'TRUE' to trigger indexing
-    - Algolia Application ID
-    - The Algolia Admin API key or and API key with the permissions as described above
-    - The name of the index you want to use
-    - Set the `NETLIFY_KEY` to be used with the target URL
 
-### Set up Ghost Webhooks
+2. Connect the repository and configure the site.
+3. Set the environment variables described in [`.env.example`](.env.example):
+   - Set `ALGOLIA_ACTIVE` to `TRUE` to enable indexing.
+   - Set the Algolia Application ID, API key, and index name.
+   - Choose a `NETLIFY_KEY` for the webhook query parameter. Setting it does not protect current handlers when the parameter is omitted.
 
-Ghost webhooks will initiate posts to be indexed to Algolia. This can be a new entry, an update, or a removal. On Ghost's admin panel, create a new **Custom Integration** (Ghost Admin &#8594; Settings &#8594; Integrations &#8594; Custom Integrations) and the following **webhooks**:
+The repository's [`netlify.toml`](../../netlify.toml) builds and deploys these functions from `packages/algolia-netlify`.
 
-1. `post.published`
-   - Name: Post published
-   - Event: Post published
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=NETLIFY_KEY)
+### Set up Ghost webhooks
 
-2. `post.published.edited`
-   - Name: Post updated
-   - Event: Published post updated
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-published?key=NETLIFY_KEY)
+In Ghost Admin, create a **Custom Integration** under **Settings → Integrations** and add these webhooks:
 
-3. `post.unpublished`
-   - Name: Post unpublished
-   - Event: Post unpublished
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=NETLIFY_KEY)
+| Ghost event | Function |
+| --- | --- |
+| `post.published` | `post-published` |
+| `post.published.edited` | `post-published` |
+| `post.unpublished` | `post-unpublished` |
+| `post.deleted` | `post-unpublished` |
 
-4. `post.deleted`
-   - Name: Post deleted
-   - Event: Post deleted
-   - Target URL: the endpoint of the post-published function, found on Netlify's admin panel plus the `NETLIFY_KEY` as a query parameter as defined in the configuration data above (https://YOUR-SITE-ID.netlify.com/.netlify/functions/post-unpublished?key=NETLIFY_KEY)
+Use the function URL shown by Netlify and pass the configured `NETLIFY_KEY` as the `key` query parameter. For example:
 
-These webhooks will trigger an index on every **future change of posts**.
+```text
+https://YOUR-SITE-ID.netlify.app/.netlify/functions/post-published?key=NETLIFY_KEY
+```
 
-> To run an initial index of all the content, you can use the handy CLI from our Ghost Algolia tooling. Head over [here](https://github.com/TryGhost/algolia/tree/master/packages/algolia) and follow the instructions from there.
+These webhooks keep future post changes synchronized. Use the [`@tryghost/algolia` CLI](../algolia/README.md) to create the initial index.
 
+## Development
 
-## Security
+Install the monorepo dependencies from the repository root with `yarn`. Then configure and run this package locally:
 
-To avoid unauthorized access to the Netlify functions endpoints, we highly recommend to setup the `NETLIFY_KEY` variable. This key is currently optional but will be enforced in the future.
+```sh
+cd packages/algolia-netlify
+cp .env.example .env
+# Replace the example values in .env with development credentials.
+yarn dev
+```
 
-## Develop
+`yarn dev` builds the functions and starts Netlify Dev. Use the local URL it prints for endpoints such as `/.netlify/functions/post-published`.
 
-This is a mono repository, managed with [lerna](https://lernajs.io/).
+Run this package's tests and ESLint checks from the repository root:
 
-Follow the instructions for the top-level repo.
-1. `git clone` this repo & `cd` into it as usual
-2. Run `yarn` to install top-level dependencies.
+```sh
+yarn workspace @tryghost/algolia-netlify test
+```
 
-To run this package locally, you will need to copy the existing `.env.example` file to `.env` and fill it with the correct keys.
+Run the full monorepo suite with `yarn test`.
 
-By running
+---
 
-- `yarn serve`
+## Copyright & License
 
-you will create a server on `localhost:9000` where your functions will be exposed to listen to (e. g. http://localhost:9000/.netlify/functions/post-unpublished), so you can use them in your local Ghost instance as Webhook target URL.
-
-
-## Test
-
-- `yarn lint` run just eslint
-- `yarn test` run lint and tests
-
-
-# Copyright & License
-
-Copyright (c) 2013-2025 Ghost Foundation - Released under the [MIT license](LICENSE).
+Copyright (c) 2013-2026 Ghost Foundation - Released under the [MIT license](LICENSE). Ghost and the Ghost Logo are trademarks of Ghost Foundation Ltd. Please see our [trademark policy](https://ghost.org/trademark/) for info on acceptable usage.
