@@ -1,0 +1,2832 @@
+[
+  {
+    "objectID": "6a7d75c8b25e8a000197c521_0",
+    "slug": "ghost-6-rendered-content-contract",
+    "url": "http://127.0.0.1:23689/ghost-6-rendered-content-contract/#fixture-overview",
+    "html": "<p>Rendered by Ghost 6 from synthetic source HTML with an <a href=\"http://127.0.0.1:23689/internal-destination/\">internal link</a>.</p>",
+    "image": "https://fixture.invalid/images/ghost-6-contract.jpg",
+    "title": "Ghost 6 rendered content contract",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [
+      "Fixture overview"
+    ],
+    "anchor": "fixture-overview",
+    "customRanking": {
+      "position": 0,
+      "heading": 80
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c521_1",
+    "slug": "ghost-6-rendered-content-contract",
+    "url": "http://127.0.0.1:23689/ghost-6-rendered-content-contract/#structured-blocks",
+    "html": "<li>First deterministic item</li><li>Second deterministic item</li> const fixture = true;\nconsole.log(fixture);<p>End of the rendered acceptance fixture.</p>",
+    "image": "https://fixture.invalid/images/ghost-6-contract.jpg",
+    "title": "Ghost 6 rendered content contract",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [
+      "Fixture overview",
+      "Structured blocks"
+    ],
+    "anchor": "structured-blocks",
+    "customRanking": {
+      "position": 1,
+      "heading": 70
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c520_0",
+    "slug": "no-tags-no-feature-image",
+    "url": "http://127.0.0.1:23689/no-tags-no-feature-image/",
+    "html": "<p>This record intentionally has no tags and a null feature image.</p>",
+    "image": null,
+    "title": "No tags and no feature image",
+    "tags": [],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c51e_0",
+    "slug": "synthetic-ghost-post-098",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-098/",
+    "html": "<p>Deterministic synthetic content for pagination record 98.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 098",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c51d_0",
+    "slug": "synthetic-ghost-post-097",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-097/",
+    "html": "<p>Deterministic synthetic content for pagination record 97.</p>",
+    "image": "https://fixture.invalid/images/feature-097.jpg",
+    "title": "Synthetic Ghost post 097",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c51c_0",
+    "slug": "synthetic-ghost-post-096",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-096/",
+    "html": "<p>Deterministic synthetic content for pagination record 96.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 096",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c51b_0",
+    "slug": "synthetic-ghost-post-095",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-095/",
+    "html": "<p>Deterministic synthetic content for pagination record 95.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 095",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c51a_0",
+    "slug": "synthetic-ghost-post-094",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-094/",
+    "html": "<p>Deterministic synthetic content for pagination record 94.</p>",
+    "image": "https://fixture.invalid/images/feature-094.jpg",
+    "title": "Synthetic Ghost post 094",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c519_0",
+    "slug": "synthetic-ghost-post-093",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-093/",
+    "html": "<p>Deterministic synthetic content for pagination record 93.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 093",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c518_0",
+    "slug": "synthetic-ghost-post-092",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-092/",
+    "html": "<p>Deterministic synthetic content for pagination record 92.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 092",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c517_0",
+    "slug": "synthetic-ghost-post-091",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-091/",
+    "html": "<p>Deterministic synthetic content for pagination record 91.</p>",
+    "image": "https://fixture.invalid/images/feature-091.jpg",
+    "title": "Synthetic Ghost post 091",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c516_0",
+    "slug": "synthetic-ghost-post-090",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-090/",
+    "html": "<p>Deterministic synthetic content for pagination record 90.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 090",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c515_0",
+    "slug": "synthetic-ghost-post-089",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-089/",
+    "html": "<p>Deterministic synthetic content for pagination record 89.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 089",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c514_0",
+    "slug": "synthetic-ghost-post-088",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-088/",
+    "html": "<p>Deterministic synthetic content for pagination record 88.</p>",
+    "image": "https://fixture.invalid/images/feature-088.jpg",
+    "title": "Synthetic Ghost post 088",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c513_0",
+    "slug": "synthetic-ghost-post-087",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-087/",
+    "html": "<p>Deterministic synthetic content for pagination record 87.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 087",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c512_0",
+    "slug": "synthetic-ghost-post-086",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-086/",
+    "html": "<p>Deterministic synthetic content for pagination record 86.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 086",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c511_0",
+    "slug": "synthetic-ghost-post-085",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-085/",
+    "html": "<p>Deterministic synthetic content for pagination record 85.</p>",
+    "image": "https://fixture.invalid/images/feature-085.jpg",
+    "title": "Synthetic Ghost post 085",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c510_0",
+    "slug": "synthetic-ghost-post-084",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-084/",
+    "html": "<p>Deterministic synthetic content for pagination record 84.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 084",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c50f_0",
+    "slug": "synthetic-ghost-post-083",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-083/",
+    "html": "<p>Deterministic synthetic content for pagination record 83.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 083",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c50e_0",
+    "slug": "synthetic-ghost-post-082",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-082/",
+    "html": "<p>Deterministic synthetic content for pagination record 82.</p>",
+    "image": "https://fixture.invalid/images/feature-082.jpg",
+    "title": "Synthetic Ghost post 082",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c50d_0",
+    "slug": "synthetic-ghost-post-081",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-081/",
+    "html": "<p>Deterministic synthetic content for pagination record 81.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 081",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c50c_0",
+    "slug": "synthetic-ghost-post-080",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-080/",
+    "html": "<p>Deterministic synthetic content for pagination record 80.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 080",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c50b_0",
+    "slug": "synthetic-ghost-post-079",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-079/",
+    "html": "<p>Deterministic synthetic content for pagination record 79.</p>",
+    "image": "https://fixture.invalid/images/feature-079.jpg",
+    "title": "Synthetic Ghost post 079",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c50a_0",
+    "slug": "synthetic-ghost-post-078",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-078/",
+    "html": "<p>Deterministic synthetic content for pagination record 78.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 078",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c509_0",
+    "slug": "synthetic-ghost-post-077",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-077/",
+    "html": "<p>Deterministic synthetic content for pagination record 77.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 077",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c508_0",
+    "slug": "synthetic-ghost-post-076",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-076/",
+    "html": "<p>Deterministic synthetic content for pagination record 76.</p>",
+    "image": "https://fixture.invalid/images/feature-076.jpg",
+    "title": "Synthetic Ghost post 076",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c507_0",
+    "slug": "synthetic-ghost-post-075",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-075/",
+    "html": "<p>Deterministic synthetic content for pagination record 75.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 075",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c506_0",
+    "slug": "synthetic-ghost-post-074",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-074/",
+    "html": "<p>Deterministic synthetic content for pagination record 74.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 074",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c505_0",
+    "slug": "synthetic-ghost-post-073",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-073/",
+    "html": "<p>Deterministic synthetic content for pagination record 73.</p>",
+    "image": "https://fixture.invalid/images/feature-073.jpg",
+    "title": "Synthetic Ghost post 073",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c504_0",
+    "slug": "synthetic-ghost-post-072",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-072/",
+    "html": "<p>Deterministic synthetic content for pagination record 72.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 072",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c503_0",
+    "slug": "synthetic-ghost-post-071",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-071/",
+    "html": "<p>Deterministic synthetic content for pagination record 71.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 071",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c502_0",
+    "slug": "synthetic-ghost-post-070",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-070/",
+    "html": "<p>Deterministic synthetic content for pagination record 70.</p>",
+    "image": "https://fixture.invalid/images/feature-070.jpg",
+    "title": "Synthetic Ghost post 070",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c501_0",
+    "slug": "synthetic-ghost-post-069",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-069/",
+    "html": "<p>Deterministic synthetic content for pagination record 69.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 069",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c500_0",
+    "slug": "synthetic-ghost-post-068",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-068/",
+    "html": "<p>Deterministic synthetic content for pagination record 68.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 068",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ff_0",
+    "slug": "synthetic-ghost-post-067",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-067/",
+    "html": "<p>Deterministic synthetic content for pagination record 67.</p>",
+    "image": "https://fixture.invalid/images/feature-067.jpg",
+    "title": "Synthetic Ghost post 067",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4fe_0",
+    "slug": "synthetic-ghost-post-066",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-066/",
+    "html": "<p>Deterministic synthetic content for pagination record 66.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 066",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4fd_0",
+    "slug": "synthetic-ghost-post-065",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-065/",
+    "html": "<p>Deterministic synthetic content for pagination record 65.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 065",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4fc_0",
+    "slug": "synthetic-ghost-post-064",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-064/",
+    "html": "<p>Deterministic synthetic content for pagination record 64.</p>",
+    "image": "https://fixture.invalid/images/feature-064.jpg",
+    "title": "Synthetic Ghost post 064",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4fb_0",
+    "slug": "synthetic-ghost-post-063",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-063/",
+    "html": "<p>Deterministic synthetic content for pagination record 63.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 063",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4fa_0",
+    "slug": "synthetic-ghost-post-062",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-062/",
+    "html": "<p>Deterministic synthetic content for pagination record 62.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 062",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f9_0",
+    "slug": "synthetic-ghost-post-061",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-061/",
+    "html": "<p>Deterministic synthetic content for pagination record 61.</p>",
+    "image": "https://fixture.invalid/images/feature-061.jpg",
+    "title": "Synthetic Ghost post 061",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f8_0",
+    "slug": "synthetic-ghost-post-060",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-060/",
+    "html": "<p>Deterministic synthetic content for pagination record 60.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 060",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f7_0",
+    "slug": "synthetic-ghost-post-059",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-059/",
+    "html": "<p>Deterministic synthetic content for pagination record 59.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 059",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f6_0",
+    "slug": "synthetic-ghost-post-058",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-058/",
+    "html": "<p>Deterministic synthetic content for pagination record 58.</p>",
+    "image": "https://fixture.invalid/images/feature-058.jpg",
+    "title": "Synthetic Ghost post 058",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f5_0",
+    "slug": "synthetic-ghost-post-057",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-057/",
+    "html": "<p>Deterministic synthetic content for pagination record 57.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 057",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f4_0",
+    "slug": "synthetic-ghost-post-056",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-056/",
+    "html": "<p>Deterministic synthetic content for pagination record 56.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 056",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f3_0",
+    "slug": "synthetic-ghost-post-055",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-055/",
+    "html": "<p>Deterministic synthetic content for pagination record 55.</p>",
+    "image": "https://fixture.invalid/images/feature-055.jpg",
+    "title": "Synthetic Ghost post 055",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f2_0",
+    "slug": "synthetic-ghost-post-054",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-054/",
+    "html": "<p>Deterministic synthetic content for pagination record 54.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 054",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f1_0",
+    "slug": "synthetic-ghost-post-053",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-053/",
+    "html": "<p>Deterministic synthetic content for pagination record 53.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 053",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4f0_0",
+    "slug": "synthetic-ghost-post-052",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-052/",
+    "html": "<p>Deterministic synthetic content for pagination record 52.</p>",
+    "image": "https://fixture.invalid/images/feature-052.jpg",
+    "title": "Synthetic Ghost post 052",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ef_0",
+    "slug": "synthetic-ghost-post-051",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-051/",
+    "html": "<p>Deterministic synthetic content for pagination record 51.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 051",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ee_0",
+    "slug": "synthetic-ghost-post-050",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-050/",
+    "html": "<p>Deterministic synthetic content for pagination record 50.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 050",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ed_0",
+    "slug": "synthetic-ghost-post-049",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-049/",
+    "html": "<p>Deterministic synthetic content for pagination record 49.</p>",
+    "image": "https://fixture.invalid/images/feature-049.jpg",
+    "title": "Synthetic Ghost post 049",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ec_0",
+    "slug": "synthetic-ghost-post-048",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-048/",
+    "html": "<p>Deterministic synthetic content for pagination record 48.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 048",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4eb_0",
+    "slug": "synthetic-ghost-post-047",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-047/",
+    "html": "<p>Deterministic synthetic content for pagination record 47.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 047",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ea_0",
+    "slug": "synthetic-ghost-post-046",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-046/",
+    "html": "<p>Deterministic synthetic content for pagination record 46.</p>",
+    "image": "https://fixture.invalid/images/feature-046.jpg",
+    "title": "Synthetic Ghost post 046",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e9_0",
+    "slug": "synthetic-ghost-post-045",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-045/",
+    "html": "<p>Deterministic synthetic content for pagination record 45.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 045",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e8_0",
+    "slug": "synthetic-ghost-post-044",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-044/",
+    "html": "<p>Deterministic synthetic content for pagination record 44.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 044",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e7_0",
+    "slug": "synthetic-ghost-post-043",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-043/",
+    "html": "<p>Deterministic synthetic content for pagination record 43.</p>",
+    "image": "https://fixture.invalid/images/feature-043.jpg",
+    "title": "Synthetic Ghost post 043",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e6_0",
+    "slug": "synthetic-ghost-post-042",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-042/",
+    "html": "<p>Deterministic synthetic content for pagination record 42.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 042",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e5_0",
+    "slug": "synthetic-ghost-post-041",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-041/",
+    "html": "<p>Deterministic synthetic content for pagination record 41.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 041",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e4_0",
+    "slug": "synthetic-ghost-post-040",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-040/",
+    "html": "<p>Deterministic synthetic content for pagination record 40.</p>",
+    "image": "https://fixture.invalid/images/feature-040.jpg",
+    "title": "Synthetic Ghost post 040",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e3_0",
+    "slug": "synthetic-ghost-post-039",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-039/",
+    "html": "<p>Deterministic synthetic content for pagination record 39.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 039",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e2_0",
+    "slug": "synthetic-ghost-post-038",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-038/",
+    "html": "<p>Deterministic synthetic content for pagination record 38.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 038",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e1_0",
+    "slug": "synthetic-ghost-post-037",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-037/",
+    "html": "<p>Deterministic synthetic content for pagination record 37.</p>",
+    "image": "https://fixture.invalid/images/feature-037.jpg",
+    "title": "Synthetic Ghost post 037",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4e0_0",
+    "slug": "synthetic-ghost-post-036",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-036/",
+    "html": "<p>Deterministic synthetic content for pagination record 36.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 036",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4df_0",
+    "slug": "synthetic-ghost-post-035",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-035/",
+    "html": "<p>Deterministic synthetic content for pagination record 35.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 035",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4de_0",
+    "slug": "synthetic-ghost-post-034",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-034/",
+    "html": "<p>Deterministic synthetic content for pagination record 34.</p>",
+    "image": "https://fixture.invalid/images/feature-034.jpg",
+    "title": "Synthetic Ghost post 034",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4dd_0",
+    "slug": "synthetic-ghost-post-033",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-033/",
+    "html": "<p>Deterministic synthetic content for pagination record 33.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 033",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4dc_0",
+    "slug": "synthetic-ghost-post-032",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-032/",
+    "html": "<p>Deterministic synthetic content for pagination record 32.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 032",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4db_0",
+    "slug": "synthetic-ghost-post-031",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-031/",
+    "html": "<p>Deterministic synthetic content for pagination record 31.</p>",
+    "image": "https://fixture.invalid/images/feature-031.jpg",
+    "title": "Synthetic Ghost post 031",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4da_0",
+    "slug": "synthetic-ghost-post-030",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-030/",
+    "html": "<p>Deterministic synthetic content for pagination record 30.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 030",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d9_0",
+    "slug": "synthetic-ghost-post-029",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-029/",
+    "html": "<p>Deterministic synthetic content for pagination record 29.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 029",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d8_0",
+    "slug": "synthetic-ghost-post-028",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-028/",
+    "html": "<p>Deterministic synthetic content for pagination record 28.</p>",
+    "image": "https://fixture.invalid/images/feature-028.jpg",
+    "title": "Synthetic Ghost post 028",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d7_0",
+    "slug": "synthetic-ghost-post-027",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-027/",
+    "html": "<p>Deterministic synthetic content for pagination record 27.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 027",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d6_0",
+    "slug": "synthetic-ghost-post-026",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-026/",
+    "html": "<p>Deterministic synthetic content for pagination record 26.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 026",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d5_0",
+    "slug": "synthetic-ghost-post-025",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-025/",
+    "html": "<p>Deterministic synthetic content for pagination record 25.</p>",
+    "image": "https://fixture.invalid/images/feature-025.jpg",
+    "title": "Synthetic Ghost post 025",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d4_0",
+    "slug": "synthetic-ghost-post-024",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-024/",
+    "html": "<p>Deterministic synthetic content for pagination record 24.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 024",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d3_0",
+    "slug": "synthetic-ghost-post-023",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-023/",
+    "html": "<p>Deterministic synthetic content for pagination record 23.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 023",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d2_0",
+    "slug": "synthetic-ghost-post-022",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-022/",
+    "html": "<p>Deterministic synthetic content for pagination record 22.</p>",
+    "image": "https://fixture.invalid/images/feature-022.jpg",
+    "title": "Synthetic Ghost post 022",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d1_0",
+    "slug": "synthetic-ghost-post-021",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-021/",
+    "html": "<p>Deterministic synthetic content for pagination record 21.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 021",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4d0_0",
+    "slug": "synthetic-ghost-post-020",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-020/",
+    "html": "<p>Deterministic synthetic content for pagination record 20.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 020",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4cf_0",
+    "slug": "synthetic-ghost-post-019",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-019/",
+    "html": "<p>Deterministic synthetic content for pagination record 19.</p>",
+    "image": "https://fixture.invalid/images/feature-019.jpg",
+    "title": "Synthetic Ghost post 019",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ce_0",
+    "slug": "synthetic-ghost-post-018",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-018/",
+    "html": "<p>Deterministic synthetic content for pagination record 18.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 018",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4cd_0",
+    "slug": "synthetic-ghost-post-017",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-017/",
+    "html": "<p>Deterministic synthetic content for pagination record 17.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 017",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4cc_0",
+    "slug": "synthetic-ghost-post-016",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-016/",
+    "html": "<p>Deterministic synthetic content for pagination record 16.</p>",
+    "image": "https://fixture.invalid/images/feature-016.jpg",
+    "title": "Synthetic Ghost post 016",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4cb_0",
+    "slug": "synthetic-ghost-post-015",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-015/",
+    "html": "<p>Deterministic synthetic content for pagination record 15.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 015",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4ca_0",
+    "slug": "synthetic-ghost-post-014",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-014/",
+    "html": "<p>Deterministic synthetic content for pagination record 14.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 014",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c9_0",
+    "slug": "synthetic-ghost-post-013",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-013/",
+    "html": "<p>Deterministic synthetic content for pagination record 13.</p>",
+    "image": "https://fixture.invalid/images/feature-013.jpg",
+    "title": "Synthetic Ghost post 013",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c8_0",
+    "slug": "synthetic-ghost-post-012",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-012/",
+    "html": "<p>Deterministic synthetic content for pagination record 12.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 012",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c7_0",
+    "slug": "synthetic-ghost-post-011",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-011/",
+    "html": "<p>Deterministic synthetic content for pagination record 11.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 011",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c6_0",
+    "slug": "synthetic-ghost-post-010",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-010/",
+    "html": "<p>Deterministic synthetic content for pagination record 10.</p>",
+    "image": "https://fixture.invalid/images/feature-010.jpg",
+    "title": "Synthetic Ghost post 010",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c5_0",
+    "slug": "synthetic-ghost-post-009",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-009/",
+    "html": "<p>Deterministic synthetic content for pagination record 9.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 009",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c4_0",
+    "slug": "synthetic-ghost-post-008",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-008/",
+    "html": "<p>Deterministic synthetic content for pagination record 8.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 008",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c3_0",
+    "slug": "synthetic-ghost-post-007",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-007/",
+    "html": "<p>Deterministic synthetic content for pagination record 7.</p>",
+    "image": "https://fixture.invalid/images/feature-007.jpg",
+    "title": "Synthetic Ghost post 007",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c2_0",
+    "slug": "synthetic-ghost-post-006",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-006/",
+    "html": "<p>Deterministic synthetic content for pagination record 6.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 006",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c1_0",
+    "slug": "synthetic-ghost-post-005",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-005/",
+    "html": "<p>Deterministic synthetic content for pagination record 5.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 005",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4c0_0",
+    "slug": "synthetic-ghost-post-004",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-004/",
+    "html": "<p>Deterministic synthetic content for pagination record 4.</p>",
+    "image": "https://fixture.invalid/images/feature-004.jpg",
+    "title": "Synthetic Ghost post 004",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4bf_0",
+    "slug": "synthetic-ghost-post-003",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-003/",
+    "html": "<p>Deterministic synthetic content for pagination record 3.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 003",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4be_0",
+    "slug": "synthetic-ghost-post-002",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-002/",
+    "html": "<p>Deterministic synthetic content for pagination record 2.</p>",
+    "image": null,
+    "title": "Synthetic Ghost post 002",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  },
+  {
+    "objectID": "6a7d75c8b25e8a000197c4bd_0",
+    "slug": "synthetic-ghost-post-001",
+    "url": "http://127.0.0.1:23689/synthetic-ghost-post-001/",
+    "html": "<p>Deterministic synthetic content for pagination record 1.</p>",
+    "image": "https://fixture.invalid/images/feature-001.jpg",
+    "title": "Synthetic Ghost post 001",
+    "tags": [
+      {
+        "name": "Ghost 6",
+        "slug": "ghost-6"
+      },
+      {
+        "name": "Acceptance",
+        "slug": "acceptance"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Algolia Fixture Author",
+        "slug": "algolia"
+      }
+    ],
+    "headings": [],
+    "anchor": null,
+    "customRanking": {
+      "position": 0,
+      "heading": 100
+    }
+  }
+]
