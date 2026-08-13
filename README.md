@@ -7,7 +7,7 @@ JavaScript tools for turning Ghost posts into records and keeping an Algolia sea
 
 ## Tools
 
-This Yarn and Lerna monorepo contains four public packages:
+This pnpm and Lerna monorepo contains four public packages:
 
 - [`@tryghost/algolia`](packages/algolia/README.md) provides a CLI for initially indexing a Ghost site's published posts.
 - [`@tryghost/algolia-netlify`](packages/algolia-netlify/README.md) provides Netlify Functions that process Ghost post webhooks and update an index.
@@ -34,19 +34,19 @@ Use the CLI for the initial batch index of a site's published posts. Installatio
 Use the Node version declared in [`.nvmrc`](.nvmrc), then install the monorepo dependencies and link its workspaces:
 
 ```sh
-yarn
+pnpm install
 ```
 
 Run the full test suite, including package lint checks:
 
 ```sh
-yarn test
+pnpm test
 ```
 
 Run only ESLint across the packages:
 
 ```sh
-yarn lint
+pnpm lint
 ```
 
 Package-specific development and verification commands are documented in each package README.
@@ -56,7 +56,7 @@ Package-specific development and verification commands are documented in each pa
 The repository currently publishes changed packages through Lerna:
 
 ```sh
-yarn ship
+pnpm ship
 ```
 
 This is a maintainer-only release operation for public npm packages and runs the full test suite first.

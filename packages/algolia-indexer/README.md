@@ -11,7 +11,7 @@ npm install @tryghost/algolia-indexer
 or
 
 ```sh
-yarn add @tryghost/algolia-indexer
+pnpm add @tryghost/algolia-indexer
 ```
 
 ## Usage
@@ -37,13 +37,13 @@ Call `initIndex()` before `delete(slug)` when removing every fragment associated
 
 ## Development
 
-Install dependencies from the repository root with `yarn`. From the root, run this package's tests and ESLint checks with:
+Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and ESLint checks with:
 
 ```sh
-yarn workspace @tryghost/algolia-indexer test
+pnpm --filter @tryghost/algolia-indexer test
 ```
 
-Run the full monorepo suite with `yarn test`.
+Run the full monorepo suite with `pnpm test`.
 
 ---
 

@@ -15,7 +15,7 @@
     "algolia": "algolia",
     "test": "NODE_ENV=testing vitest run --root .",
     "lint": "eslint . --ext .js --cache",
-    "posttest": "yarn lint"
+    "posttest": "pnpm lint"
   },
   "files": [
     "bin",
@@ -26,8 +26,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@tryghost/algolia-fragmenter": "^0.2.7",
-    "@tryghost/algolia-indexer": "^0.3.1",
+    "@tryghost/algolia-fragmenter": "workspace:^",
+    "@tryghost/algolia-indexer": "workspace:^",
     "@tryghost/content-api": "1.12.10",
     "@tryghost/errors": "1.2.27",
     "@tryghost/pretty-cli": "1.2.39",
