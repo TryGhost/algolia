@@ -10,7 +10,7 @@ export default defineConfig({
                 'packages/*/index.js',
                 'packages/*/lib/**/*.js',
                 'packages/algolia/bin/**/*.js',
-                'packages/algolia-netlify/functions/**/*.js'
+                'packages/algolia-netlify/functions/**/*.{ts,mts}'
             ],
             exclude: [
                 '**/test/**',
@@ -18,7 +18,8 @@ export default defineConfig({
                 '**/fixtures/**',
                 '**/build/**',
                 '**/coverage/**',
-                '**/*.config.{js,mjs,cjs}'
+                '**/*.config.{js,mjs,cjs}',
+                '**/.eslintrc.js'
             ]
         }
     }

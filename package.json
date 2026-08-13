@@ -6,9 +6,17 @@
   "engines": {
     "node": ">=24"
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "@tryghost/algolia-netlify/algolia-html-extractor",
+      "@tryghost/algolia-netlify/algolia-html-extractor/**",
+      "@tryghost/algolia-netlify/algoliasearch",
+      "@tryghost/algolia-netlify/algoliasearch/**"
+    ]
+  },
   "eslintIgnore": [
     "**/node_modules/**"
   ],
@@ -19,7 +27,8 @@
     "test:coverage": "NODE_ENV=testing vitest run --coverage",
     "posttest:coverage": "node ./test/verify-coverage.mjs",
     "lint:tests": "eslint test vitest.config.mjs --ext .js,.mjs",
-    "posttest": "yarn lint",
+    "posttest": "yarn typecheck && yarn lint",
+    "typecheck": "yarn workspace @tryghost/algolia-netlify typecheck",
     "lint": "yarn lint:tests && yarn workspaces run lint",
     "preship": "yarn test",
     "ship": "lerna publish"
@@ -27,7 +36,7 @@
   "devDependencies": {
     "@bcoe/v8-coverage": "1.0.2",
     "@vitest/coverage-v8": "4.1.10",
-    "eslint": "8.54.0",
+    "eslint": "8.57.1",
     "eslint-plugin-ghost": "3.4.0",
     "vite": "8.2.1",
     "vitest": "4.1.10"

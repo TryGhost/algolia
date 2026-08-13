@@ -30,7 +30,7 @@ Deploy manually, and do not expose the deployed functions publicly until mandato
    - Set the Algolia Application ID, API key, and index name.
    - Choose a `NETLIFY_KEY` for the webhook query parameter. Setting it does not protect current handlers when the parameter is omitted.
 
-The repository's [`netlify.toml`](../../netlify.toml) builds and deploys these functions from `packages/algolia-netlify`.
+The repository's [`netlify.toml`](../../netlify.toml) builds and deploys these functions from `packages/algolia-netlify`. The explicit `public` publish directory contains only a static landing page so package files, function sources, and function build artifacts are not exposed as site files.
 
 ### Set up Ghost webhooks
 
@@ -62,15 +62,21 @@ cp .env.example .env
 yarn dev
 ```
 
-`yarn dev` builds the functions and starts Netlify Dev. Use the local URL it prints for endpoints such as `/.netlify/functions/post-published`.
+`yarn dev` starts Netlify Dev, which builds the TypeScript functions as needed. Use the local URL it prints for endpoints such as `/.netlify/functions/post-published`.
 
 Run this package's tests and ESLint checks from the repository root:
 
 ```sh
 yarn workspace @tryghost/algolia-netlify test
+yarn workspace @tryghost/algolia-netlify typecheck
+yarn workspace @tryghost/algolia-netlify build
 ```
 
 Run the full monorepo suite with `yarn test`.
+
+The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Existing valid webhook behavior, endpoint URLs, and optional `key` handling are unchanged.
+
+This runtime migration does not repair the package's pre-existing npm artifact: the published tarball does not contain an importable entry point or the function sources. Deploy this workspace from the repository with Netlify; making `@tryghost/algolia-netlify` installable remains separate release work.
 
 ---
 
