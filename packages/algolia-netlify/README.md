@@ -86,7 +86,7 @@ Run the full monorepo suite with `pnpm test`.
 
 The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Existing valid webhook behavior, endpoint URLs, and optional `key` handling are unchanged.
 
-`pnpm pack` builds an ESM-only Node 24 package with generated TypeScript declarations. The package intentionally exposes only the two handlers; webhook utilities remain internal.
+From this package directory, `pnpm pack` builds an ESM-only package with generated TypeScript declarations. The supported Node range is declared in [`package.json`](package.json). The package intentionally exposes only the two handlers; webhook utilities remain internal.
 
 ---
 
