@@ -15,17 +15,14 @@ export type GhostWebhookPayload = {
     };
 };
 
-export const isRecord = (value: unknown): value is JsonRecord => (
-    typeof value === 'object' && value !== null && !Array.isArray(value)
-);
+export const isRecord = (value: unknown): value is JsonRecord =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
 
-export const isGhostUserAgent = (value: string | null): boolean => (
-    value !== null && GHOST_USER_AGENT.test(value)
-);
+export const isGhostUserAgent = (value: string | null): boolean =>
+    value !== null && GHOST_USER_AGENT.test(value);
 
-export const textResponse = (body: string, status = 200): Response => (
-    new Response(body, {status, headers: TEXT_HEADERS})
-);
+export const textResponse = (body: string, status = 200): Response =>
+    new Response(body, {status, headers: TEXT_HEADERS});
 
 export const invalidBodyResponse = (): Response => textResponse('Invalid request body', 400);
 export const noValidBodyResponse = (): Response => textResponse('No valid request body detected');

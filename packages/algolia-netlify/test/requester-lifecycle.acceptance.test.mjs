@@ -40,11 +40,21 @@ describe('Algolia requester test lifecycle', () => {
             ]) {
                 expect(Object.values(originals)).not.toContain(hook);
             }
-            expect(() => http.request('http://example.com')).toThrow('denied an unexpected network request');
-            expect(() => https.get('https://example.com')).toThrow('denied an unexpected network request');
-            expect(() => net.connect(443, 'example.com')).toThrow('denied an unexpected network request');
-            expect(() => tls.connect(443, 'example.com')).toThrow('denied an unexpected network request');
-            expect(() => global.fetch('https://example.com')).toThrow('denied an unexpected network request');
+            expect(() => http.request('http://example.com')).toThrow(
+                'denied an unexpected network request'
+            );
+            expect(() => https.get('https://example.com')).toThrow(
+                'denied an unexpected network request'
+            );
+            expect(() => net.connect(443, 'example.com')).toThrow(
+                'denied an unexpected network request'
+            );
+            expect(() => tls.connect(443, 'example.com')).toThrow(
+                'denied an unexpected network request'
+            );
+            expect(() => global.fetch('https://example.com')).toThrow(
+                'denied an unexpected network request'
+            );
         } finally {
             requesterMock.restore();
         }

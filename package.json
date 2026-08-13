@@ -6,18 +6,16 @@
   "engines": {
     "node": ">=24"
   },
-  "eslintIgnore": [
-    "**/node_modules/**"
-  ],
   "scripts": {
     "dev": "echo \"Implement me!\"",
     "test": "NODE_ENV=testing vitest run",
     "test:coverage": "NODE_ENV=testing vitest run --coverage",
     "posttest:coverage": "node ./test/verify-coverage.mjs",
-    "lint:tests": "eslint test vitest.config.mjs --ext .js,.mjs",
     "posttest": "pnpm typecheck && pnpm lint",
     "typecheck": "pnpm --filter @tryghost/algolia-netlify typecheck",
-    "lint": "pnpm lint:tests && pnpm --recursive run lint",
+    "lint": "oxlint --quiet && oxfmt --check .",
+    "lint:fix": "oxlint --fix && oxfmt .",
+    "format": "oxfmt .",
     "preship": "git diff --quiet && git diff --cached --quiet || (echo 'Error: working tree must be clean before shipping' && exit 1) && pnpm test",
     "ship": "nx release version --git-push --git-remote ${GHOST_UPSTREAM:-origin}",
     "ship:patch": "pnpm ship patch",
@@ -28,9 +26,9 @@
     "@bcoe/v8-coverage": "1.0.2",
     "@nx/js": "23.1.1",
     "@vitest/coverage-v8": "4.1.10",
-    "eslint": "8.57.1",
-    "eslint-plugin-ghost": "3.5.0",
     "nx": "23.1.1",
+    "oxfmt": "0.63.0",
+    "oxlint": "1.78.0",
     "vite": "8.2.1",
     "vitest": "4.1.10"
   },

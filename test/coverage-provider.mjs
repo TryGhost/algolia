@@ -19,23 +19,31 @@ export const createOwnedSubprocessCoverageDirectory = () => {
     return directory;
 };
 
-export const isOwnedSubprocessCoverageDirectory = (directory) => {
-    return ownedSubprocessCoverageDirectories.has(directory)
-        && dirname(directory) === subprocessCoverageParent
-        && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(directory.slice(subprocessCoverageParent.length + 1));
+export const isOwnedSubprocessCoverageDirectory = directory => {
+    return (
+        ownedSubprocessCoverageDirectories.has(directory) &&
+        dirname(directory) === subprocessCoverageParent &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+            directory.slice(subprocessCoverageParent.length + 1)
+        )
+    );
 };
 
 export const consumeOwnedSubprocessCoverage = async (directory, consume) => {
     if (!isOwnedSubprocessCoverageDirectory(directory)) {
-        throw new Error('Subprocess coverage directory is not owned by this Vitest controller.'); // eslint-disable-line ghost/ghost-custom/no-native-error
+        throw new Error('Subprocess coverage directory is not owned by this Vitest controller.');
     }
 
     try {
         if (existsSync(directory)) {
             const filenames = await readdir(directory);
-            const rawCoverages = await Promise.all(filenames
-                .filter(filename => filename.endsWith('.json'))
-                .map(async filename => JSON.parse(await readFile(resolve(directory, filename), 'utf8'))));
+            const rawCoverages = await Promise.all(
+                filenames
+                    .filter(filename => filename.endsWith('.json'))
+                    .map(async filename =>
+                        JSON.parse(await readFile(resolve(directory, filename), 'utf8'))
+                    )
+            );
 
             if (rawCoverages.length > 0) {
                 await consume(rawCoverages);
@@ -57,20 +65,26 @@ class SubprocessCoverageProvider extends V8CoverageProvider {
     }
 
     async generateCoverage(context) {
-        await consumeOwnedSubprocessCoverage(this.subprocessCoverageDirectory, async (rawCoverages) => {
-            const coverage = mergeProcessCovs(rawCoverages);
-            coverage.result = coverage.result
-                .filter(entry => entry.url.startsWith('file://') && !entry.url.includes('/node_modules/'))
-                // Vitest's converter expects a script offset; Node executes these sources without a wrapper.
-                .map(entry => ({...entry, startOffset: 0}));
+        await consumeOwnedSubprocessCoverage(
+            this.subprocessCoverageDirectory,
+            async rawCoverages => {
+                const coverage = mergeProcessCovs(rawCoverages);
+                coverage.result = coverage.result
+                    .filter(
+                        entry =>
+                            entry.url.startsWith('file://') && !entry.url.includes('/node_modules/')
+                    )
+                    // Vitest's converter expects a script offset; Node executes these sources without a wrapper.
+                    .map(entry => ({...entry, startOffset: 0}));
 
-            this.onAfterSuiteRun({
-                coverage,
-                environment: 'node',
-                projectName: '',
-                testFiles: ['subprocesses']
-            });
-        });
+                this.onAfterSuiteRun({
+                    coverage,
+                    environment: 'node',
+                    projectName: '',
+                    testFiles: ['subprocesses']
+                });
+            }
+        );
 
         return super.generateCoverage(context);
     }
@@ -85,9 +99,13 @@ export const createControllerCoverageProvider = () => {
 
 const getWorkerCoverageDirectory = () => {
     const directory = process.env[SUBPROCESS_COVERAGE_ENV];
-    if (dirname(directory || '') !== subprocessCoverageParent
-        || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test((directory || '').slice(subprocessCoverageParent.length + 1))) {
-        throw new Error('Vitest worker received an invalid subprocess coverage directory.'); // eslint-disable-line ghost/ghost-custom/no-native-error
+    if (
+        dirname(directory || '') !== subprocessCoverageParent ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+            (directory || '').slice(subprocessCoverageParent.length + 1)
+        )
+    ) {
+        throw new Error('Vitest worker received an invalid subprocess coverage directory.');
     }
     return directory;
 };

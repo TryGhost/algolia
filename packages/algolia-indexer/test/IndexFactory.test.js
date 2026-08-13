@@ -14,14 +14,18 @@ const algoliaSearchPath = require.resolve('algoliasearch');
 const dependencyMarker = `${require.resolve('@algolia/requester-node-http').split('/@algolia/')[0]}/@algolia/`;
 const algoliaSearchMarker = `${algoliaSearchPath.slice(0, algoliaSearchPath.lastIndexOf('/'))}/`;
 
-const isSubjectCacheEntry = (filename) => {
-    return filename === packageEntryPath
-        || filename === indexFactoryPath
-        || filename.startsWith(dependencyMarker)
-        || filename.startsWith(algoliaSearchMarker);
+const isSubjectCacheEntry = filename => {
+    return (
+        filename === packageEntryPath ||
+        filename === indexFactoryPath ||
+        filename.startsWith(dependencyMarker) ||
+        filename.startsWith(algoliaSearchMarker)
+    );
 };
 
-const originalCacheEntries = new Map(Object.entries(require.cache).filter(([filename]) => isSubjectCacheEntry(filename)));
+const originalCacheEntries = new Map(
+    Object.entries(require.cache).filter(([filename]) => isSubjectCacheEntry(filename))
+);
 
 const restoreSubjectCache = () => {
     for (const filename of Object.keys(require.cache).filter(isSubjectCacheEntry)) {
@@ -53,7 +57,9 @@ const loadSubject = (load = () => require('../index.js')) => {
 };
 
 const expectOriginalCacheIdentities = () => {
-    const restoredEntries = new Map(Object.entries(require.cache).filter(([filename]) => isSubjectCacheEntry(filename)));
+    const restoredEntries = new Map(
+        Object.entries(require.cache).filter(([filename]) => isSubjectCacheEntry(filename))
+    );
     expect([...restoredEntries.keys()]).toEqual([...originalCacheEntries.keys()]);
     for (const [filename, cacheEntry] of originalCacheEntries) {
         expect(restoredEntries.get(filename)).toBe(cacheEntry);
@@ -64,7 +70,16 @@ const REQUIRED_SETTINGS = {
     distinct: true,
     attributeForDistinct: 'slug',
     customRanking: ['desc(customRanking.heading)', 'asc(customRanking.position)'],
-    searchableAttributes: ['title', 'headings', 'html', 'url', 'tags.name', 'tags', 'authors.name', 'authors'],
+    searchableAttributes: [
+        'title',
+        'headings',
+        'html',
+        'url',
+        'tags.name',
+        'tags',
+        'authors.name',
+        'authors'
+    ],
     attributesForFaceting: ['filterOnly(slug)']
 };
 
@@ -78,7 +93,7 @@ const createIndexer = (overrides = {}) => {
     return new IndexFactory({...ALGOLIA_OPTIONS, ...overrides});
 };
 
-const normalizeRequest = (request) => {
+const normalizeRequest = request => {
     const url = new URL(request.url);
     return {
         method: request.method,
@@ -126,13 +141,15 @@ const assertMappedOperationError = async (invoke, expectedAttempt) => {
 
     expect(exactMappedError(error)).toEqual({
         name: 'Error',
-        message: 'Unreachable hosts - your application id may be incorrect. If the error persists, contact support@algolia.com.',
+        message:
+            'Unreachable hosts - your application id may be incorrect. If the error persists, contact support@algolia.com.',
         errorType: 'AlgoliaError',
         code: undefined,
         status: undefined,
         originalError: {
             name: 'RetryError',
-            message: 'Unreachable hosts - your application id may be incorrect. If the error persists, contact support@algolia.com.',
+            message:
+                'Unreachable hosts - your application id may be incorrect. If the error persists, contact support@algolia.com.',
             attempts: Array(4).fill({
                 ...expectedAttempt,
                 response: {
@@ -166,11 +183,21 @@ describe('IndexFactory public contracts', function () {
 
     it('denies bypass network access and restores every hook and cache identity', function () {
         const originals = requester.originals();
-        expect(() => http.request('http://example.com')).toThrow('denied an unexpected network request');
-        expect(() => https.get('https://example.com')).toThrow('denied an unexpected network request');
-        expect(() => net.connect(443, 'example.com')).toThrow('denied an unexpected network request');
-        expect(() => tls.connect(443, 'example.com')).toThrow('denied an unexpected network request');
-        expect(() => global.fetch('https://example.com')).toThrow('denied an unexpected network request');
+        expect(() => http.request('http://example.com')).toThrow(
+            'denied an unexpected network request'
+        );
+        expect(() => https.get('https://example.com')).toThrow(
+            'denied an unexpected network request'
+        );
+        expect(() => net.connect(443, 'example.com')).toThrow(
+            'denied an unexpected network request'
+        );
+        expect(() => tls.connect(443, 'example.com')).toThrow(
+            'denied an unexpected network request'
+        );
+        expect(() => global.fetch('https://example.com')).toThrow(
+            'denied an unexpected network request'
+        );
 
         try {
             restoreSubjectCache();
@@ -196,9 +223,11 @@ describe('IndexFactory public contracts', function () {
         const originals = requester.originals();
 
         try {
-            expect(() => loadSubject(() => {
-                throw new Error('synthetic subject import failure');
-            })).toThrow('synthetic subject import failure');
+            expect(() =>
+                loadSubject(() => {
+                    throw new Error('synthetic subject import failure');
+                })
+            ).toThrow('synthetic subject import failure');
 
             expect(Module._load).toBe(originals.load);
             expect(http.request).toBe(originals.httpRequest);
@@ -219,17 +248,19 @@ describe('IndexFactory public contracts', function () {
         await indexer.initIndex();
         await indexer.index.getSettings();
 
-        expect(requester.requests().map(normalizeRequest)).toEqual([{
-            method: 'GET',
-            origin: 'https://app-id-dsn.algolia.net',
-            pathname: '/1/indexes/help-center/settings',
-            headers: {
-                'content-type': 'application/x-www-form-urlencoded',
-                'x-algolia-api-key': 'admin-api-key',
-                'x-algolia-application-id': 'app-id'
-            },
-            body: undefined
-        }]);
+        expect(requester.requests().map(normalizeRequest)).toEqual([
+            {
+                method: 'GET',
+                origin: 'https://app-id-dsn.algolia.net',
+                pathname: '/1/indexes/help-center/settings',
+                headers: {
+                    'content-type': 'application/x-www-form-urlencoded',
+                    'x-algolia-api-key': 'admin-api-key',
+                    'x-algolia-application-id': 'app-id'
+                },
+                body: undefined
+            }
+        ]);
     });
 
     it('applies the required settings by default and returns the external settings', async function () {
@@ -267,9 +298,16 @@ describe('IndexFactory public contracts', function () {
     it('applies custom settings when updates are explicitly enabled', async function () {
         const customSettings = {searchableAttributes: ['title', 'html']};
 
-        await createIndexer({indexSettings: customSettings}).setSettingsForIndex({updateSettings: true});
+        await createIndexer({indexSettings: customSettings}).setSettingsForIndex({
+            updateSettings: true
+        });
 
-        expect(requester.requests().map(normalizeRequest).map(({method, pathname, body}) => ({method, pathname, body}))).toEqual([
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .map(({method, pathname, body}) => ({method, pathname, body}))
+        ).toEqual([
             {method: 'PUT', pathname: '/1/indexes/help-center/settings', body: customSettings},
             {method: 'GET', pathname: '/1/indexes/help-center/settings', body: undefined}
         ]);
@@ -279,17 +317,19 @@ describe('IndexFactory public contracts', function () {
         const settings = await createIndexer().setSettingsForIndex({updateSettings: false});
 
         expect({requests: requester.requests().map(normalizeRequest), settings}).toEqual({
-            requests: [{
-                method: 'GET',
-                origin: 'https://app-id-dsn.algolia.net',
-                pathname: '/1/indexes/help-center/settings',
-                headers: {
-                    'content-type': 'application/x-www-form-urlencoded',
-                    'x-algolia-api-key': 'admin-api-key',
-                    'x-algolia-application-id': 'app-id'
-                },
-                body: undefined
-            }],
+            requests: [
+                {
+                    method: 'GET',
+                    origin: 'https://app-id-dsn.algolia.net',
+                    pathname: '/1/indexes/help-center/settings',
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded',
+                        'x-algolia-api-key': 'admin-api-key',
+                        'x-algolia-application-id': 'app-id'
+                    },
+                    body: undefined
+                }
+            ],
             settings: {distinct: true}
         });
     });
@@ -301,22 +341,24 @@ describe('IndexFactory public contracts', function () {
 
         await indexer.save(records);
 
-        expect(requester.requests().map(normalizeRequest)).toEqual([{
-            method: 'POST',
-            origin: 'https://app-id.algolia.net',
-            pathname: '/1/indexes/help-center/batch',
-            headers: {
-                'content-type': 'application/x-www-form-urlencoded',
-                'x-algolia-api-key': 'admin-api-key',
-                'x-algolia-application-id': 'app-id'
-            },
-            body: {
-                requests: [
-                    {action: 'updateObject', body: {objectID: 'post-1_0'}},
-                    {action: 'updateObject', body: {objectID: 'post-1_1'}}
-                ]
+        expect(requester.requests().map(normalizeRequest)).toEqual([
+            {
+                method: 'POST',
+                origin: 'https://app-id.algolia.net',
+                pathname: '/1/indexes/help-center/batch',
+                headers: {
+                    'content-type': 'application/x-www-form-urlencoded',
+                    'x-algolia-api-key': 'admin-api-key',
+                    'x-algolia-application-id': 'app-id'
+                },
+                body: {
+                    requests: [
+                        {action: 'updateObject', body: {objectID: 'post-1_0'}},
+                        {action: 'updateObject', body: {objectID: 'post-1_1'}}
+                    ]
+                }
             }
-        }]);
+        ]);
     });
 
     it('serializes the exact slug filter for deletion', async function () {
@@ -325,17 +367,19 @@ describe('IndexFactory public contracts', function () {
 
         await indexer.delete('getting-started');
 
-        expect(requester.requests().map(normalizeRequest)).toEqual([{
-            method: 'POST',
-            origin: 'https://app-id.algolia.net',
-            pathname: '/1/indexes/help-center/deleteByQuery',
-            headers: {
-                'content-type': 'application/x-www-form-urlencoded',
-                'x-algolia-api-key': 'admin-api-key',
-                'x-algolia-application-id': 'app-id'
-            },
-            body: {filters: 'slug:getting-started'}
-        }]);
+        expect(requester.requests().map(normalizeRequest)).toEqual([
+            {
+                method: 'POST',
+                origin: 'https://app-id.algolia.net',
+                pathname: '/1/indexes/help-center/deleteByQuery',
+                headers: {
+                    'content-type': 'application/x-www-form-urlencoded',
+                    'x-algolia-api-key': 'admin-api-key',
+                    'x-algolia-application-id': 'app-id'
+                },
+                body: {filters: 'slug:getting-started'}
+            }
+        ]);
     });
 
     it('serializes the exact object IDs for deletion', async function () {
@@ -344,22 +388,24 @@ describe('IndexFactory public contracts', function () {
 
         await indexer.deleteObjects(['post-1_0', 'post-1_1']);
 
-        expect(requester.requests().map(normalizeRequest)).toEqual([{
-            method: 'POST',
-            origin: 'https://app-id.algolia.net',
-            pathname: '/1/indexes/help-center/batch',
-            headers: {
-                'content-type': 'application/x-www-form-urlencoded',
-                'x-algolia-api-key': 'admin-api-key',
-                'x-algolia-application-id': 'app-id'
-            },
-            body: {
-                requests: [
-                    {action: 'deleteObject', body: {objectID: 'post-1_0'}},
-                    {action: 'deleteObject', body: {objectID: 'post-1_1'}}
-                ]
+        expect(requester.requests().map(normalizeRequest)).toEqual([
+            {
+                method: 'POST',
+                origin: 'https://app-id.algolia.net',
+                pathname: '/1/indexes/help-center/batch',
+                headers: {
+                    'content-type': 'application/x-www-form-urlencoded',
+                    'x-algolia-api-key': 'admin-api-key',
+                    'x-algolia-application-id': 'app-id'
+                },
+                body: {
+                    requests: [
+                        {action: 'deleteObject', body: {objectID: 'post-1_0'}},
+                        {action: 'deleteObject', body: {objectID: 'post-1_1'}}
+                    ]
+                }
             }
-        }]);
+        ]);
     });
 
     it('maps setSettingsForIndex failures to the exact AlgoliaError fields', async function () {

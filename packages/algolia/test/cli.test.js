@@ -10,14 +10,14 @@ const MISSING_CONFIG_PATH = path.join(testDirectory, 'missing-config.json');
 const INVALID_LIMITS = ['not-a-number', '0', '-1', '1.5', '101'];
 const INVALID_PAGES = ['not-a-number', '0', '-1', '1.5'];
 
-const runCli = (args) => {
+const runCli = args => {
     return spawnSync(process.execPath, [CLI_PATH, ...args], {
         encoding: 'utf8',
         env: process.env
     });
 };
 
-const getOutput = (result) => {
+const getOutput = result => {
     return `${result.stdout}${result.stderr}`;
 };
 
@@ -57,7 +57,9 @@ describe('algolia CLI', {timeout: 15000}, function () {
 
     it('accepts the inclusive limit bounds and a positive page', function () {
         const firstPost = getOutput(runCli(['index', MISSING_CONFIG_PATH, '--limit', '1']));
-        const requestedPage = getOutput(runCli(['index', MISSING_CONFIG_PATH, '--limit', '100', '--page', '3']));
+        const requestedPage = getOutput(
+            runCli(['index', MISSING_CONFIG_PATH, '--limit', '100', '--page', '3'])
+        );
 
         for (const output of [firstPost, requestedPage]) {
             expect(output).toMatch(/Failed loading JSON config file/);

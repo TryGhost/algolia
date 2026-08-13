@@ -41,7 +41,7 @@ describe('subprocess coverage ownership', function () {
         }
     });
 
-    const createOwnedRun = async (contents) => {
+    const createOwnedRun = async contents => {
         const directory = createOwnedSubprocessCoverageDirectory();
         sibling = `${directory}-sibling-sentinel`;
         await mkdir(directory, {recursive: true});
@@ -50,7 +50,7 @@ describe('subprocess coverage ownership', function () {
         return directory;
     };
 
-    const assertExactCleanup = async (directory) => {
+    const assertExactCleanup = async directory => {
         await assert.rejects(access(directory), {code: 'ENOENT'});
         assert.equal(await readFile(sibling, 'utf8'), 'keep me');
         await access(path.dirname(directory));
@@ -71,7 +71,10 @@ describe('subprocess coverage ownership', function () {
     it('cleans its exact owned run when reading raw coverage fails', async function () {
         const directory = await createOwnedRun('invalid JSON');
 
-        await assert.rejects(consumeOwnedSubprocessCoverage(directory, async () => {}), SyntaxError);
+        await assert.rejects(
+            consumeOwnedSubprocessCoverage(directory, async () => {}),
+            SyntaxError
+        );
         await assertExactCleanup(directory);
     });
 
@@ -98,7 +101,10 @@ describe('subprocess coverage ownership', function () {
         const sentinel = path.join(externalParent, 'sentinel');
         await writeFile(sentinel, 'keep me');
 
-        await assert.rejects(consumeOwnedSubprocessCoverage(externalParent, async () => {}), /not owned/);
+        await assert.rejects(
+            consumeOwnedSubprocessCoverage(externalParent, async () => {}),
+            /not owned/
+        );
         assert.equal(await readFile(sentinel, 'utf8'), 'keep me');
     });
 });

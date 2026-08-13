@@ -9,7 +9,7 @@ const allowedOrigin = process.env.GHOST_REPLAY_ORIGIN;
 const expectedSettings = require('../fixtures/ghost-v6/expected-index-settings.json');
 
 if (!requestLogPath || !allowedOrigin) {
-    throw new Error('Acceptance preload requires request logging and a replay origin.'); // eslint-disable-line ghost/ghost-custom/no-native-error
+    throw new Error('Acceptance preload requires request logging and a replay origin.');
 }
 
 const originalLoad = Module._load;
@@ -28,29 +28,30 @@ const networkTarget = (defaultProtocol, input) => {
     }
 
     if (!input || typeof input !== 'object') {
-        throw new Error('Network request did not provide a URL.'); // eslint-disable-line ghost/ghost-custom/no-native-error
+        throw new Error('Network request did not provide a URL.');
     }
 
     const protocol = input.protocol || defaultProtocol;
     const authority = input.hostname
         ? `${input.hostname}${input.port ? `:${input.port}` : ''}`
-        : (input.host || `localhost${input.port ? `:${input.port}` : ''}`);
+        : input.host || `localhost${input.port ? `:${input.port}` : ''}`;
     return new URL(`${protocol}//${authority}${input.path || input.pathname || '/'}`);
 };
 
 const effectiveNetworkTarget = (defaultProtocol, input, args) => {
     const target = networkTarget(defaultProtocol, input);
-    const options = (typeof input === 'string' || input instanceof URL)
-        && args[0]
-        && typeof args[0] === 'object'
-        ? args[0]
-        : null;
+    const options =
+        (typeof input === 'string' || input instanceof URL) &&
+        args[0] &&
+        typeof args[0] === 'object'
+            ? args[0]
+            : null;
 
     if (!options) {
         return target;
     }
     if (options.socketPath) {
-        throw new Error('HTTP transport denied a Unix socket request.'); // eslint-disable-line ghost/ghost-custom/no-native-error
+        throw new Error('HTTP transport denied a Unix socket request.');
     }
     if (options.protocol) {
         target.protocol = options.protocol;
@@ -72,7 +73,7 @@ const effectiveNetworkTarget = (defaultProtocol, input, args) => {
 const assertAllowedNetworkTarget = (transport, defaultProtocol, input, args = []) => {
     const target = effectiveNetworkTarget(defaultProtocol, input, args);
     if (target.origin !== parsedAllowedOrigin.origin) {
-        throw new Error(`${transport} denied non-loopback network request to ${target.origin}.`); // eslint-disable-line ghost/ghost-custom/no-native-error
+        throw new Error(`${transport} denied non-loopback network request to ${target.origin}.`);
     }
 };
 
@@ -83,10 +84,8 @@ const guardRequest = (transport, defaultProtocol, originalRequest) => {
     };
 };
 
-const socketTarget = (args) => {
-    const [options] = Array.isArray(args[0])
-        ? args[0]
-        : net._normalizeArgs(args);
+const socketTarget = args => {
+    const [options] = Array.isArray(args[0]) ? args[0] : net._normalizeArgs(args);
     return options.path
         ? {path: options.path}
         : {port: Number(options.port), host: options.host || 'localhost'};
@@ -96,10 +95,12 @@ const guardSocket = (transport, originalConnect) => {
     return function (...args) {
         const target = socketTarget(args);
         if (target.path) {
-            throw new Error(`${transport} denied Unix socket ${target.path}.`); // eslint-disable-line ghost/ghost-custom/no-native-error
+            throw new Error(`${transport} denied Unix socket ${target.path}.`);
         }
         if (target.host !== parsedAllowedOrigin.hostname || target.port !== allowedPort) {
-            throw new Error(`${transport} denied non-loopback socket to ${target.host}:${target.port}.`); // eslint-disable-line ghost/ghost-custom/no-native-error
+            throw new Error(
+                `${transport} denied non-loopback socket to ${target.host}:${target.port}.`
+            );
         }
         return originalConnect.apply(this, args);
     };
@@ -119,24 +120,31 @@ if (typeof global.fetch === 'function') {
     };
 }
 
-const responseFor = (request) => {
+const responseFor = request => {
     const url = new URL(request.url);
     const expected = expectedRequests[requestIndex];
-    const hasExpectedHost = url.hostname === (request.method === 'GET'
-        ? 'acceptance-app-dsn.algolia.net'
-        : 'acceptance-app.algolia.net');
-    const hasExpectedHeaders = request.headers['x-algolia-application-id'] === 'acceptance-app'
-        && request.headers['x-algolia-api-key'] === 'acceptance-admin-key'
-        && request.headers['content-type'] === 'application/x-www-form-urlencoded';
+    const hasExpectedHost =
+        url.hostname ===
+        (request.method === 'GET'
+            ? 'acceptance-app-dsn.algolia.net'
+            : 'acceptance-app.algolia.net');
+    const hasExpectedHeaders =
+        request.headers['x-algolia-application-id'] === 'acceptance-app' &&
+        request.headers['x-algolia-api-key'] === 'acceptance-admin-key' &&
+        request.headers['content-type'] === 'application/x-www-form-urlencoded';
 
-    if (!expected
-        || expected.method !== request.method
-        || expected.pathname !== url.pathname
-        || !hasExpectedHost
-        || !hasExpectedHeaders) {
+    if (
+        !expected ||
+        expected.method !== request.method ||
+        expected.pathname !== url.pathname ||
+        !hasExpectedHost ||
+        !hasExpectedHeaders
+    ) {
         return {
             status: 403,
-            content: JSON.stringify({message: 'Unexpected Algolia request denied by the acceptance test.'}),
+            content: JSON.stringify({
+                message: 'Unexpected Algolia request denied by the acceptance test.'
+            }),
             isTimedOut: false
         };
     }

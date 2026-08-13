@@ -30,13 +30,26 @@ const responseFor = (request, requestNumber) => {
                 distinct: true,
                 attributeForDistinct: 'slug',
                 customRanking: ['desc(customRanking.heading)', 'asc(customRanking.position)'],
-                searchableAttributes: ['title', 'headings', 'html', 'url', 'tags.name', 'tags', 'authors.name', 'authors'],
+                searchableAttributes: [
+                    'title',
+                    'headings',
+                    'html',
+                    'url',
+                    'tags.name',
+                    'tags',
+                    'authors.name',
+                    'authors'
+                ],
                 attributesForFaceting: ['filterOnly(slug)']
             }),
             isTimedOut: false
         };
     }
-    return {status: 200, content: JSON.stringify({taskID: requestNumber, objectIDs: []}), isTimedOut: false};
+    return {
+        status: 200,
+        content: JSON.stringify({taskID: requestNumber, objectIDs: []}),
+        isTimedOut: false
+    };
 };
 
 const createNodeHttpRequester = () => ({

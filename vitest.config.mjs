@@ -24,8 +24,7 @@ export default defineConfig({
                 '**/fixtures/**',
                 '**/build/**',
                 '**/coverage/**',
-                '**/*.config.{js,mjs,cjs}',
-                '**/.eslintrc.js'
+                '**/*.config.{js,mjs,cjs}'
             ]
         }
     }

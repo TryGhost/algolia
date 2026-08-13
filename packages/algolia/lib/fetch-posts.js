@@ -2,12 +2,12 @@ const DEFAULT_PAGE_SIZE = 100;
 const PAGE_DELAY_MS = 100;
 
 const waitBetweenPages = () => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         setTimeout(resolve, PAGE_DELAY_MS);
     });
 };
 
-const getNextPage = (posts) => {
+const getNextPage = posts => {
     if (!posts.meta || !posts.meta.pagination || typeof posts.meta.pagination !== 'object') {
         throw TypeError('Ghost returned posts without pagination metadata.');
     }
@@ -21,7 +21,7 @@ const getNextPage = (posts) => {
     return nextPage;
 };
 
-const validatePosts = (posts) => {
+const validatePosts = posts => {
     if (!Array.isArray(posts)) {
         throw TypeError('Ghost returned posts in an invalid format.');
     }

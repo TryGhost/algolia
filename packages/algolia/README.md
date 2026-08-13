@@ -58,7 +58,7 @@ If a long `--skip` filter causes a `414 Request-URI Too Large` response, put the
 
 ## Development
 
-Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and ESLint checks with:
+Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and lint checks with:
 
 ```sh
 pnpm --filter @tryghost/algolia test
