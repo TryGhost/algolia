@@ -1,8 +1,8 @@
 [build]
   base = "packages/algolia-netlify"
-  command = "NODE_ENV=production yarn build"
-  functions = "build/functions"
-  publish = ""
+  command = "yarn typecheck"
+  functions = "functions"
+  publish = "public"
 
 [build.environment]
   NODE_VERSION = "24"

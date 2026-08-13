@@ -23,6 +23,8 @@ This Yarn and Lerna monorepo contains four public packages:
 
 Deployment, Algolia configuration, and Ghost webhook setup are described in the [`@tryghost/algolia-netlify` guide](packages/algolia-netlify/README.md).
 
+The Netlify deployment publishes only a static landing page alongside the functions; repository package and function files are not site assets.
+
 ### CLI
 
 Use the CLI for the initial batch index of a site's published posts. Installation, configuration, and command options are documented in the [`@tryghost/algolia` guide](packages/algolia/README.md).
