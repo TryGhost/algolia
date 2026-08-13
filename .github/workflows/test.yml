@@ -25,3 +25,16 @@ jobs:
       - run: yarn test:coverage
       - run: yarn typecheck
       - run: yarn lint
+
+  required-checks-pass:
+    name: Required checks pass
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all required jobs succeeded
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e 'all(.[]; .result == "success")' > /dev/null
