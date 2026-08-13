@@ -74,7 +74,7 @@ pnpm dev
 
 `pnpm dev` starts Netlify Dev, which builds the TypeScript functions as needed. Use the local URL it prints for endpoints such as `/.netlify/functions/post-published`.
 
-Run this package's tests and ESLint checks from the repository root:
+Run this package's tests and lint checks from the repository root:
 
 ```sh
 pnpm --filter @tryghost/algolia-netlify test

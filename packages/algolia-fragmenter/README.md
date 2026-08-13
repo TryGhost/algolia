@@ -29,7 +29,7 @@ const fragments = records.reduce(transforms.fragmentTransformer, []);
 
 ## Development
 
-Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and ESLint checks with:
+Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and lint checks with:
 
 ```sh
 pnpm --filter @tryghost/algolia-fragmenter test

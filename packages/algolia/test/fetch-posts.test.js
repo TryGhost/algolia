@@ -32,7 +32,8 @@ describe('fetchPosts', function () {
         firstPage.meta = {pagination: {next: 3}};
         const secondPage = [{id: 'second-post'}];
         secondPage.meta = {pagination: {next: null}};
-        const browsePosts = vi.fn()
+        const browsePosts = vi
+            .fn()
             .mockResolvedValueOnce(firstPage)
             .mockResolvedValueOnce(secondPage);
         vi.useFakeTimers();
@@ -95,44 +96,36 @@ describe('fetchPosts', function () {
     it('rejects a non-array response in automatic pagination mode', async function () {
         const browsePosts = vi.fn().mockResolvedValue({meta: {pagination: {next: null}}});
 
-        await assert.rejects(
-            fetchPosts(browsePosts),
-            {
-                name: 'TypeError',
-                message: 'Ghost returned posts in an invalid format.'
-            }
-        );
+        await assert.rejects(fetchPosts(browsePosts), {
+            name: 'TypeError',
+            message: 'Ghost returned posts in an invalid format.'
+        });
     });
 
     it('rejects missing pagination metadata in automatic mode', async function () {
         const browsePosts = vi.fn().mockResolvedValue([{id: 'post-without-meta'}]);
 
-        await assert.rejects(
-            fetchPosts(browsePosts),
-            {
-                name: 'TypeError',
-                message: 'Ghost returned posts without pagination metadata.'
-            }
-        );
+        await assert.rejects(fetchPosts(browsePosts), {
+            name: 'TypeError',
+            message: 'Ghost returned posts without pagination metadata.'
+        });
     });
 
     it('rejects a non-array response from a later page', async function () {
         const firstPage = [{id: 'first-post'}];
         firstPage.meta = {pagination: {next: 2}};
-        const browsePosts = vi.fn()
+        const browsePosts = vi
+            .fn()
             .mockResolvedValueOnce(firstPage)
             .mockResolvedValueOnce({meta: {pagination: {next: null}}});
         vi.useFakeTimers();
 
         try {
             const resultPromise = fetchPosts(browsePosts);
-            const rejection = assert.rejects(
-                resultPromise,
-                {
-                    name: 'TypeError',
-                    message: 'Ghost returned posts in an invalid format.'
-                }
-            );
+            const rejection = assert.rejects(resultPromise, {
+                name: 'TypeError',
+                message: 'Ghost returned posts in an invalid format.'
+            });
 
             await vi.advanceTimersByTimeAsync(100);
             await rejection;
@@ -144,20 +137,18 @@ describe('fetchPosts', function () {
     it('rejects missing pagination metadata from a later page', async function () {
         const firstPage = [{id: 'first-post'}];
         firstPage.meta = {pagination: {next: 2}};
-        const browsePosts = vi.fn()
+        const browsePosts = vi
+            .fn()
             .mockResolvedValueOnce(firstPage)
             .mockResolvedValueOnce([{id: 'post-without-meta'}]);
         vi.useFakeTimers();
 
         try {
             const resultPromise = fetchPosts(browsePosts);
-            const rejection = assert.rejects(
-                resultPromise,
-                {
-                    name: 'TypeError',
-                    message: 'Ghost returned posts without pagination metadata.'
-                }
-            );
+            const rejection = assert.rejects(resultPromise, {
+                name: 'TypeError',
+                message: 'Ghost returned posts without pagination metadata.'
+            });
 
             await vi.advanceTimersByTimeAsync(100);
             await rejection;
@@ -172,13 +163,10 @@ describe('fetchPosts', function () {
             posts.meta = {pagination: {next: nextPage}};
             const browsePosts = vi.fn().mockResolvedValue(posts);
 
-            await assert.rejects(
-                fetchPosts(browsePosts),
-                {
-                    name: 'TypeError',
-                    message: 'Ghost returned an invalid next page.'
-                }
-            );
+            await assert.rejects(fetchPosts(browsePosts), {
+                name: 'TypeError',
+                message: 'Ghost returned an invalid next page.'
+            });
         }
     });
 
@@ -189,7 +177,8 @@ describe('fetchPosts', function () {
         repeatedPage.meta = {pagination: {next: 2}};
         const finalPage = [{id: 'final-post'}];
         finalPage.meta = {pagination: {next: null}};
-        const browsePosts = vi.fn()
+        const browsePosts = vi
+            .fn()
             .mockResolvedValueOnce(firstPage)
             .mockResolvedValueOnce(repeatedPage)
             .mockResolvedValueOnce(finalPage);
@@ -197,13 +186,10 @@ describe('fetchPosts', function () {
 
         try {
             const resultPromise = fetchPosts(browsePosts);
-            const rejection = assert.rejects(
-                resultPromise,
-                {
-                    name: 'TypeError',
-                    message: 'Ghost returned a repeated next page.'
-                }
-            );
+            const rejection = assert.rejects(resultPromise, {
+                name: 'TypeError',
+                message: 'Ghost returned a repeated next page.'
+            });
 
             await vi.advanceTimersByTimeAsync(200);
             await rejection;
@@ -217,13 +203,10 @@ describe('fetchPosts', function () {
         posts.meta = {pagination: {next: 1}};
         const browsePosts = vi.fn().mockResolvedValue(posts);
 
-        await assert.rejects(
-            fetchPosts(browsePosts),
-            {
-                name: 'TypeError',
-                message: 'Ghost returned a repeated next page.'
-            }
-        );
+        await assert.rejects(fetchPosts(browsePosts), {
+            name: 'TypeError',
+            message: 'Ghost returned a repeated next page.'
+        });
         expect(browsePosts).toHaveBeenCalledTimes(1);
     });
 

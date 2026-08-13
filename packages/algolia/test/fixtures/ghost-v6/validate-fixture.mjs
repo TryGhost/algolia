@@ -79,7 +79,7 @@ assert.deepEqual(
     ['extended-heading', 'paragraph', 'extended-heading', 'list', 'codeblock', 'image', 'paragraph']
 );
 
-console.log(JSON.stringify({ // eslint-disable-line no-console
+console.log(JSON.stringify({
     posts: posts.length,
     page1: page1.posts.length,
     page2: page2.posts.length,

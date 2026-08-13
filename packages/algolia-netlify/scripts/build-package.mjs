@@ -11,10 +11,7 @@ await rm(outputDirectory, {recursive: true, force: true});
 
 await build({
     absWorkingDir: packageDirectory,
-    entryPoints: [
-        'functions/post-published.mts',
-        'functions/post-unpublished.mts'
-    ],
+    entryPoints: ['functions/post-published.mts', 'functions/post-unpublished.mts'],
     outdir: outputDirectory,
     outbase: '.',
     outExtension: {'.js': '.mjs'},

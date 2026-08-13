@@ -40,10 +40,10 @@ export default async function postPublished(request: Request): Promise<Response>
         const index = new IndexFactory(algoliaSettings());
         await index.setSettingsForIndex();
         await index.save(fragments);
-        console.log('Fragments successfully saved to Algolia index'); // eslint-disable-line no-console
+        console.log('Fragments successfully saved to Algolia index');
         return textResponse(`Post "${String(post.title)}" has been added to the index.`);
     } catch (error) {
-        console.log(error); // eslint-disable-line no-console
+        console.log(error);
         const message = error instanceof Error ? error.message : String(error);
         return Response.json({msg: message}, {status: 500});
     }

@@ -2,14 +2,8 @@ declare module '@tryghost/algolia-fragmenter' {
     type AlgoliaRecord = Record<string, unknown>;
 
     const transforms: {
-        transformToAlgoliaObject(
-            posts: AlgoliaRecord[],
-            ignoreSlugs?: string[]
-        ): AlgoliaRecord[];
-        fragmentTransformer(
-            accumulator: AlgoliaRecord[],
-            post: AlgoliaRecord
-        ): AlgoliaRecord[];
+        transformToAlgoliaObject(posts: AlgoliaRecord[], ignoreSlugs?: string[]): AlgoliaRecord[];
+        fragmentTransformer(accumulator: AlgoliaRecord[], post: AlgoliaRecord): AlgoliaRecord[];
     };
 
     export default transforms;

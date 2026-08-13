@@ -32,7 +32,7 @@
     "dev": "pnpm --dir ../.. exec netlify dev --filter @tryghost/algolia-netlify",
     "test": "NODE_ENV=testing vitest run --root .",
     "typecheck": "tsc --project tsconfig.functions.json && tsc --project tsconfig.test.json",
-    "lint": "eslint . --ext .js,.cjs,.ts,.mts,.cts --cache",
+    "lint": "oxlint --quiet . && oxfmt --check .",
     "posttest": "pnpm typecheck && pnpm lint",
     "build": "NODE_ENV=production pnpm --dir ../.. exec netlify build --offline --filter @tryghost/algolia-netlify",
     "build:package": "node scripts/build-package.mjs && tsc --project tsconfig.package.json && node scripts/clean-package.mjs",
@@ -44,35 +44,11 @@
   "publishConfig": {
     "access": "public"
   },
-  "eslintConfig": {
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": 2023,
-      "sourceType": "module"
-    },
-    "extends": [
-      "airbnb-base",
-      "plugin:ghost/browser"
-    ],
-    "plugins": [
-      "ghost"
-    ]
-  },
-  "eslintIgnore": [
-    "webpack.functions.js",
-    "build/*",
-    "dist/*"
-  ],
   "devDependencies": {
     "@types/node": "24.13.3",
-    "@typescript-eslint/parser": "8.67.0",
-    "eslint": "8.57.1",
-    "eslint-config-airbnb-base": "15.0.0",
-    "eslint-plugin-ghost": "3.5.0",
-    "eslint-plugin-import": "2.32.0",
     "esbuild": "0.28.2",
     "netlify-cli": "27.1.1",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "dependencies": {
     "@tryghost/algolia-fragmenter": "workspace:^",

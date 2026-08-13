@@ -15,7 +15,7 @@ prettyCLI.command({
     flags: 'index <pathToConfig>',
     desc: 'Run a batch index of all Ghost posts to Algolia',
     paramsDesc: ['Path to a valid config JSON file'],
-    setup: (sywac) => {
+    setup: sywac => {
         sywac.boolean('-V --verbose', {
             defaultValue: false,
             desc: 'Show verbose output'
@@ -35,7 +35,10 @@ prettyCLI.command({
             desc: 'Exclude post slugs from config JSON file'
         });
         sywac.check((argv, context) => {
-            if (argv.limit !== undefined && (!Number.isInteger(argv.limit) || argv.limit < 1 || argv.limit > 100)) {
+            if (
+                argv.limit !== undefined &&
+                (!Number.isInteger(argv.limit) || argv.limit < 1 || argv.limit > 100)
+            ) {
                 context.cliMessage('--limit must be an integer from 1 to 100.');
             }
 
@@ -48,7 +51,7 @@ prettyCLI.command({
             }
         });
     },
-    run: async (argv) => {
+    run: async argv => {
         const mainTimer = Date.now();
         let context = {errors: [], posts: []};
 
@@ -87,7 +90,9 @@ prettyCLI.command({
                 fetchOptions.limit = argv.limit;
             }
 
-            ui.log.info(`Fetching ${argv.limit === undefined ? 'all' : argv.limit} posts from Ghost...`);
+            ui.log.info(
+                `Fetching ${argv.limit === undefined ? 'all' : argv.limit} posts from Ghost...`
+            );
 
             if (argv.page !== undefined) {
                 ui.log.info(`...from page #${argv.page}.`);
@@ -114,7 +119,10 @@ prettyCLI.command({
                 ui.log.info(`Skipping the ${ignoreSlugsCount} slugs in ${argv.pathToConfig}`);
             }
 
-            context.posts = transforms.transformToAlgoliaObject(context.posts, context.ignore_slugs);
+            context.posts = transforms.transformToAlgoliaObject(
+                context.posts,
+                context.ignore_slugs
+            );
 
             context.fragments = context.posts.reduce(transforms.fragmentTransformer, []);
 
@@ -146,7 +154,9 @@ prettyCLI.command({
 
             await index.save(context.fragments);
 
-            ui.log.ok(`${context.fragments.length} Fragments successfully saved to Algolia index in ${Date.now() - timer}ms.`);
+            ui.log.ok(
+                `${context.fragments.length} Fragments successfully saved to Algolia index in ${Date.now() - timer}ms.`
+            );
         } catch (error) {
             context.errors.push(error);
             return ui.log.error('Error saving fragments', context.errors);

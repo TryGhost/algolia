@@ -31,9 +31,7 @@ export default async function postUnpublished(request: Request): Promise<Respons
 
     const {current} = payload.post;
     const {previous} = payload.post;
-    const post = isRecord(current) && Object.keys(current).length > 0
-        ? current
-        : previous;
+    const post = isRecord(current) && Object.keys(current).length > 0 ? current : previous;
     const slug = isRecord(post) && typeof post.slug === 'string' ? post.slug : '';
 
     if (!slug) {
@@ -44,10 +42,10 @@ export default async function postUnpublished(request: Request): Promise<Respons
         const index = new IndexFactory(algoliaSettings());
         await index.initIndex();
         await index.delete(slug);
-        console.log(`Fragments for slug "${slug}" successfully removed from Algolia index`); // eslint-disable-line no-console
+        console.log(`Fragments for slug "${slug}" successfully removed from Algolia index`);
         return textResponse(`Post "${slug}" has been removed from the index.`);
     } catch (error) {
-        console.log(error); // eslint-disable-line no-console
+        console.log(error);
         const message = error instanceof Error ? error.message : String(error);
         return Response.json({msg: message}, {status: 500});
     }

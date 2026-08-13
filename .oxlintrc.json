@@ -1,0 +1,68 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "node", "vitest"],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/coverage/**",
+    ".nx/**",
+    "packages/*/build/**",
+    "packages/algolia-netlify/.netlify/**",
+    "packages/algolia-netlify/build/**",
+    "packages/algolia-netlify/dist/**"
+  ],
+  "rules": {
+    "array-callback-return": "error",
+    "curly": "error",
+    "dot-notation": "error",
+    "eqeqeq": "error",
+    "no-console": "error",
+    "no-constructor-return": "error",
+    "no-plusplus": [
+      "error",
+      {
+        "allowForLoopAfterthoughts": true
+      }
+    ],
+    "no-promise-executor-return": "error",
+    "no-shadow": "error",
+    "no-undef": "error",
+    "no-useless-call": "error",
+    "vitest/expect-expect": "off",
+    "vitest/no-focused-tests": "error",
+    "vitest/no-identical-title": "error",
+    "vitest/valid-describe-callback": "error"
+  },
+  "overrides": [
+    {
+      "files": ["packages/algolia/index.js"],
+      "rules": {
+        "unicorn/no-empty-file": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/algolia-indexer/lib/IndexFactory.js",
+        "packages/algolia-netlify/functions/**/*.{ts,mts}",
+        "packages/algolia/test/fixtures/ghost-v6/validate-fixture.mjs",
+        "packages/algolia/test/fixtures/ghost-v6/verify-fixture.mjs"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/test/**/*.{js,cjs,mjs,ts,mts,cts}", "**/*.test.{js,cjs,mjs,ts,mts,cts}"],
+      "env": {
+        "vitest": true
+      }
+    }
+  ]
+}

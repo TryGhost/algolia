@@ -56,12 +56,8 @@ module.exports.fragmentTransformer = (recordAccumulator, node) => {
 
         // TODO: switch this on in verbose mode only
         // // If fragments are too long, we need this to see which fragment it was
-        // console.log(`Created fragment: `, objectID, fragment.url || node.url, fragment.html.length); // eslint-disable-line no-console
 
-        return [
-            ...fragmentAccumulator,
-            {...node, ...fragment, objectID: objectID}
-        ];
+        return [...fragmentAccumulator, {...node, ...fragment, objectID: objectID}];
     }, []);
 
     return [...recordAccumulator, ...records];
@@ -78,7 +74,7 @@ module.exports._testReduceFragmentsUnderHeadings = reduceFragmentsUnderHeadings;
 module.exports.transformToAlgoliaObject = (posts, ignoreSlugs) => {
     const algoliaObjects = [];
 
-    posts.map((post) => {
+    posts.map(post => {
         // Define the properties we need for Algolia
         const algoliaPost = {
             objectID: post.id,
@@ -100,13 +96,13 @@ module.exports.transformToAlgoliaObject = (posts, ignoreSlugs) => {
         }
 
         if (post.tags && post.tags.length) {
-            post.tags.forEach((tag) => {
+            post.tags.forEach(tag => {
                 algoliaPost.tags.push({name: tag.name, slug: tag.slug});
             });
         }
 
         if (post.authors && post.authors.length) {
-            post.authors.forEach((author) => {
+            post.authors.forEach(author => {
                 algoliaPost.authors.push({name: author.name, slug: author.slug});
             });
         }
