@@ -28,7 +28,7 @@
     "@bcoe/v8-coverage": "1.0.2",
     "@nx/js": "23.1.1",
     "@vitest/coverage-v8": "4.1.10",
-    "eslint": "8.57.1",
+    "eslint": "10.8.1",
     "eslint-plugin-ghost": "3.5.0",
     "nx": "23.1.1",
     "vite": "8.2.1",
