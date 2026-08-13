@@ -1,6 +1,6 @@
 {
   "name": "@tryghost/algolia-fragmenter",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TryGhost/algolia.git",
