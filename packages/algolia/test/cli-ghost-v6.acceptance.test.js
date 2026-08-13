@@ -270,11 +270,11 @@ describe('Ghost 6 CLI acceptance', function () {
 
             const [settingsPut, settingsGet, recordsBatch] = algoliaRequests;
             const expectedAlgoliaHeaders = {
+                accept: 'application/json',
                 'x-algolia-api-key': 'acceptance-admin-key',
                 'x-algolia-application-id': 'acceptance-app',
-                'content-type': 'application/x-www-form-urlencoded'
+                'content-type': 'text/plain'
             };
-            const algoliaAgent = `Algolia for JavaScript (4.20.0); Node.js (${process.versions.node})`;
             const normalizeRequest = request => {
                 const url = new URL(request.url);
                 return {
@@ -287,6 +287,11 @@ describe('Ghost 6 CLI acceptance', function () {
             };
 
             expect(algoliaRequests).toHaveLength(3);
+            const algoliaAgent = normalizeRequest(settingsPut).query['x-algolia-agent'];
+            expect(algoliaAgent).toMatch(
+                /^Algolia for JavaScript \(5\.\d+\.\d+\); Search \(5\.\d+\.\d+\); Node\.js \(.+\)$/
+            );
+            expect(algoliaAgent).toContain(`Node.js (${process.versions.node})`);
             expect(normalizeRequest(settingsPut)).toEqual({
                 method: 'PUT',
                 origin: 'https://acceptance-app.algolia.net',
@@ -299,7 +304,7 @@ describe('Ghost 6 CLI acceptance', function () {
                 method: 'GET',
                 origin: 'https://acceptance-app-dsn.algolia.net',
                 pathname: '/1/indexes/ghost-content/settings',
-                query: {'x-algolia-agent': algoliaAgent, getVersion: '2'},
+                query: {'x-algolia-agent': algoliaAgent},
                 headers: expectedAlgoliaHeaders
             });
             expect(settingsGet).not.toHaveProperty('data');
@@ -314,7 +319,7 @@ describe('Ghost 6 CLI acceptance', function () {
             const batch = JSON.parse(recordsBatch.data);
             expect(batch.requests).toHaveLength(101);
             expect(batch.requests.map(request => request.action)).toEqual(
-                Array(101).fill('updateObject')
+                Array(101).fill('addObject')
             );
             expect(batch.requests.map(request => request.body)).toEqual(expectedRecords);
             expect(batch.requests.at(-1).body.slug).toBe('synthetic-ghost-post-001');

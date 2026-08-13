@@ -180,7 +180,7 @@ describe('modern Netlify webhook handlers', () => {
             requests: Array<{action: string; body: Record<string, unknown>}>;
         };
         expect(batch.requests).toEqual(
-            expectedRecords.slice(0, 2).map(record => ({action: 'updateObject', body: record}))
+            expectedRecords.slice(0, 2).map(record => ({action: 'addObject', body: record}))
         );
     });
 

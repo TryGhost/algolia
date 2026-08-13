@@ -47,7 +47,7 @@ const responseFor = (request, requestNumber) => {
     };
 };
 
-const createNodeHttpRequester = () => ({
+const createHttpRequester = () => ({
     async send(request) {
         state.requests.push(structuredClone(request));
         return responseFor(request, state.requests.length);
@@ -57,7 +57,7 @@ const createNodeHttpRequester = () => ({
 
 const mockedLoad = function (request) {
     if (request === '@algolia/requester-node-http') {
-        return {createNodeHttpRequester};
+        return {createHttpRequester};
     }
     return originals.load.apply(this, arguments);
 };
