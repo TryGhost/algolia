@@ -10,7 +10,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "echo \"Implement me!\"",
-    "test": "NODE_ENV=testing mocha './test/**/*.test.js'",
+    "test": "NODE_ENV=testing vitest run --root .",
     "lint": "eslint . --ext .js --cache",
     "posttest": "yarn lint"
   },
@@ -20,11 +20,6 @@
   ],
   "publishConfig": {
     "access": "public"
-  },
-  "devDependencies": {
-    "mocha": "10.2.0",
-    "should": "13.2.3",
-    "sinon": "17.0.1"
   },
   "dependencies": {
     "algolia-html-extractor": "0.0.1"

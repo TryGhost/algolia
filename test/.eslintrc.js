@@ -5,6 +5,6 @@ module.exports = {
     },
     plugins: ['ghost'],
     extends: [
-        'plugin:ghost/test'
+        'plugin:ghost/node'
     ]
 };

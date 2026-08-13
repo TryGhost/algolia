@@ -10,7 +10,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "yarn build && netlify dev",
-    "test": "NODE_ENV=testing mocha './test/**/*.test.js'",
+    "test": "NODE_ENV=testing vitest run --root . --passWithNoTests",
     "lint": "eslint . --ext .js --cache",
     "posttest": "yarn lint",
     "build": "NODE_ENV=production netlify functions:build --functions build/functions --src functions"
@@ -40,10 +40,7 @@
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-plugin-ghost": "3.4.0",
     "eslint-plugin-import": "2.29.0",
-    "mocha": "10.2.0",
-    "netlify-cli": "16.3.1",
-    "should": "13.2.3",
-    "sinon": "17.0.1"
+    "netlify-cli": "16.3.1"
   },
   "dependencies": {
     "@tryghost/algolia-fragmenter": "^0.2.7",
