@@ -2,6 +2,16 @@
 
 `@tryghost/algolia-netlify` provides Netlify Functions that listen to Ghost post webhooks and update an Algolia search index.
 
+The public package exports the native Request/Response handlers from its root and from explicit subpaths:
+
+```js
+import {postPublished, postUnpublished} from '@tryghost/algolia-netlify';
+import publishedHandler from '@tryghost/algolia-netlify/post-published';
+import unpublishedHandler from '@tryghost/algolia-netlify/post-unpublished';
+```
+
+The named and subpath exports reference the same handlers. Consumers can wrap either subpath in a basename-preserving Netlify Function entry; this repository deploys the canonical `post-published` and `post-unpublished` entries directly.
+
 ## Security
 
 > [!WARNING]
@@ -76,7 +86,7 @@ Run the full monorepo suite with `pnpm test`.
 
 The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Existing valid webhook behavior, endpoint URLs, and optional `key` handling are unchanged.
 
-This runtime migration does not repair the package's pre-existing npm artifact: the published tarball does not contain an importable entry point or the function sources. Deploy this workspace from the repository with Netlify; making `@tryghost/algolia-netlify` installable remains separate release work.
+`pnpm pack` builds an ESM-only Node 24 package with generated TypeScript declarations. The package intentionally exposes only the two handlers; webhook utilities remain internal.
 
 ---
 

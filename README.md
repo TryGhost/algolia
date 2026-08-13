@@ -7,7 +7,7 @@ JavaScript tools for turning Ghost posts into records and keeping an Algolia sea
 
 ## Tools
 
-This pnpm and Lerna monorepo contains four public packages:
+This pnpm monorepo contains four public packages:
 
 - [`@tryghost/algolia`](packages/algolia/README.md) provides a CLI for initially indexing a Ghost site's published posts.
 - [`@tryghost/algolia-netlify`](packages/algolia-netlify/README.md) provides Netlify Functions that process Ghost post webhooks and update an index.
@@ -53,13 +53,22 @@ Package-specific development and verification commands are documented in each pa
 
 ## Publishing
 
-The repository currently publishes changed packages through Lerna:
+The repository versions its four public packages independently with Nx. Use the root `ship:*` commands from a clean checkout of `main`:
 
 ```sh
-pnpm ship
+pnpm ship:patch
+pnpm ship:minor
+pnpm ship:major
 ```
 
-This is a maintainer-only release operation for public npm packages and runs the full test suite first.
+Unscoped commands version all four packages. To version only specific packages, pass Nx's standard project selector and use `--dry-run` first:
+
+```sh
+pnpm ship:patch --projects=@tryghost/algolia --dry-run
+pnpm ship:patch --projects=@tryghost/algolia
+```
+
+This maintainer-only operation runs the full suite, updates selected package versions and required internal dependants, creates the release commit and package tags, and pushes them to the configured upstream. The [`Publish` workflow](.github/workflows/publish.yml) then publishes new versions through npm trusted publishing with provenance. Never run `npm publish` by hand.
 
 ---
 

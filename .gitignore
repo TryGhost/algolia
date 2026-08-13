@@ -71,3 +71,9 @@ packages/algolia/config*.json
 
 # Local Netlify folder
 .netlify
+
+# Generated npm package output
+packages/algolia-netlify/dist/
+
+# Nx local cache and workspace data
+.nx/
