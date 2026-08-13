@@ -48,7 +48,7 @@
     "@types/node": "24.13.3",
     "esbuild": "0.28.2",
     "netlify-cli": "27.1.1",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "dependencies": {
     "@tryghost/algolia-fragmenter": "workspace:^",
