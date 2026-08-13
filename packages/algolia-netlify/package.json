@@ -78,6 +78,6 @@
     "@tryghost/algolia-fragmenter": "workspace:^",
     "@tryghost/algolia-indexer": "workspace:^",
     "algolia-html-extractor": "0.0.1",
-    "algoliasearch": "4.20.0"
+    "algoliasearch": "5.56.0"
   }
 }
