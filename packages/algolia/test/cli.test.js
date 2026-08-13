@@ -1,12 +1,14 @@
-require('./utils');
+import {describe, expect, it} from 'vitest';
 
-const path = require('path');
-const {spawnSync} = require('child_process');
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 
-const CLI_PATH = path.join(__dirname, '..', 'bin', 'cli.js');
-const MISSING_CONFIG_PATH = path.join(__dirname, 'missing-config.json');
-const CONFIG_PATH = path.join(__dirname, 'fixtures', 'cli-config.json');
-const MOCK_DEPENDENCIES_PATH = path.join(__dirname, 'fixtures', 'mock-cli-dependencies.js');
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const CLI_PATH = path.join(testDirectory, '..', 'bin', 'cli.js');
+const MISSING_CONFIG_PATH = path.join(testDirectory, 'missing-config.json');
+const CONFIG_PATH = path.join(testDirectory, 'fixtures', 'cli-config.json');
+const MOCK_DEPENDENCIES_PATH = path.join(testDirectory, 'fixtures', 'mock-cli-dependencies.js');
 const INVALID_LIMITS = ['not-a-number', '0', '-1', '1.5', '101'];
 const INVALID_PAGES = ['not-a-number', '0', '-1', '1.5'];
 
@@ -39,10 +41,10 @@ describe('algolia CLI', function () {
         const result = runCli(['index', MISSING_CONFIG_PATH, '--page', '2']);
         const output = getOutput(result);
 
-        result.status.should.not.eql(0);
-        output.should.match(/--page requires --limit/);
-        output.should.not.match(/--page must be a positive integer/);
-        output.should.not.match(/Failed loading JSON config file/);
+        expect(result.status).not.toBe(0);
+        expect(output).toMatch(/--page requires --limit/);
+        expect(output).not.toMatch(/--page must be a positive integer/);
+        expect(output).not.toMatch(/Failed loading JSON config file/);
     });
 
     for (const limit of INVALID_LIMITS) {
@@ -50,9 +52,9 @@ describe('algolia CLI', function () {
             const result = runCli(['index', MISSING_CONFIG_PATH, '--limit', limit]);
             const output = getOutput(result);
 
-            result.status.should.not.eql(0);
-            output.should.match(/--limit must be an integer from 1 to 100/);
-            output.should.not.match(/Failed loading JSON config file/);
+            expect(result.status).not.toBe(0);
+            expect(output).toMatch(/--limit must be an integer from 1 to 100/);
+            expect(output).not.toMatch(/Failed loading JSON config file/);
         });
     }
 
@@ -61,10 +63,10 @@ describe('algolia CLI', function () {
             const result = runCli(['index', MISSING_CONFIG_PATH, '--limit', '100', '--page', page]);
             const output = getOutput(result);
 
-            result.status.should.not.eql(0);
-            output.should.match(/--page must be a positive integer/);
-            output.should.not.match(/Failed loading JSON config file/);
-            output.should.not.match(/GHOST_CLIENT|GHOST_BROWSE/);
+            expect(result.status).not.toBe(0);
+            expect(output).toMatch(/--page must be a positive integer/);
+            expect(output).not.toMatch(/Failed loading JSON config file/);
+            expect(output).not.toMatch(/GHOST_CLIENT|GHOST_BROWSE/);
         });
     }
 
@@ -72,29 +74,29 @@ describe('algolia CLI', function () {
         const result = runCli(['index', CONFIG_PATH], {mockDependencies: true});
         const output = getOutput(result);
 
-        result.status.should.eql(0);
-        getLoggedValues(output, 'GHOST_CLIENT').should.eql([{
+        expect(result.status).toBe(0);
+        expect(getLoggedValues(output, 'GHOST_CLIENT')).toEqual([{
             url: 'https://example.test',
             key: 'test-content-api-key',
             version: 'v6.0'
         }]);
-        getLoggedValues(output, 'GHOST_BROWSE').should.eql([
+        expect(getLoggedValues(output, 'GHOST_BROWSE')).toEqual([
             {limit: 100, page: 1, include: 'tags,authors'},
             {limit: 100, page: 2, include: 'tags,authors'}
         ]);
-        output.should.match(/2 Fragments successfully saved/);
+        expect(output).toMatch(/2 Fragments successfully saved/);
     });
 
     it('accepts the inclusive limit bounds in one-page mode', function () {
         const firstPost = runCli(['index', CONFIG_PATH, '--limit', '1'], {mockDependencies: true});
         const requestedPage = runCli(['index', CONFIG_PATH, '--limit', '100', '--page', '3'], {mockDependencies: true});
 
-        firstPost.status.should.eql(0);
-        getLoggedValues(getOutput(firstPost), 'GHOST_BROWSE').should.eql([
+        expect(firstPost.status).toBe(0);
+        expect(getLoggedValues(getOutput(firstPost), 'GHOST_BROWSE')).toEqual([
             {limit: 1, include: 'tags,authors'}
         ]);
-        requestedPage.status.should.eql(0);
-        getLoggedValues(getOutput(requestedPage), 'GHOST_BROWSE').should.eql([
+        expect(requestedPage.status).toBe(0);
+        expect(getLoggedValues(getOutput(requestedPage), 'GHOST_BROWSE')).toEqual([
             {limit: 100, page: 3, include: 'tags,authors'}
         ]);
     });

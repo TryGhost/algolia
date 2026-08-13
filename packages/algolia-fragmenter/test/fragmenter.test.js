@@ -1,13 +1,14 @@
-// Switch these lines once there are useful utils
-// const testUtils = require('./utils');
-require('./utils');
+import {describe, expect, it} from 'vitest';
 
-const transforms = require('../');
-const fs = require('fs');
-const path = require('path');
+import transforms from '../index.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 const readFixture = (fileName) => {
-    return fs.readFileSync(path.join(__dirname, `fixtures`, `${fileName}.html`), {encoding: `utf8`});
+    return fs.readFileSync(path.join(testDirectory, `fixtures`, `${fileName}.html`), {encoding: `utf8`});
 };
 
 describe('Algolia Transforms', function () {
@@ -53,11 +54,11 @@ describe('Algolia Transforms', function () {
         let reducedFragments = fragments.reduce(transforms._testReduceFragmentsUnderHeadings, []);
 
         // We start with 4 elements, and end up with 2
-        reducedFragments.should.have.lengthOf(2);
+        expect(reducedFragments).toHaveLength(2);
         // The content gets merged to contain all 3 strings
-        reducedFragments[0].content.should.match(/getting started/);
-        reducedFragments[0].content.should.match(/supported version/);
-        reducedFragments[0].content.should.match(/manage all the packages/);
+        expect(reducedFragments[0].content).toMatch(/getting started/);
+        expect(reducedFragments[0].content).toMatch(/supported version/);
+        expect(reducedFragments[0].content).toMatch(/manage all the packages/);
     });
 
     it('Processes minimal example correctly', function () {
@@ -69,8 +70,8 @@ describe('Algolia Transforms', function () {
         };
         let reducedFragments = transforms.fragmentTransformer([], fakeNode);
 
-        reducedFragments.should.have.a.lengthOf(4);
-        reducedFragments[1].url.should.eql('/install/source/#pre-requisites');
+        expect(reducedFragments).toHaveLength(4);
+        expect(reducedFragments[1].url).toBe('/install/source/#pre-requisites');
     });
 
     it('merges multiple nodes correctly', function () {
@@ -88,11 +89,11 @@ describe('Algolia Transforms', function () {
 
         let reducedFragments = fakeNodes.reduce(transforms.fragmentTransformer, []);
 
-        reducedFragments.should.have.a.lengthOf(6);
-        reducedFragments[0].url.should.eql('/install/source/');
-        reducedFragments[1].url.should.eql('/install/source/#pre-requisites');
-        reducedFragments[4].url.should.eql('/install/test/');
-        reducedFragments[5].url.should.eql('/install/test/#testing');
+        expect(reducedFragments).toHaveLength(6);
+        expect(reducedFragments[0].url).toBe('/install/source/');
+        expect(reducedFragments[1].url).toBe('/install/source/#pre-requisites');
+        expect(reducedFragments[4].url).toBe('/install/test/');
+        expect(reducedFragments[5].url).toBe('/install/test/#testing');
     });
 
     it('Processes massive example correctly', function () {
@@ -106,7 +107,7 @@ describe('Algolia Transforms', function () {
         let reducedFragments = [fakeNode].reduce(transforms.fragmentTransformer, []);
 
         reducedFragments.forEach((fragment) => {
-            JSON.stringify(fragment).length.should.be.below(10000);
+            expect(JSON.stringify(fragment).length).toBeLessThan(10000);
         });
     });
 });

@@ -1,22 +1,30 @@
-require('./utils');
+import assert from 'node:assert/strict';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 
-const assert = require('assert/strict');
-const {fetchPosts} = require('../lib/fetch-posts');
+import fetchPostsModule from '../lib/fetch-posts.js';
+
+const {fetchPosts} = fetchPostsModule;
 
 describe('fetchPosts', function () {
+    afterEach(function () {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     it('fetches the first page with Ghost 6 pagination defaults', async function () {
         const posts = [{id: 'first-post'}];
         posts.meta = {pagination: {next: null}};
-        const browsePosts = sinon.stub().resolves(posts);
+        const browsePosts = vi.fn().mockResolvedValue(posts);
 
         const result = await fetchPosts(browsePosts);
 
-        result.should.eql([{id: 'first-post'}]);
-        browsePosts.calledOnceWithExactly({
+        expect(result).toEqual([{id: 'first-post'}]);
+        expect(browsePosts).toHaveBeenCalledTimes(1);
+        expect(browsePosts).toHaveBeenCalledWith({
             limit: 100,
             page: 1,
             include: 'tags,authors'
-        }).should.be.true();
+        });
     });
 
     it('follows Ghost pagination after waiting between pages', async function () {
@@ -24,66 +32,68 @@ describe('fetchPosts', function () {
         firstPage.meta = {pagination: {next: 3}};
         const secondPage = [{id: 'second-post'}];
         secondPage.meta = {pagination: {next: null}};
-        const browsePosts = sinon.stub();
-        browsePosts.onFirstCall().resolves(firstPage);
-        browsePosts.onSecondCall().resolves(secondPage);
-        const clock = sinon.useFakeTimers();
+        const browsePosts = vi.fn()
+            .mockResolvedValueOnce(firstPage)
+            .mockResolvedValueOnce(secondPage);
+        vi.useFakeTimers();
 
         try {
             const resultPromise = fetchPosts(browsePosts, {filter: 'slug:-[skip-me]'});
-            await clock.tickAsync(99);
-            browsePosts.calledOnce.should.be.true();
+            await vi.advanceTimersByTimeAsync(99);
+            expect(browsePosts).toHaveBeenCalledTimes(1);
 
-            await clock.tickAsync(1);
+            await vi.advanceTimersByTimeAsync(1);
             const result = await resultPromise;
 
-            result.should.eql([{id: 'first-post'}, {id: 'second-post'}]);
-            browsePosts.firstCall.calledWithExactly({
+            expect(result).toEqual([{id: 'first-post'}, {id: 'second-post'}]);
+            expect(browsePosts).toHaveBeenNthCalledWith(1, {
                 limit: 100,
                 page: 1,
                 include: 'tags,authors',
                 filter: 'slug:-[skip-me]'
-            }).should.be.true();
-            browsePosts.secondCall.calledWithExactly({
+            });
+            expect(browsePosts).toHaveBeenNthCalledWith(2, {
                 limit: 100,
                 page: 3,
                 include: 'tags,authors',
                 filter: 'slug:-[skip-me]'
-            }).should.be.true();
+            });
         } finally {
-            clock.restore();
+            vi.useRealTimers();
         }
     });
 
     it('fetches only the requested limit when a limit is explicit', async function () {
-        const browsePosts = sinon.stub().resolves([{id: 'limited-post'}]);
+        const browsePosts = vi.fn().mockResolvedValue([{id: 'limited-post'}]);
 
         const result = await fetchPosts(browsePosts, {limit: 20});
 
-        result.should.eql([{id: 'limited-post'}]);
-        browsePosts.calledOnceWithExactly({
+        expect(result).toEqual([{id: 'limited-post'}]);
+        expect(browsePosts).toHaveBeenCalledTimes(1);
+        expect(browsePosts).toHaveBeenCalledWith({
             limit: 20,
             include: 'tags,authors'
-        }).should.be.true();
+        });
     });
 
     it('fetches only the requested page when limit and page are explicit', async function () {
         const requestedPage = [{id: 'requested-post'}];
         requestedPage.meta = {pagination: {next: 4}};
-        const browsePosts = sinon.stub().resolves(requestedPage);
+        const browsePosts = vi.fn().mockResolvedValue(requestedPage);
 
         const result = await fetchPosts(browsePosts, {limit: 10, page: 3});
 
-        result.should.eql([{id: 'requested-post'}]);
-        browsePosts.calledOnceWithExactly({
+        expect(result).toEqual([{id: 'requested-post'}]);
+        expect(browsePosts).toHaveBeenCalledTimes(1);
+        expect(browsePosts).toHaveBeenCalledWith({
             limit: 10,
             page: 3,
             include: 'tags,authors'
-        }).should.be.true();
+        });
     });
 
     it('rejects a non-array response in automatic pagination mode', async function () {
-        const browsePosts = sinon.stub().resolves({meta: {pagination: {next: null}}});
+        const browsePosts = vi.fn().mockResolvedValue({meta: {pagination: {next: null}}});
 
         await assert.rejects(
             fetchPosts(browsePosts),
@@ -95,7 +105,7 @@ describe('fetchPosts', function () {
     });
 
     it('rejects missing pagination metadata in automatic mode', async function () {
-        const browsePosts = sinon.stub().resolves([{id: 'post-without-meta'}]);
+        const browsePosts = vi.fn().mockResolvedValue([{id: 'post-without-meta'}]);
 
         await assert.rejects(
             fetchPosts(browsePosts),
@@ -109,10 +119,10 @@ describe('fetchPosts', function () {
     it('rejects a non-array response from a later page', async function () {
         const firstPage = [{id: 'first-post'}];
         firstPage.meta = {pagination: {next: 2}};
-        const browsePosts = sinon.stub();
-        browsePosts.onFirstCall().resolves(firstPage);
-        browsePosts.onSecondCall().resolves({meta: {pagination: {next: null}}});
-        const clock = sinon.useFakeTimers();
+        const browsePosts = vi.fn()
+            .mockResolvedValueOnce(firstPage)
+            .mockResolvedValueOnce({meta: {pagination: {next: null}}});
+        vi.useFakeTimers();
 
         try {
             const resultPromise = fetchPosts(browsePosts);
@@ -124,20 +134,20 @@ describe('fetchPosts', function () {
                 }
             );
 
-            await clock.tickAsync(100);
+            await vi.advanceTimersByTimeAsync(100);
             await rejection;
         } finally {
-            clock.restore();
+            vi.useRealTimers();
         }
     });
 
     it('rejects missing pagination metadata from a later page', async function () {
         const firstPage = [{id: 'first-post'}];
         firstPage.meta = {pagination: {next: 2}};
-        const browsePosts = sinon.stub();
-        browsePosts.onFirstCall().resolves(firstPage);
-        browsePosts.onSecondCall().resolves([{id: 'post-without-meta'}]);
-        const clock = sinon.useFakeTimers();
+        const browsePosts = vi.fn()
+            .mockResolvedValueOnce(firstPage)
+            .mockResolvedValueOnce([{id: 'post-without-meta'}]);
+        vi.useFakeTimers();
 
         try {
             const resultPromise = fetchPosts(browsePosts);
@@ -149,10 +159,10 @@ describe('fetchPosts', function () {
                 }
             );
 
-            await clock.tickAsync(100);
+            await vi.advanceTimersByTimeAsync(100);
             await rejection;
         } finally {
-            clock.restore();
+            vi.useRealTimers();
         }
     });
 
@@ -160,7 +170,7 @@ describe('fetchPosts', function () {
         for (const nextPage of [undefined, 0, -1, 1.5, '2']) {
             const posts = [{id: 'first-post'}];
             posts.meta = {pagination: {next: nextPage}};
-            const browsePosts = sinon.stub().resolves(posts);
+            const browsePosts = vi.fn().mockResolvedValue(posts);
 
             await assert.rejects(
                 fetchPosts(browsePosts),
@@ -179,11 +189,11 @@ describe('fetchPosts', function () {
         repeatedPage.meta = {pagination: {next: 2}};
         const finalPage = [{id: 'final-post'}];
         finalPage.meta = {pagination: {next: null}};
-        const browsePosts = sinon.stub();
-        browsePosts.onFirstCall().resolves(firstPage);
-        browsePosts.onSecondCall().resolves(repeatedPage);
-        browsePosts.onThirdCall().resolves(finalPage);
-        const clock = sinon.useFakeTimers();
+        const browsePosts = vi.fn()
+            .mockResolvedValueOnce(firstPage)
+            .mockResolvedValueOnce(repeatedPage)
+            .mockResolvedValueOnce(finalPage);
+        vi.useFakeTimers();
 
         try {
             const resultPromise = fetchPosts(browsePosts);
@@ -195,17 +205,17 @@ describe('fetchPosts', function () {
                 }
             );
 
-            await clock.tickAsync(200);
+            await vi.advanceTimersByTimeAsync(200);
             await rejection;
         } finally {
-            clock.restore();
+            vi.useRealTimers();
         }
     });
 
     it('rejects pagination back to the initial page', async function () {
         const posts = [{id: 'first-post'}];
         posts.meta = {pagination: {next: 1}};
-        const browsePosts = sinon.stub().resolves(posts);
+        const browsePosts = vi.fn().mockResolvedValue(posts);
 
         await assert.rejects(
             fetchPosts(browsePosts),
@@ -214,12 +224,12 @@ describe('fetchPosts', function () {
                 message: 'Ghost returned a repeated next page.'
             }
         );
-        browsePosts.calledOnce.should.be.true();
+        expect(browsePosts).toHaveBeenCalledTimes(1);
     });
 
     it('propagates Ghost request errors unchanged', async function () {
         const ghostError = Error('Ghost request failed');
-        const browsePosts = sinon.stub().rejects(ghostError);
+        const browsePosts = vi.fn().mockRejectedValue(ghostError);
 
         await assert.rejects(fetchPosts(browsePosts), error => error === ghostError);
     });
