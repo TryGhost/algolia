@@ -18,7 +18,7 @@
     "dev": "algolia",
     "algolia": "algolia",
     "test": "NODE_ENV=testing vitest run --root .",
-    "lint": "eslint . --ext .js --cache",
+    "lint": "oxlint --quiet . && oxfmt --check .",
     "posttest": "pnpm lint"
   },
   "files": [

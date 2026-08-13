@@ -17,8 +17,12 @@ const networkDenialProbePath = path.join(testDirectory, 'helpers', 'network-deni
 const fixtureDirectory = path.join(testDirectory, 'fixtures', 'ghost-v6');
 const fixtureVerifierPath = path.join(fixtureDirectory, 'verify-fixture.mjs');
 const contentApiKey = '00000000000000000000000000';
-const expectedRecords = JSON.parse(await readFile(path.join(fixtureDirectory, 'expected-algolia-records.json'), 'utf8'));
-const expectedSettings = JSON.parse(await readFile(path.join(fixtureDirectory, 'expected-index-settings.json'), 'utf8'));
+const expectedRecords = JSON.parse(
+    await readFile(path.join(fixtureDirectory, 'expected-algolia-records.json'), 'utf8')
+);
+const expectedSettings = JSON.parse(
+    await readFile(path.join(fixtureDirectory, 'expected-index-settings.json'), 'utf8')
+);
 const ownedDirectories = new Set();
 const ownedServers = new Set();
 
@@ -50,17 +54,21 @@ const startReplayServer = (requestLogPath, replayMode) => {
             reject(new Error('Ghost replay server did not become ready within 5 seconds.'));
         }, 5000);
         server.stderr.on('data', chunk => stderr.push(chunk));
-        server.once('error', (error) => {
+        server.once('error', error => {
             clearTimeout(timeout);
             reject(error);
         });
         server.once('exit', (code, signal) => {
             if (!ready) {
                 clearTimeout(timeout);
-                reject(new Error(`Ghost replay server exited before readiness (${code ?? signal}).\n${Buffer.concat(stderr).toString('utf8')}`));
+                reject(
+                    new Error(
+                        `Ghost replay server exited before readiness (${code ?? signal}).\n${Buffer.concat(stderr).toString('utf8')}`
+                    )
+                );
             }
         });
-        server.on('message', (message) => {
+        server.on('message', message => {
             if (message.type === 'ready') {
                 ready = true;
                 clearTimeout(timeout);
@@ -73,9 +81,13 @@ const startReplayServer = (requestLogPath, replayMode) => {
     });
 };
 
-const readJsonLines = async (logPath) => {
+const readJsonLines = async logPath => {
     const contents = await readFile(logPath, 'utf8');
-    return contents.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+    return contents
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map(line => JSON.parse(line));
 };
 
 const runCliAgainstReplay = async ({args = [], replayMode = 'automatic'} = {}) => {
@@ -89,18 +101,22 @@ const runCliAgainstReplay = async ({args = [], replayMode = 'automatic'} = {}) =
     ]);
 
     const {server, port} = await startReplayServer(ghostRequestLog, replayMode);
-    await writeFile(configPath, JSON.stringify({
-        ghost: {
-            apiUrl: `http://127.0.0.1:${port}`,
-            apiKey: contentApiKey
-        },
-        algolia: {
-            appId: 'acceptance-app',
-            apiKey: 'acceptance-admin-key',
-            index: 'ghost-content'
-        },
-        ignore_slugs: ['ignored-by-config']
-    }), {mode: 0o600});
+    await writeFile(
+        configPath,
+        JSON.stringify({
+            ghost: {
+                apiUrl: `http://127.0.0.1:${port}`,
+                apiKey: contentApiKey
+            },
+            algolia: {
+                appId: 'acceptance-app',
+                apiKey: 'acceptance-admin-key',
+                index: 'ghost-content'
+            },
+            ignore_slugs: ['ignored-by-config']
+        }),
+        {mode: 0o600}
+    );
 
     const env = {
         PATH: process.env.PATH,
@@ -133,10 +149,12 @@ const runCliAgainstReplay = async ({args = [], replayMode = 'automatic'} = {}) =
 describe('Ghost 6 CLI acceptance', function () {
     afterEach(async () => {
         await Promise.all([...ownedServers].map(stopServer));
-        await Promise.all([...ownedDirectories].map(async (directory) => {
-            ownedDirectories.delete(directory);
-            await rm(directory, {recursive: true});
-        }));
+        await Promise.all(
+            [...ownedDirectories].map(async directory => {
+                ownedDirectories.delete(directory);
+                await rm(directory, {recursive: true});
+            })
+        );
     });
 
     it('keeps captured Ghost responses and reviewed goldens byte-exact', function () {
@@ -152,81 +170,244 @@ describe('Ghost 6 CLI acceptance', function () {
         expect(result.stdout).toBe('Verified 8 Ghost 6 fixture files.\n');
     });
 
-    it('denies non-loopback HTTP transports while allowing the Ghost replay origin', {timeout: 10000}, async function () {
-        const parentHttpRequest = http.request;
-        const temporaryDirectory = await createTemporaryDirectory();
-        const ghostRequestLog = path.join(temporaryDirectory, 'ghost-requests.jsonl');
-        const algoliaRequestLog = path.join(temporaryDirectory, 'algolia-requests.jsonl');
-        await Promise.all([
-            writeFile(ghostRequestLog, '', {mode: 0o600}),
-            writeFile(algoliaRequestLog, '', {mode: 0o600})
-        ]);
-        const {server, port} = await startReplayServer(ghostRequestLog, 'network-probe');
-        const replayOrigin = `http://127.0.0.1:${port}`;
+    it(
+        'denies non-loopback HTTP transports while allowing the Ghost replay origin',
+        {timeout: 10000},
+        async function () {
+            const parentHttpRequest = http.request;
+            const temporaryDirectory = await createTemporaryDirectory();
+            const ghostRequestLog = path.join(temporaryDirectory, 'ghost-requests.jsonl');
+            const algoliaRequestLog = path.join(temporaryDirectory, 'algolia-requests.jsonl');
+            await Promise.all([
+                writeFile(ghostRequestLog, '', {mode: 0o600}),
+                writeFile(algoliaRequestLog, '', {mode: 0o600})
+            ]);
+            const {server, port} = await startReplayServer(ghostRequestLog, 'network-probe');
+            const replayOrigin = `http://127.0.0.1:${port}`;
 
-        const result = spawnSync(process.execPath, [networkDenialProbePath], {
-            encoding: 'utf8',
-            env: {
-                PATH: process.env.PATH,
-                NODE_OPTIONS: `--require=${requesterPreloadPath}`,
-                ALGOLIA_ACCEPTANCE_REQUEST_LOG: algoliaRequestLog,
-                GHOST_REPLAY_ORIGIN: replayOrigin,
-                GHOST_REPLAY_CONTENT_API_KEY: contentApiKey
-            },
-            timeout: 5000,
-            maxBuffer: 1024 * 1024
+            const result = spawnSync(process.execPath, [networkDenialProbePath], {
+                encoding: 'utf8',
+                env: {
+                    PATH: process.env.PATH,
+                    NODE_OPTIONS: `--require=${requesterPreloadPath}`,
+                    ALGOLIA_ACCEPTANCE_REQUEST_LOG: algoliaRequestLog,
+                    GHOST_REPLAY_ORIGIN: replayOrigin,
+                    GHOST_REPLAY_CONTENT_API_KEY: contentApiKey
+                },
+                timeout: 5000,
+                maxBuffer: 1024 * 1024
+            });
+            await stopServer(server);
+
+            expect(result.error).toBeUndefined();
+            expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+            expect(JSON.parse(result.stdout)).toEqual({
+                httpResult: {status: 200, posts: 1},
+                fetchResult: {status: 200, posts: 1},
+                netResult: {status: 200, posts: 1},
+                denied: [
+                    'http.request',
+                    'http.get',
+                    'http.get URL',
+                    'http.request options',
+                    'http.get hostname override',
+                    'http.get port override',
+                    'http.get protocol override',
+                    'https.request',
+                    'https.get',
+                    'https.get URL',
+                    'https.request options',
+                    'fetch',
+                    'fetch Request',
+                    'net.connect',
+                    'net.createConnection',
+                    'net.Socket.connect',
+                    'net.Socket.connect path',
+                    'tls.connect',
+                    'tls.TLSSocket.connect'
+                ]
+            });
+            expect(await readJsonLines(ghostRequestLog)).toHaveLength(3);
+            expect(await readFile(algoliaRequestLog, 'utf8')).toBe('');
+            expect(http.request).toBe(parentHttpRequest);
+        }
+    );
+
+    it(
+        'indexes captured Ghost 6 content through the public CLI',
+        {timeout: 20000},
+        async function () {
+            const {result, ghostRequests, algoliaRequests} = await runCliAgainstReplay({
+                args: ['--skipjsonslugs']
+            });
+
+            expect(ghostRequests).toEqual([
+                {
+                    method: 'GET',
+                    pathname: '/ghost/api/content/posts/',
+                    query: {
+                        key: contentApiKey,
+                        include: 'tags,authors',
+                        limit: '100',
+                        page: '1'
+                    },
+                    acceptVersion: 'v6.0',
+                    userAgent: 'GhostContentSDK/1.12.10'
+                },
+                {
+                    method: 'GET',
+                    pathname: '/ghost/api/content/posts/',
+                    query: {
+                        key: contentApiKey,
+                        include: 'tags,authors',
+                        limit: '100',
+                        page: '2'
+                    },
+                    acceptVersion: 'v6.0',
+                    userAgent: 'GhostContentSDK/1.12.10'
+                }
+            ]);
+
+            const [settingsPut, settingsGet, recordsBatch] = algoliaRequests;
+            const expectedAlgoliaHeaders = {
+                'x-algolia-api-key': 'acceptance-admin-key',
+                'x-algolia-application-id': 'acceptance-app',
+                'content-type': 'application/x-www-form-urlencoded'
+            };
+            const algoliaAgent = `Algolia for JavaScript (4.20.0); Node.js (${process.versions.node})`;
+            const normalizeRequest = request => {
+                const url = new URL(request.url);
+                return {
+                    method: request.method,
+                    origin: url.origin,
+                    pathname: url.pathname,
+                    query: Object.fromEntries(url.searchParams),
+                    headers: request.headers
+                };
+            };
+
+            expect(algoliaRequests).toHaveLength(3);
+            expect(normalizeRequest(settingsPut)).toEqual({
+                method: 'PUT',
+                origin: 'https://acceptance-app.algolia.net',
+                pathname: '/1/indexes/ghost-content/settings',
+                query: {'x-algolia-agent': algoliaAgent},
+                headers: expectedAlgoliaHeaders
+            });
+            expect(JSON.parse(settingsPut.data)).toEqual(expectedSettings);
+            expect(normalizeRequest(settingsGet)).toEqual({
+                method: 'GET',
+                origin: 'https://acceptance-app-dsn.algolia.net',
+                pathname: '/1/indexes/ghost-content/settings',
+                query: {'x-algolia-agent': algoliaAgent, getVersion: '2'},
+                headers: expectedAlgoliaHeaders
+            });
+            expect(settingsGet).not.toHaveProperty('data');
+            expect(normalizeRequest(recordsBatch)).toEqual({
+                method: 'POST',
+                origin: 'https://acceptance-app.algolia.net',
+                pathname: '/1/indexes/ghost-content/batch',
+                query: {'x-algolia-agent': algoliaAgent},
+                headers: expectedAlgoliaHeaders
+            });
+
+            const batch = JSON.parse(recordsBatch.data);
+            expect(batch.requests).toHaveLength(101);
+            expect(batch.requests.map(request => request.action)).toEqual(
+                Array(101).fill('updateObject')
+            );
+            expect(batch.requests.map(request => request.body)).toEqual(expectedRecords);
+            expect(batch.requests.at(-1).body.slug).toBe('synthetic-ghost-post-001');
+            expect(batch.requests.some(request => request.body.slug === 'ignored-by-config')).toBe(
+                false
+            );
+
+            const richRecords = batch.requests
+                .map(request => request.body)
+                .filter(record => record.slug === 'ghost-6-rendered-content-contract');
+            expect(richRecords).toEqual(expectedRecords.slice(0, 2));
+            expect(richRecords.map(record => record.url)).toEqual([
+                'http://127.0.0.1:23689/ghost-6-rendered-content-contract/#fixture-overview',
+                'http://127.0.0.1:23689/ghost-6-rendered-content-contract/#structured-blocks'
+            ]);
+            expect(richRecords[0]).toMatchObject({
+                html: '<p>Rendered by Ghost 6 from synthetic source HTML with an <a href="http://127.0.0.1:23689/internal-destination/">internal link</a>.</p>',
+                tags: [
+                    {name: 'Ghost 6', slug: 'ghost-6'},
+                    {name: 'Acceptance', slug: 'acceptance'}
+                ],
+                authors: [{name: 'Algolia Fixture Author', slug: 'algolia'}]
+            });
+            for (const record of batch.requests.map(request => request.body)) {
+                expect(Object.keys(record).sort()).toEqual([
+                    'anchor',
+                    'authors',
+                    'customRanking',
+                    'headings',
+                    'html',
+                    'image',
+                    'objectID',
+                    'slug',
+                    'tags',
+                    'title',
+                    'url'
+                ]);
+                expect(record).not.toHaveProperty('uuid');
+                expect(record).not.toHaveProperty('excerpt');
+                expect(record).not.toHaveProperty('primary_author');
+                expect(record).not.toHaveProperty('primary_tag');
+                expect(record).not.toHaveProperty('codeinjection_head');
+            }
+
+            expect(result.error).toBeUndefined();
+            expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+            expect(result.signal).toBeNull();
+            expect(`${result.stdout}${result.stderr}`).toMatch(/101 Fragments successfully saved/);
+            expect(`${result.stdout}${result.stderr}`).toMatch(
+                /Successfully indexed all the things/
+            );
+        }
+    );
+
+    it(
+        'forwards an explicit limit without enabling automatic pagination',
+        {timeout: 20000},
+        async function () {
+            const {result, ghostRequests, algoliaRequests} = await runCliAgainstReplay({
+                args: ['--limit', '1'],
+                replayMode: 'limit-one'
+            });
+
+            expect(result.error).toBeUndefined();
+            expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+            expect(ghostRequests).toEqual([
+                {
+                    method: 'GET',
+                    pathname: '/ghost/api/content/posts/',
+                    query: {
+                        key: contentApiKey,
+                        include: 'tags,authors',
+                        limit: '1'
+                    },
+                    acceptVersion: 'v6.0',
+                    userAgent: 'GhostContentSDK/1.12.10'
+                }
+            ]);
+            expect(algoliaRequests).toHaveLength(3);
+            expect(JSON.parse(algoliaRequests[2].data).requests).toHaveLength(2);
+            expect(`${result.stdout}${result.stderr}`).toMatch(/2 Fragments successfully saved/);
+        }
+    );
+
+    it('forwards an explicit page and fetches only that page', {timeout: 20000}, async function () {
+        const {result, ghostRequests, algoliaRequests} = await runCliAgainstReplay({
+            args: ['--limit', '100', '--page', '2'],
+            replayMode: 'page-two'
         });
-        await stopServer(server);
 
         expect(result.error).toBeUndefined();
         expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-        expect(JSON.parse(result.stdout)).toEqual({
-            httpResult: {status: 200, posts: 1},
-            fetchResult: {status: 200, posts: 1},
-            netResult: {status: 200, posts: 1},
-            denied: [
-                'http.request',
-                'http.get',
-                'http.get URL',
-                'http.request options',
-                'http.get hostname override',
-                'http.get port override',
-                'http.get protocol override',
-                'https.request',
-                'https.get',
-                'https.get URL',
-                'https.request options',
-                'fetch',
-                'fetch Request',
-                'net.connect',
-                'net.createConnection',
-                'net.Socket.connect',
-                'net.Socket.connect path',
-                'tls.connect',
-                'tls.TLSSocket.connect'
-            ]
-        });
-        expect(await readJsonLines(ghostRequestLog)).toHaveLength(3);
-        expect(await readFile(algoliaRequestLog, 'utf8')).toBe('');
-        expect(http.request).toBe(parentHttpRequest);
-    });
-
-    it('indexes captured Ghost 6 content through the public CLI', {timeout: 20000}, async function () {
-        const {result, ghostRequests, algoliaRequests} = await runCliAgainstReplay({args: ['--skipjsonslugs']});
-
         expect(ghostRequests).toEqual([
-            {
-                method: 'GET',
-                pathname: '/ghost/api/content/posts/',
-                query: {
-                    key: contentApiKey,
-                    include: 'tags,authors',
-                    limit: '100',
-                    page: '1'
-                },
-                acceptVersion: 'v6.0',
-                userAgent: 'GhostContentSDK/1.12.10'
-            },
             {
                 method: 'GET',
                 pathname: '/ghost/api/content/posts/',
@@ -240,145 +421,6 @@ describe('Ghost 6 CLI acceptance', function () {
                 userAgent: 'GhostContentSDK/1.12.10'
             }
         ]);
-
-        const [settingsPut, settingsGet, recordsBatch] = algoliaRequests;
-        const expectedAlgoliaHeaders = {
-            'x-algolia-api-key': 'acceptance-admin-key',
-            'x-algolia-application-id': 'acceptance-app',
-            'content-type': 'application/x-www-form-urlencoded'
-        };
-        const algoliaAgent = `Algolia for JavaScript (4.20.0); Node.js (${process.versions.node})`;
-        const normalizeRequest = (request) => {
-            const url = new URL(request.url);
-            return {
-                method: request.method,
-                origin: url.origin,
-                pathname: url.pathname,
-                query: Object.fromEntries(url.searchParams),
-                headers: request.headers
-            };
-        };
-
-        expect(algoliaRequests).toHaveLength(3);
-        expect(normalizeRequest(settingsPut)).toEqual({
-            method: 'PUT',
-            origin: 'https://acceptance-app.algolia.net',
-            pathname: '/1/indexes/ghost-content/settings',
-            query: {'x-algolia-agent': algoliaAgent},
-            headers: expectedAlgoliaHeaders
-        });
-        expect(JSON.parse(settingsPut.data)).toEqual(expectedSettings);
-        expect(normalizeRequest(settingsGet)).toEqual({
-            method: 'GET',
-            origin: 'https://acceptance-app-dsn.algolia.net',
-            pathname: '/1/indexes/ghost-content/settings',
-            query: {'x-algolia-agent': algoliaAgent, getVersion: '2'},
-            headers: expectedAlgoliaHeaders
-        });
-        expect(settingsGet).not.toHaveProperty('data');
-        expect(normalizeRequest(recordsBatch)).toEqual({
-            method: 'POST',
-            origin: 'https://acceptance-app.algolia.net',
-            pathname: '/1/indexes/ghost-content/batch',
-            query: {'x-algolia-agent': algoliaAgent},
-            headers: expectedAlgoliaHeaders
-        });
-
-        const batch = JSON.parse(recordsBatch.data);
-        expect(batch.requests).toHaveLength(101);
-        expect(batch.requests.map(request => request.action)).toEqual(Array(101).fill('updateObject'));
-        expect(batch.requests.map(request => request.body)).toEqual(expectedRecords);
-        expect(batch.requests.at(-1).body.slug).toBe('synthetic-ghost-post-001');
-        expect(batch.requests.some(request => request.body.slug === 'ignored-by-config')).toBe(false);
-
-        const richRecords = batch.requests
-            .map(request => request.body)
-            .filter(record => record.slug === 'ghost-6-rendered-content-contract');
-        expect(richRecords).toEqual(expectedRecords.slice(0, 2));
-        expect(richRecords.map(record => record.url)).toEqual([
-            'http://127.0.0.1:23689/ghost-6-rendered-content-contract/#fixture-overview',
-            'http://127.0.0.1:23689/ghost-6-rendered-content-contract/#structured-blocks'
-        ]);
-        expect(richRecords[0]).toMatchObject({
-            html: '<p>Rendered by Ghost 6 from synthetic source HTML with an <a href="http://127.0.0.1:23689/internal-destination/">internal link</a>.</p>',
-            tags: [
-                {name: 'Ghost 6', slug: 'ghost-6'},
-                {name: 'Acceptance', slug: 'acceptance'}
-            ],
-            authors: [{name: 'Algolia Fixture Author', slug: 'algolia'}]
-        });
-        for (const record of batch.requests.map(request => request.body)) {
-            expect(Object.keys(record).sort()).toEqual([
-                'anchor',
-                'authors',
-                'customRanking',
-                'headings',
-                'html',
-                'image',
-                'objectID',
-                'slug',
-                'tags',
-                'title',
-                'url'
-            ]);
-            expect(record).not.toHaveProperty('uuid');
-            expect(record).not.toHaveProperty('excerpt');
-            expect(record).not.toHaveProperty('primary_author');
-            expect(record).not.toHaveProperty('primary_tag');
-            expect(record).not.toHaveProperty('codeinjection_head');
-        }
-
-        expect(result.error).toBeUndefined();
-        expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-        expect(result.signal).toBeNull();
-        expect(`${result.stdout}${result.stderr}`).toMatch(/101 Fragments successfully saved/);
-        expect(`${result.stdout}${result.stderr}`).toMatch(/Successfully indexed all the things/);
-    });
-
-    it('forwards an explicit limit without enabling automatic pagination', {timeout: 20000}, async function () {
-        const {result, ghostRequests, algoliaRequests} = await runCliAgainstReplay({
-            args: ['--limit', '1'],
-            replayMode: 'limit-one'
-        });
-
-        expect(result.error).toBeUndefined();
-        expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-        expect(ghostRequests).toEqual([{
-            method: 'GET',
-            pathname: '/ghost/api/content/posts/',
-            query: {
-                key: contentApiKey,
-                include: 'tags,authors',
-                limit: '1'
-            },
-            acceptVersion: 'v6.0',
-            userAgent: 'GhostContentSDK/1.12.10'
-        }]);
-        expect(algoliaRequests).toHaveLength(3);
-        expect(JSON.parse(algoliaRequests[2].data).requests).toHaveLength(2);
-        expect(`${result.stdout}${result.stderr}`).toMatch(/2 Fragments successfully saved/);
-    });
-
-    it('forwards an explicit page and fetches only that page', {timeout: 20000}, async function () {
-        const {result, ghostRequests, algoliaRequests} = await runCliAgainstReplay({
-            args: ['--limit', '100', '--page', '2'],
-            replayMode: 'page-two'
-        });
-
-        expect(result.error).toBeUndefined();
-        expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-        expect(ghostRequests).toEqual([{
-            method: 'GET',
-            pathname: '/ghost/api/content/posts/',
-            query: {
-                key: contentApiKey,
-                include: 'tags,authors',
-                limit: '100',
-                page: '2'
-            },
-            acceptVersion: 'v6.0',
-            userAgent: 'GhostContentSDK/1.12.10'
-        }]);
         expect(algoliaRequests).toHaveLength(3);
         const requests = JSON.parse(algoliaRequests[2].data).requests;
         expect(requests).toHaveLength(1);

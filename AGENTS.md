@@ -11,7 +11,7 @@ This repository contains the Ghost-to-Algolia CLI, Netlify Functions, and their 
 
 ## Verification
 
-- Run `pnpm test` from the repository root for the root and package test suites; package `posttest` scripts also run ESLint.
+- Run `pnpm test` from the repository root for the root and package test suites; package `posttest` scripts also run the package lint and formatting checks.
 - Run `pnpm lint` for a lint-only monorepo check.
 - Use `pnpm --filter <package-name> test` for a focused package check, then run the full suite before handoff.
 - For Netlify function changes, copy `packages/algolia-netlify/.env.example` to `.env`, use development credentials, and run `pnpm dev` from that package directory.

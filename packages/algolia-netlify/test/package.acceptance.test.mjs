@@ -14,25 +14,26 @@ const ghostFixtureDirectory = path.resolve(packageDirectory, '../algolia/test/fi
 const temporaryDirectories = [];
 
 afterEach(async () => {
-    await Promise.all(temporaryDirectories.splice(0).map(directory => (
-        rm(directory, {recursive: true, force: true})
-    )));
+    await Promise.all(
+        temporaryDirectories
+            .splice(0)
+            .map(directory => rm(directory, {recursive: true, force: true}))
+    );
 });
 
 describe('@tryghost/algolia-netlify package', () => {
     it('exports both native Request/Response handlers from its packed artifact', async () => {
-        const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'algolia-netlify-package-'));
+        const temporaryDirectory = await mkdtemp(
+            path.join(os.tmpdir(), 'algolia-netlify-package-')
+        );
         temporaryDirectories.push(temporaryDirectory);
 
         const packPackage = async name => {
-            const result = await execFileAsync('pnpm', [
-                '--filter',
-                name,
-                'pack',
-                '--json',
-                '--pack-destination',
-                temporaryDirectory
-            ], {cwd: workspaceDirectory});
+            const result = await execFileAsync(
+                'pnpm',
+                ['--filter', name, 'pack', '--json', '--pack-destination', temporaryDirectory],
+                {cwd: workspaceDirectory}
+            );
             return JSON.parse(result.stdout);
         };
         const [packedFragmenter, packedIndexer, packed] = await Promise.all([
@@ -40,18 +41,28 @@ describe('@tryghost/algolia-netlify package', () => {
             packPackage('@tryghost/algolia-indexer'),
             packPackage('@tryghost/algolia-netlify')
         ]);
-        await writeFile(path.join(temporaryDirectory, 'package.json'), JSON.stringify({
-            private: true,
-            dependencies: {
-                '@tryghost/algolia-netlify': `file:./${path.basename(packed.filename)}`
-            }
-        }, null, 2));
-        await writeFile(path.join(temporaryDirectory, 'pnpm-workspace.yaml'), `
+        await writeFile(
+            path.join(temporaryDirectory, 'package.json'),
+            JSON.stringify(
+                {
+                    private: true,
+                    dependencies: {
+                        '@tryghost/algolia-netlify': `file:./${path.basename(packed.filename)}`
+                    }
+                },
+                null,
+                2
+            )
+        );
+        await writeFile(
+            path.join(temporaryDirectory, 'pnpm-workspace.yaml'),
+            `
 packages: []
 overrides:
   '@tryghost/algolia-fragmenter': 'file:./${path.basename(packedFragmenter.filename)}'
   '@tryghost/algolia-indexer': 'file:./${path.basename(packedIndexer.filename)}'
-        `.trimStart());
+        `.trimStart()
+        );
         await execFileAsync('pnpm', [
             '--dir',
             temporaryDirectory,
@@ -59,9 +70,14 @@ overrides:
             '--prefer-offline',
             '--ignore-scripts'
         ]);
-        const installedPackage = path.join(temporaryDirectory, 'node_modules/@tryghost/algolia-netlify');
+        const installedPackage = path.join(
+            temporaryDirectory,
+            'node_modules/@tryghost/algolia-netlify'
+        );
 
-        const manifest = JSON.parse(await readFile(path.join(installedPackage, 'package.json'), 'utf8'));
+        const manifest = JSON.parse(
+            await readFile(path.join(installedPackage, 'package.json'), 'utf8')
+        );
         expect(Object.keys(manifest.dependencies).sort()).toEqual([
             '@tryghost/algolia-fragmenter',
             '@tryghost/algolia-indexer',
@@ -94,11 +110,20 @@ overrides:
             'package.json'
         ]);
 
-        const postsPage = JSON.parse(await readFile(path.join(ghostFixtureDirectory, 'posts-page-1.json'), 'utf8'));
-        const richPost = postsPage.posts.find(post => post.slug === 'ghost-6-rendered-content-contract');
-        const requesterHelper = path.join(packageDirectory, 'test/helpers/algolia-requester-register.cjs');
+        const postsPage = JSON.parse(
+            await readFile(path.join(ghostFixtureDirectory, 'posts-page-1.json'), 'utf8')
+        );
+        const richPost = postsPage.posts.find(
+            post => post.slug === 'ghost-6-rendered-content-contract'
+        );
+        const requesterHelper = path.join(
+            packageDirectory,
+            'test/helpers/algolia-requester-register.cjs'
+        );
         const consumer = path.join(temporaryDirectory, 'consumer.mjs');
-        await writeFile(consumer, `
+        await writeFile(
+            consumer,
+            `
             import {createRequire} from 'node:module';
 
             const require = createRequire(import.meta.url);
@@ -144,7 +169,8 @@ overrides:
             } finally {
                 requesterMock.restore();
             }
-        `);
+        `
+        );
         const consumerResult = await execFileAsync(process.execPath, [consumer], {
             cwd: temporaryDirectory,
             env: {...process.env}
@@ -171,7 +197,9 @@ overrides:
         });
 
         const typeConsumer = path.join(temporaryDirectory, 'consumer.mts');
-        await writeFile(typeConsumer, `
+        await writeFile(
+            typeConsumer,
+            `
             import {postPublished, postUnpublished} from '@tryghost/algolia-netlify';
             import publishedDefault from '@tryghost/algolia-netlify/post-published';
             import unpublishedDefault from '@tryghost/algolia-netlify/post-unpublished';
@@ -183,19 +211,24 @@ overrides:
                 unpublishedDefault
             ];
             void handlers;
-        `);
-        await execFileAsync(path.join(packageDirectory, 'node_modules/.bin/tsc'), [
-            '--noEmit',
-            '--strict',
-            '--target',
-            'ES2023',
-            '--module',
-            'NodeNext',
-            '--moduleResolution',
-            'NodeNext',
-            '--lib',
-            'ES2023,DOM',
-            typeConsumer
-        ], {cwd: temporaryDirectory});
+        `
+        );
+        await execFileAsync(
+            path.join(packageDirectory, 'node_modules/.bin/tsc'),
+            [
+                '--noEmit',
+                '--strict',
+                '--target',
+                'ES2023',
+                '--module',
+                'NodeNext',
+                '--moduleResolution',
+                'NodeNext',
+                '--lib',
+                'ES2023,DOM',
+                typeConsumer
+            ],
+            {cwd: temporaryDirectory}
+        );
     }, 30000);
 });

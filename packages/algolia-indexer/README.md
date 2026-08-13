@@ -37,7 +37,7 @@ Call `initIndex()` before `delete(slug)` when removing every fragment associated
 
 ## Development
 
-Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and ESLint checks with:
+Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and lint checks with:
 
 ```sh
 pnpm --filter @tryghost/algolia-indexer test

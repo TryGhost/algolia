@@ -43,7 +43,7 @@ Run the full test suite, including package lint checks:
 pnpm test
 ```
 
-Run only ESLint across the packages:
+Run only the lint and formatting checks across the packages:
 
 ```sh
 pnpm lint

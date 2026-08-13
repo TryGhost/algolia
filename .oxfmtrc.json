@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "arrowParens": "avoid",
+  "bracketSpacing": false,
+  "singleQuote": true,
+  "tabWidth": 4,
+  "trailingComma": "none",
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/coverage/**",
+    ".nx/**",
+    "packages/*/build/**",
+    "packages/algolia-netlify/.netlify/**",
+    "packages/algolia-netlify/build/**",
+    "packages/algolia-netlify/dist/**",
+    "packages/algolia/test/fixtures/ghost-v6/generate-import.mjs",
+    "packages/algolia/test/fixtures/ghost-v6/validate-fixture.mjs",
+    "pnpm-lock.yaml",
+    "**/*.html",
+    "**/*.json",
+    "**/*.jsonc",
+    "**/*.toml",
+    "**/*.yml",
+    "**/*.yaml",
+    "**/*.md"
+  ]
+}
