@@ -15,7 +15,7 @@ npm install @tryghost/algolia
 or
 
 ```sh
-yarn add @tryghost/algolia
+pnpm add @tryghost/algolia
 ```
 
 ## Usage
@@ -58,13 +58,13 @@ If a long `--skip` filter causes a `414 Request-URI Too Large` response, put the
 
 ## Development
 
-Install dependencies from the repository root with `yarn`. From the root, run this package's tests and ESLint checks with:
+Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and ESLint checks with:
 
 ```sh
-yarn workspace @tryghost/algolia test
+pnpm --filter @tryghost/algolia test
 ```
 
-Run the full monorepo suite with `yarn test`.
+Run the full monorepo suite with `pnpm test`.
 
 ---
 

@@ -53,26 +53,26 @@ These webhooks keep future post changes synchronized. Use the [`@tryghost/algoli
 
 ## Development
 
-Install the monorepo dependencies from the repository root with `yarn`. Then configure and run this package locally:
+Install the monorepo dependencies from the repository root with `pnpm install`. Then configure and run this package locally:
 
 ```sh
 cd packages/algolia-netlify
 cp .env.example .env
 # Replace the example values in .env with development credentials.
-yarn dev
+pnpm dev
 ```
 
-`yarn dev` starts Netlify Dev, which builds the TypeScript functions as needed. Use the local URL it prints for endpoints such as `/.netlify/functions/post-published`.
+`pnpm dev` starts Netlify Dev, which builds the TypeScript functions as needed. Use the local URL it prints for endpoints such as `/.netlify/functions/post-published`.
 
 Run this package's tests and ESLint checks from the repository root:
 
 ```sh
-yarn workspace @tryghost/algolia-netlify test
-yarn workspace @tryghost/algolia-netlify typecheck
-yarn workspace @tryghost/algolia-netlify build
+pnpm --filter @tryghost/algolia-netlify test
+pnpm --filter @tryghost/algolia-netlify typecheck
+pnpm --filter @tryghost/algolia-netlify build
 ```
 
-Run the full monorepo suite with `yarn test`.
+Run the full monorepo suite with `pnpm test`.
 
 The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Existing valid webhook behavior, endpoint URLs, and optional `key` handling are unchanged.
 

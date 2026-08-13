@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "yarn typecheck"
+  command = "pnpm typecheck"
   functions = "functions"
   publish = "public"
 

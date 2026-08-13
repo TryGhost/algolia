@@ -11,7 +11,7 @@ npm install @tryghost/algolia-fragmenter
 or
 
 ```sh
-yarn add @tryghost/algolia-fragmenter
+pnpm add @tryghost/algolia-fragmenter
 ```
 
 ## Usage
@@ -29,13 +29,13 @@ const fragments = records.reduce(transforms.fragmentTransformer, []);
 
 ## Development
 
-Install dependencies from the repository root with `yarn`. From the root, run this package's tests and ESLint checks with:
+Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and ESLint checks with:
 
 ```sh
-yarn workspace @tryghost/algolia-fragmenter test
+pnpm --filter @tryghost/algolia-fragmenter test
 ```
 
-Run the full monorepo suite with `yarn test`.
+Run the full monorepo suite with `pnpm test`.
 
 ---
 

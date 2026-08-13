@@ -1,0 +1,11 @@
+packages:
+  - packages/*
+
+linkWorkspacePackages: true
+
+allowBuilds:
+  esbuild: true
+  netlify-cli: false
+  nx: true
+  sharp: false
+  unix-dgram: false
