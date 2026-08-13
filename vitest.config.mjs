@@ -6,6 +6,12 @@ export default defineConfig({
             provider: 'custom',
             customProviderModule: './test/coverage-provider.mjs',
             reporter: ['text', 'json-summary', 'lcov'],
+            thresholds: {
+                statements: 93,
+                branches: 90,
+                functions: 96,
+                lines: 93
+            },
             include: [
                 'packages/*/index.js',
                 'packages/*/lib/**/*.js',

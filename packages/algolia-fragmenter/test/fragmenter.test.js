@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 
-import transforms from '../index.js';
+import fragmenter from '../index.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -11,103 +11,157 @@ const readFixture = (fileName) => {
     return fs.readFileSync(path.join(testDirectory, `fixtures`, `${fileName}.html`), {encoding: `utf8`});
 };
 
-describe('Algolia Transforms', function () {
-    it('Can reduce fragments under headings correctly', function () {
-        let fragments = [
-            {
-                html: '<p>Before getting started, you\'ll need these global packages to be installed:</p>',
-                content: 'Before getting started, you\'ll need these global packages to be installed:',
-                headings: ['Pre-requisites'],
-                anchor: 'pre-requisites',
-                customRanking: {position: 1, heading: 80},
-                objectID: '931c35eda23999b8124728b4bf4979eb'
-            },
-            {
-                html: '<li><strong>A <a href="https://docs.ghost.org/faq/node-versions/">supported version</a> of <a href="https://nodejs.org" target="_blank" rel="nofollow noopener noreferrer">Node.js</a></strong> - Ideally installed via <a href="https://github.com/creationix/nvm#install-script" target="_blank" rel="nofollow noopener noreferrer">nvm</a></li>',
-                content: 'A supported version of Node.js - Ideally installed via nvm',
-                headings: ['Pre-requisites'],
-                anchor: 'pre-requisites',
+const createPost = (overrides = {}) => ({
+    id: 'post-1',
+    slug: 'getting-started',
+    url: 'https://example.com/getting-started/',
+    html: '<p>Introduction.</p>',
+    feature_image: 'https://example.com/getting-started.jpg',
+    title: 'Getting started',
+    tags: [],
+    authors: [],
+    ...overrides
+});
 
-                customRanking: {position: 2, heading: 80},
-                objectID: 'dcbe237f62a97a33e1a9d8880c577933'
-            },
-            {
-                html: '<li><strong><a href="https://yarnpkg.com/en/docs/install#alternatives-tab" target="_blank" rel="nofollow noopener noreferrer">Yarn</a></strong> - to manage all the packages</li>',
-                content: 'Yarn - to manage all the packages',
-                headings: ['Pre-requisites'],
-                anchor: 'pre-requisites',
+const fragmentPosts = (posts) => {
+    return fragmenter.transformToAlgoliaObject(posts).reduce(fragmenter.fragmentTransformer, []);
+};
 
-                customRanking: {position: 3, heading: 80},
-                objectID: '49e23962e997062e388a060735442633'
-            },
-            {
-                html: '<pre class="language-bash"><code class="language-bash">yarn global add knex-migrator grunt-cli ember-cli bower</code></pre>',
-                content: 'yarn global add knex-migrator grunt-cli ember-cli bower',
-                headings: ['Pre-requisites', 'The install these global packages'],
-                anchor: 'the-install-these-global-packages',
+describe('Algolia fragmenter public contracts', function () {
+    it('selects the exact Algolia record shape and projects tag and author relations', function () {
+        const posts = [createPost({
+            tags: [{id: 'tag-id', name: 'Guide', slug: 'guide', description: 'not indexed'}],
+            authors: [{id: 'author-id', name: 'Ada Lovelace', slug: 'ada', bio: 'not indexed'}],
+            excerpt: 'not indexed'
+        })];
 
-                customRanking: {position: 4, heading: 60},
-                objectID: 'b1a9a06228097949e1b9f0cfcb7fe352'
-            }
+        expect(fragmenter.transformToAlgoliaObject(posts)).toEqual([{
+            objectID: 'post-1',
+            slug: 'getting-started',
+            url: 'https://example.com/getting-started/',
+            html: '<p>Introduction.</p>',
+            image: 'https://example.com/getting-started.jpg',
+            title: 'Getting started',
+            tags: [{name: 'Guide', slug: 'guide'}],
+            authors: [{name: 'Ada Lovelace', slug: 'ada'}]
+        }]);
+    });
+
+    it('omits posts whose slug is ignored', function () {
+        const posts = [
+            createPost({id: 'ignored-id', slug: 'ignored'}),
+            createPost({id: 'kept-id', slug: 'kept', title: 'Kept post'})
         ];
 
-        let reducedFragments = fragments.reduce(transforms._testReduceFragmentsUnderHeadings, []);
-
-        // We start with 4 elements, and end up with 2
-        expect(reducedFragments).toHaveLength(2);
-        // The content gets merged to contain all 3 strings
-        expect(reducedFragments[0].content).toMatch(/getting started/);
-        expect(reducedFragments[0].content).toMatch(/supported version/);
-        expect(reducedFragments[0].content).toMatch(/manage all the packages/);
+        expect(fragmenter.transformToAlgoliaObject(posts, ['ignored'])).toEqual([{
+            objectID: 'kept-id',
+            slug: 'kept',
+            url: 'https://example.com/getting-started/',
+            html: '<p>Introduction.</p>',
+            image: 'https://example.com/getting-started.jpg',
+            title: 'Kept post',
+            tags: [],
+            authors: []
+        }]);
     });
 
-    it('Processes minimal example correctly', function () {
-        const fakeNode = {
-            objectID: `abc`,
-            title: `Install from Source`,
-            url: `/install/source/`,
-            html: readFixture(`minimal-example`)
-        };
-        let reducedFragments = transforms.fragmentTransformer([], fakeNode);
+    it('normalizes null and missing relations to empty projections', function () {
+        const postWithMissingRelations = createPost({id: 'missing-relations'});
+        delete postWithMissingRelations.tags;
+        delete postWithMissingRelations.authors;
 
-        expect(reducedFragments).toHaveLength(4);
-        expect(reducedFragments[1].url).toBe('/install/source/#pre-requisites');
+        const records = fragmenter.transformToAlgoliaObject([
+            createPost({id: 'null-relations', tags: null, authors: null}),
+            postWithMissingRelations
+        ]);
+
+        expect(records.map(({objectID, tags, authors}) => ({objectID, tags, authors}))).toEqual([
+            {objectID: 'null-relations', tags: [], authors: []},
+            {objectID: 'missing-relations', tags: [], authors: []}
+        ]);
     });
 
-    it('merges multiple nodes correctly', function () {
-        const fakeNodes = [{
-            objectID: `abc`,
-            title: `Install from Source`,
-            url: `/install/source/`,
-            html: readFixture(`minimal-example`)
-        }, {
-            objectID: `def`,
-            title: `Install Test`,
-            url: `/install/test/`,
-            html: `<p>I am a test</p><h2 id="testing">Testing</h1><p>I am a subtest</p>`
-        }];
+    it('creates one exact record for headingless content', function () {
+        const records = fragmentPosts([createPost({
+            id: 'headless',
+            slug: 'headless',
+            url: '/headless/',
+            html: '<p>First <em>paragraph</em>.</p><p>Second paragraph.</p>',
+            feature_image: null,
+            title: 'Headless'
+        })]);
 
-        let reducedFragments = fakeNodes.reduce(transforms.fragmentTransformer, []);
-
-        expect(reducedFragments).toHaveLength(6);
-        expect(reducedFragments[0].url).toBe('/install/source/');
-        expect(reducedFragments[1].url).toBe('/install/source/#pre-requisites');
-        expect(reducedFragments[4].url).toBe('/install/test/');
-        expect(reducedFragments[5].url).toBe('/install/test/#testing');
+        expect(records).toEqual([{
+            objectID: 'headless_0',
+            slug: 'headless',
+            url: '/headless/',
+            html: '<p>First <em>paragraph</em>.</p><p>Second paragraph.</p>',
+            image: null,
+            title: 'Headless',
+            tags: [],
+            authors: [],
+            headings: [],
+            anchor: null,
+            customRanking: {position: 0, heading: 100}
+        }]);
     });
 
-    it('Processes massive example correctly', function () {
-        const fakeNode = {
-            objectID: `abc`,
-            title: `Install from Source`,
-            url: `/install/source/`,
-            html: readFixture(`massive-example`)
-        };
+    it('preserves text but drops preformatted markup when merging a heading fragment', function () {
+        const records = fragmentPosts([createPost({
+            id: 'preformatted',
+            slug: 'preformatted',
+            url: '/preformatted/',
+            html: '<h2 id="commands">Commands</h2><p>Run:</p><pre><code>npm install ghost</code></pre><p>Then continue.</p>',
+            feature_image: null,
+            title: 'Preformatted'
+        })]);
 
-        let reducedFragments = [fakeNode].reduce(transforms.fragmentTransformer, []);
+        expect(records).toEqual([{
+            objectID: 'preformatted_0',
+            slug: 'preformatted',
+            url: '/preformatted/#commands',
+            html: '<p>Run:</p> npm install ghost<p>Then continue.</p>',
+            image: null,
+            title: 'Preformatted',
+            tags: [],
+            authors: [],
+            headings: ['Commands'],
+            anchor: 'commands',
+            customRanking: {position: 0, heading: 80}
+        }]);
+    });
 
-        reducedFragments.forEach((fragment) => {
-            expect(JSON.stringify(fragment).length).toBeLessThan(10000);
+    it('accumulates ordered fragments from every post', function () {
+        const records = fragmentPosts([
+            createPost({
+                id: 'first',
+                slug: 'first',
+                url: '/first/',
+                html: '<p>First post.</p>',
+                title: 'First'
+            }),
+            createPost({
+                id: 'second',
+                slug: 'second',
+                url: '/second/',
+                html: '<p>Second post.</p>',
+                title: 'Second'
+            })
+        ]);
+
+        expect(records.map(({objectID, slug, html}) => ({objectID, slug, html}))).toEqual([
+            {objectID: 'first_0', slug: 'first', html: '<p>First post.</p>'},
+            {objectID: 'second_0', slug: 'second', html: '<p>Second post.</p>'}
+        ]);
+    });
+
+    it('keeps every generated record below Algolia\'s object size limit', function () {
+        const records = fragmentPosts([createPost({
+            html: readFixture('massive-example')
+        })]);
+
+        records.forEach((record) => {
+            expect(JSON.stringify(record).length).toBeLessThan(10000);
         });
     });
 });
