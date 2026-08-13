@@ -127,7 +127,8 @@ const responseFor = (request) => {
         : 'acceptance-app.algolia.net');
     const hasExpectedHeaders = request.headers['x-algolia-application-id'] === 'acceptance-app'
         && request.headers['x-algolia-api-key'] === 'acceptance-admin-key'
-        && request.headers['content-type'] === 'application/x-www-form-urlencoded';
+        && request.headers.accept === 'application/json'
+        && request.headers['content-type'] === 'text/plain';
 
     if (!expected
         || expected.method !== request.method
@@ -164,7 +165,7 @@ const responseFor = (request) => {
     };
 };
 
-const createNodeHttpRequester = () => ({
+const createHttpRequester = () => ({
     async send(request) {
         fs.appendFileSync(requestLogPath, `${JSON.stringify(request)}\n`, {encoding: 'utf8'});
         return responseFor(request);
@@ -174,7 +175,7 @@ const createNodeHttpRequester = () => ({
 
 Module._load = function (request) {
     if (request === '@algolia/requester-node-http') {
-        return {createNodeHttpRequester};
+        return {createHttpRequester};
     }
 
     return originalLoad.apply(this, arguments);

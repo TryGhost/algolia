@@ -39,7 +39,7 @@ const responseFor = (request, requestNumber) => {
     return {status: 200, content: JSON.stringify({taskID: requestNumber, objectIDs: []}), isTimedOut: false};
 };
 
-const createNodeHttpRequester = () => ({
+const createHttpRequester = () => ({
     async send(request) {
         state.requests.push(structuredClone(request));
         const requestNumber = state.requests.length;
@@ -53,7 +53,7 @@ const createNodeHttpRequester = () => ({
 
 const mockedLoad = function (request) {
     if (request === '@algolia/requester-node-http') {
-        return {createNodeHttpRequester};
+        return {createHttpRequester};
     }
     return originals.load.apply(this, arguments);
 };

@@ -98,7 +98,7 @@ const exactMappedError = error => ({
     originalError: {
         name: error.originalError.name,
         message: error.originalError.message,
-        attempts: error.originalError.transporterStackTrace.map(({request, response}) => ({
+        attempts: error.originalError.stackTrace.map(({request, response}) => ({
             method: request.method,
             pathname: new URL(request.url).pathname,
             body: request.data ? JSON.parse(request.data) : undefined,
@@ -124,15 +124,18 @@ const assertMappedOperationError = async (invoke, expectedAttempt) => {
         error = operationError;
     }
 
-    expect(exactMappedError(error)).toEqual({
+    const mappedError = exactMappedError(error);
+    expect(mappedError.message).toBe(mappedError.originalError.message);
+    expect(mappedError.message).toMatch(/^Unreachable hosts - your application id may be incorrect\./);
+    expect(mappedError).toEqual({
         name: 'Error',
-        message: 'Unreachable hosts - your application id may be incorrect. If the error persists, contact support@algolia.com.',
+        message: mappedError.originalError.message,
         errorType: 'AlgoliaError',
         code: undefined,
         status: undefined,
         originalError: {
             name: 'RetryError',
-            message: 'Unreachable hosts - your application id may be incorrect. If the error persists, contact support@algolia.com.',
+            message: mappedError.originalError.message,
             attempts: Array(4).fill({
                 ...expectedAttempt,
                 response: {
@@ -224,7 +227,8 @@ describe('IndexFactory public contracts', function () {
             origin: 'https://app-id-dsn.algolia.net',
             pathname: '/1/indexes/help-center/settings',
             headers: {
-                'content-type': 'application/x-www-form-urlencoded',
+                accept: 'application/json',
+                'content-type': 'text/plain',
                 'x-algolia-api-key': 'admin-api-key',
                 'x-algolia-application-id': 'app-id'
             },
@@ -242,7 +246,8 @@ describe('IndexFactory public contracts', function () {
                     origin: 'https://app-id.algolia.net',
                     pathname: '/1/indexes/help-center/settings',
                     headers: {
-                        'content-type': 'application/x-www-form-urlencoded',
+                        accept: 'application/json',
+                        'content-type': 'text/plain',
                         'x-algolia-api-key': 'admin-api-key',
                         'x-algolia-application-id': 'app-id'
                     },
@@ -253,7 +258,8 @@ describe('IndexFactory public contracts', function () {
                     origin: 'https://app-id-dsn.algolia.net',
                     pathname: '/1/indexes/help-center/settings',
                     headers: {
-                        'content-type': 'application/x-www-form-urlencoded',
+                        accept: 'application/json',
+                        'content-type': 'text/plain',
                         'x-algolia-api-key': 'admin-api-key',
                         'x-algolia-application-id': 'app-id'
                     },
@@ -284,7 +290,8 @@ describe('IndexFactory public contracts', function () {
                 origin: 'https://app-id-dsn.algolia.net',
                 pathname: '/1/indexes/help-center/settings',
                 headers: {
-                    'content-type': 'application/x-www-form-urlencoded',
+                    accept: 'application/json',
+                    'content-type': 'text/plain',
                     'x-algolia-api-key': 'admin-api-key',
                     'x-algolia-application-id': 'app-id'
                 },
@@ -306,14 +313,15 @@ describe('IndexFactory public contracts', function () {
             origin: 'https://app-id.algolia.net',
             pathname: '/1/indexes/help-center/batch',
             headers: {
-                'content-type': 'application/x-www-form-urlencoded',
+                accept: 'application/json',
+                'content-type': 'text/plain',
                 'x-algolia-api-key': 'admin-api-key',
                 'x-algolia-application-id': 'app-id'
             },
             body: {
                 requests: [
-                    {action: 'updateObject', body: {objectID: 'post-1_0'}},
-                    {action: 'updateObject', body: {objectID: 'post-1_1'}}
+                    {action: 'addObject', body: {objectID: 'post-1_0'}},
+                    {action: 'addObject', body: {objectID: 'post-1_1'}}
                 ]
             }
         }]);
@@ -330,7 +338,8 @@ describe('IndexFactory public contracts', function () {
             origin: 'https://app-id.algolia.net',
             pathname: '/1/indexes/help-center/deleteByQuery',
             headers: {
-                'content-type': 'application/x-www-form-urlencoded',
+                accept: 'application/json',
+                'content-type': 'text/plain',
                 'x-algolia-api-key': 'admin-api-key',
                 'x-algolia-application-id': 'app-id'
             },
@@ -349,7 +358,8 @@ describe('IndexFactory public contracts', function () {
             origin: 'https://app-id.algolia.net',
             pathname: '/1/indexes/help-center/batch',
             headers: {
-                'content-type': 'application/x-www-form-urlencoded',
+                accept: 'application/json',
+                'content-type': 'text/plain',
                 'x-algolia-api-key': 'admin-api-key',
                 'x-algolia-application-id': 'app-id'
             },
@@ -374,8 +384,26 @@ describe('IndexFactory public contracts', function () {
         await assertMappedOperationError(indexer => indexer.save([{objectID: 'post-1_0'}]), {
             method: 'POST',
             pathname: '/1/indexes/help-center/batch',
-            body: {requests: [{action: 'updateObject', body: {objectID: 'post-1_0'}}]}
+            body: {requests: [{action: 'addObject', body: {objectID: 'post-1_0'}}]}
         });
+    });
+
+    it('maps non-retryable API failures without losing their status', async function () {
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        requester.reset({status: 400, message: 'Invalid settings'});
+
+        await expect(indexer.setSettingsForIndex()).rejects.toMatchObject({
+            errorType: 'AlgoliaError',
+            message: 'Invalid settings',
+            status: 400,
+            originalError: {
+                name: 'ApiError',
+                message: 'Invalid settings',
+                status: 400
+            }
+        });
+        expect(requester.requests()).toHaveLength(1);
     });
 
     it('maps delete failures to the exact AlgoliaError fields', async function () {

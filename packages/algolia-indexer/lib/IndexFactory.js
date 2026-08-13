@@ -1,4 +1,4 @@
-const algoliaSearch = require('algoliasearch');
+const {algoliasearch} = require('algoliasearch');
 
 // Any defined settings will override those in the algolia UI
 // TODO: make this a custom setting
@@ -14,6 +14,14 @@ const REQUIRED_SETTINGS = {
     // Add slug to attributes we can filter by in order to find fragments to remove/delete
     attributesForFaceting: [`filterOnly(slug)`]
 };
+
+const createIndexAdapter = (client, indexName) => ({
+    getSettings: () => client.getSettings({indexName}),
+    setSettings: indexSettings => client.setSettings({indexName, indexSettings}),
+    saveObjects: objects => client.saveObjects({indexName, objects}),
+    deleteBy: deleteByParams => client.deleteBy({indexName, deleteByParams}),
+    deleteObjects: objectIDs => client.deleteObjects({indexName, objectIDs})
+});
 
 /**
  * @param {options} options
@@ -80,7 +88,7 @@ class IndexFactory {
      * @returns {void}
      */
     initClient() {
-        this.client = algoliaSearch(this.options.appId, this.options.apiKey);
+        this.client = algoliasearch(this.options.appId, this.options.apiKey);
     }
 
     /**
@@ -88,7 +96,7 @@ class IndexFactory {
      */
     async initIndex() {
         this.initClient();
-        this.index = await this.client.initIndex(this.options.index);
+        this.index = createIndexAdapter(this.client, this.options.index);
     }
 
     /**

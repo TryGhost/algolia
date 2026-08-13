@@ -152,7 +152,7 @@ describe('modern Netlify webhook handlers', () => {
         ]);
         expect(JSON.parse(requests[0].data ?? '')).toEqual(expectedSettings);
         const batch = JSON.parse(requests[2].data ?? '') as {requests: Array<{action: string; body: Record<string, unknown>}>};
-        expect(batch.requests).toEqual(expectedRecords.slice(0, 2).map(record => ({action: 'updateObject', body: record})));
+        expect(batch.requests).toEqual(expectedRecords.slice(0, 2).map(record => ({action: 'addObject', body: record})));
     });
 
     it.each([
