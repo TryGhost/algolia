@@ -1,7 +1,11 @@
 {
   "name": "@tryghost/algolia-indexer",
   "version": "0.3.1",
-  "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia-indexer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TryGhost/algolia.git",
+    "directory": "packages/algolia-indexer"
+  },
   "author": "Ghost Foundation",
   "license": "MIT",
   "engines": {

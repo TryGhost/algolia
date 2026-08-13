@@ -1,7 +1,11 @@
 {
   "name": "@tryghost/algolia",
   "version": "0.2.11",
-  "repository": "https://github.com/TryGhost/algolia/tree/master/packages/algolia",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TryGhost/algolia.git",
+    "directory": "packages/algolia"
+  },
   "author": "Ghost Foundation",
   "license": "MIT",
   "engines": {

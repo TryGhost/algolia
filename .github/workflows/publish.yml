@@ -1,0 +1,97 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/*/package.json'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Preview what would be published without publishing
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  publish:
+    name: Publish to npm
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Published new versions'))
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      CI: true
+      FORCE_COLOR: 1
+      IS_SHIPPING: true
+      NPM_CONFIG_PROVENANCE: true
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Verify npm supports trusted publishing
+        run: |
+          npm_version=$(npm --version)
+          node -e 'const actual=process.argv[1].split(".").map(Number); const minimum=[11,5,1]; const difference=actual.findIndex((value,index) => value !== minimum[index]); if (difference !== -1 && actual[difference] < minimum[difference]) process.exit(1)' "$npm_version"
+          echo "npm $npm_version"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run release preflight
+        run: |
+          pnpm test:coverage
+          pnpm typecheck
+          pnpm lint
+      - name: Determine packages to publish
+        id: packages
+        shell: bash
+        run: |
+          manifests=(
+            packages/algolia/package.json
+            packages/algolia-fragmenter/package.json
+            packages/algolia-indexer/package.json
+            packages/algolia-netlify/package.json
+          )
+          to_publish=()
+          registry_error="$RUNNER_TEMP/npm-view-error"
+          for manifest in "${manifests[@]}"; do
+            name=$(jq -r .name "$manifest")
+            version=$(jq -r .version "$manifest")
+            case "$name" in
+              @tryghost/algolia|@tryghost/algolia-fragmenter|@tryghost/algolia-indexer|@tryghost/algolia-netlify) ;;
+              *) echo "Unexpected package name: $name" >&2; exit 1 ;;
+            esac
+            if npm view "$name@$version" version >/dev/null 2>"$registry_error"; then
+              echo "Skipping $name@$version because it is already published"
+            elif grep -q 'E404' "$registry_error"; then
+              echo "Queuing $name@$version"
+              to_publish+=("$name")
+            else
+              cat "$registry_error" >&2
+              exit 1
+            fi
+          done
+          (IFS=,; echo "projects=${to_publish[*]}") >> "$GITHUB_OUTPUT"
+      - name: Publish to npm
+        if: steps.packages.outputs.projects != ''
+        shell: bash
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs['dry-run'] || false }}
+          PROJECTS: ${{ steps.packages.outputs.projects }}
+        run: |
+          args=(release publish "--projects=$PROJECTS")
+          if [[ "$DRY_RUN" == "true" ]]; then
+            args+=(--dry-run)
+          fi
+          pnpm nx "${args[@]}"

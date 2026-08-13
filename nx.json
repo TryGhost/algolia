@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "release": {
+    "projects": ["packages/*"],
+    "projectsRelationship": "independent",
+    "version": {
+      "preserveMatchingDependencyRanges": false,
+      "git": {
+        "commit": true,
+        "tag": true,
+        "commitMessage": "Published new versions"
+      }
+    },
+    "changelog": {
+      "workspaceChangelog": false
+    }
+  },
+  "analytics": false
+}
