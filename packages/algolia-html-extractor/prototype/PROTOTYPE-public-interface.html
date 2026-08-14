@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prototype: public HTML extractor interface</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script>"use strict";
+(() => {
+  // packages/algolia-html-extractor/prototype/PROTOTYPE-public-interface.ts
+  var designs = [
+    {
+      id: "named-function",
+      name: "Named function",
+      thesis: "One explicit operation and domain-clean immutable extraction fragments.",
+      surface: "One named function and three exported value types.",
+      moduleFormat: "Conditional ESM and CommonJS exports expose the same named extract function.",
+      options: "None. The compatibility rules stay owned by the HTML extractor.",
+      errors: "Native TypeError for non-string runtime input; malformed HTML is recovered.",
+      strength: "Highest depth and locality. Future semantics require a deliberate interface decision.",
+      cost: "The fragmenter maps domain-clean names to its existing Algolia-shaped fields.",
+      interfaceCode: `export type ExtractedTagName = 'p' | 'pre' | 'td' | 'li';
+
+export type HeadingRank = 40 | 50 | 60 | 70 | 80 | 90 | 100;
+
+export type ExtractionFragment = Readonly<{
+    html: string;
+    text: string;
+    headingPath: readonly string[];
+    anchor: string | null;
+    position: number;
+    headingRank: HeadingRank;
+    sourceTag: ExtractedTagName;
+}>;
+
+export function extract(
+    renderedHtml: string
+): readonly ExtractionFragment[];`,
+      usageCode: `import {
+    extract,
+    type ExtractionFragment
+} from '@tryghost/algolia-html-extractor';
+
+const fragments: readonly ExtractionFragment[] = extract(ghostContent.html);`
+    },
+    {
+      id: "callable-root",
+      name: "Callable package root",
+      thesis: "Make the package itself the one synchronous function and preserve compatibility-shaped names.",
+      surface: "One default callable plus compatibility-shaped fragment types.",
+      moduleFormat: "ESM receives a default export; CommonJS receives module.exports as the function.",
+      options: "None. Migration removes the legacy constructor and selector option.",
+      errors: "Native TypeError for non-string runtime input; malformed HTML is recovered.",
+      strength: "The smallest call site and the least fragmenter translation.",
+      cost: "ESM and CommonJS need different declaration shapes, and default interop is easier to mispackage.",
+      interfaceCode: `export type ExtractedTagName = 'p' | 'pre' | 'td' | 'li';
+
+export interface ExtractionFragment {
+    readonly html: string;
+    readonly content: string;
+    readonly headings: readonly string[];
+    readonly anchor: string | null;
+    readonly tagName: ExtractedTagName;
+    readonly customRanking: Readonly<{
+        position: number;
+        heading: 40 | 50 | 60 | 70 | 80 | 90 | 100;
+    }>;
+}
+
+export default function extractRenderedHtml(
+    renderedHtml: string
+): readonly ExtractionFragment[];`,
+      usageCode: `import extractRenderedHtml from '@tryghost/algolia-html-extractor';
+
+const fragments = extractRenderedHtml(ghostContent.html);`
+    },
+    {
+      id: "compiled-profiles",
+      name: "Compiled profiles",
+      thesis: "Publish a declarative matching language so callers can define new extraction policies.",
+      surface: "Compatibility function, profile compiler, profile types, and two custom errors.",
+      moduleFormat: "Conditional ESM and CommonJS named exports; no asynchronous loading.",
+      options: "A validated public profile controls headings, matches, text sources, and fragment kinds.",
+      errors: "InvalidExtractionProfileError and HtmlExtractionError become supported public contracts.",
+      strength: "Richer extraction can be added without changing the implementation.",
+      cost: "The matching language is a permanent support burden and moves extraction policy to callers.",
+      interfaceCode: `export interface ExtractionProfile<Kind extends string> {
+    readonly name: string;
+    readonly headings: HeadingPolicy;
+    readonly fragments: readonly FragmentRule<Kind>[];
+}
+
+export interface HtmlExtractor<Kind extends string> {
+    readonly profileName: string;
+    extract(renderedHtml: string): readonly ExtractionFragment<Kind>[];
+}
+
+export function createHtmlExtractor<const Kind extends string>(
+    profile: ExtractionProfile<Kind>
+): HtmlExtractor<Kind>;
+
+export function extractHtml(
+    renderedHtml: string
+): readonly ExtractionFragment<'flow' | 'preformatted'>[];`,
+      usageCode: `import {
+    compatibilityProfile,
+    createHtmlExtractor,
+    extractHtml
+} from '@tryghost/algolia-html-extractor';
+
+const compatible = extractHtml(ghostContent.html);
+const richer = createHtmlExtractor(extendedProfile).extract(ghostContent.html);`
+    }
+  ];
+  var scenarios = [
+    {
+      id: "basic",
+      name: "Ordinary Ghost content",
+      question: "Does the default call make the common case obvious without exposing parser setup?",
+      renderedHtml: '<h2 id="start">Start here</h2><p>Run <strong>Ghost</strong>.</p>',
+      fragments: [
+        {
+          html: "<p>Run <strong>Ghost</strong>.</p>",
+          text: "Run Ghost.",
+          headingPath: ["Start here"],
+          anchor: "start",
+          position: 0,
+          headingRank: 80,
+          sourceTag: "p"
+        }
+      ]
+    },
+    {
+      id: "preformatted",
+      name: "Legacy preformatted merge",
+      question: "Does the fragment carry exactly enough source information for the fragmenter to preserve pre merging?",
+      renderedHtml: '<h2 id="commands">Commands</h2><p>Run:</p><pre><code>ghost start</code></pre>',
+      fragments: [
+        {
+          html: "<p>Run:</p>",
+          text: "Run:",
+          headingPath: ["Commands"],
+          anchor: "commands",
+          position: 0,
+          headingRank: 80,
+          sourceTag: "p"
+        },
+        {
+          html: "<pre><code>ghost start</code></pre>",
+          text: "ghost start",
+          headingPath: ["Commands"],
+          anchor: "commands",
+          position: 1,
+          headingRank: 80,
+          sourceTag: "pre"
+        }
+      ]
+    },
+    {
+      id: "malformed",
+      name: "Malformed but recoverable HTML",
+      question: "Is malformed HTML treated as normal HTML5 recovery rather than a domain error?",
+      renderedHtml: '<h2 id="table">Table<table><td>Recovered cell',
+      fragments: [
+        {
+          html: "<td>Recovered cell</td>",
+          text: "Recovered cell",
+          headingPath: ["Table"],
+          anchor: "table",
+          position: 0,
+          headingRank: 80,
+          sourceTag: "td"
+        }
+      ]
+    },
+    {
+      id: "invalid-input",
+      name: "Untyped caller passes a number",
+      question: "Does a custom error hierarchy give the caller any recovery action beyond fixing misuse?",
+      renderedHtml: "42 as unknown",
+      fragments: []
+    },
+    {
+      id: "richer-content",
+      name: "Future image alternative text",
+      question: "Should richer extraction be configurable now, or wait for its own compatibility decision?",
+      renderedHtml: '<figure><img src="cover.jpg" alt="A lighthouse at dusk"></figure>',
+      fragments: []
+    }
+  ];
+  var walkthroughs = [
+    {
+      id: "common-call",
+      name: "Common call",
+      description: "Compare the recommended named function with the callable-root shortcut on ordinary Ghost content.",
+      steps: [
+        {
+          label: "Choose the named function",
+          action: { type: "select-design", designId: "named-function" }
+        },
+        {
+          label: "Load ordinary Ghost content",
+          action: { type: "select-scenario", scenarioId: "basic" }
+        },
+        { label: "Run extraction", action: { type: "run" } }
+      ]
+    },
+    {
+      id: "legacy-seam",
+      name: "Legacy seam",
+      description: "Check that preformatted content stays distinguishable without exposing a parse5 node.",
+      steps: [
+        {
+          label: "Choose the named function",
+          action: { type: "select-design", designId: "named-function" }
+        },
+        {
+          label: "Load the preformatted case",
+          action: { type: "select-scenario", scenarioId: "preformatted" }
+        },
+        { label: "Run extraction", action: { type: "run" } }
+      ]
+    },
+    {
+      id: "errors-and-extension",
+      name: "Errors and extension",
+      description: "Feel whether profiles and custom errors earn the much larger long-lived interface.",
+      steps: [
+        {
+          label: "Choose compiled profiles",
+          action: { type: "select-design", designId: "compiled-profiles" }
+        },
+        {
+          label: "Load future richer content",
+          action: { type: "select-scenario", scenarioId: "richer-content" }
+        },
+        { label: "Run the configured extraction", action: { type: "run" } },
+        {
+          label: "Load invalid runtime input",
+          action: { type: "select-scenario", scenarioId: "invalid-input" }
+        },
+        { label: "Run the invalid call", action: { type: "run" } }
+      ]
+    }
+  ];
+  var initialState = {
+    designId: "named-function",
+    scenarioId: "basic",
+    status: "ready",
+    outcome: null,
+    activeWalkthroughId: "common-call",
+    nextWalkthroughStep: 0,
+    lastChange: "Ready to compare the three interface designs."
+  };
+  var getDesign = (id) => {
+    const design = designs.find((candidate) => candidate.id === id);
+    if (design === void 0) {
+      throw new Error(`Unknown design: ${id}`);
+    }
+    return design;
+  };
+  var getScenario = (id) => {
+    const scenario = scenarios.find((candidate) => candidate.id === id);
+    if (scenario === void 0) {
+      throw new Error(`Unknown scenario: ${id}`);
+    }
+    return scenario;
+  };
+  var getWalkthrough = (id) => {
+    const walkthrough = walkthroughs.find((candidate) => candidate.id === id);
+    if (walkthrough === void 0) {
+      throw new Error(`Unknown walkthrough: ${id}`);
+    }
+    return walkthrough;
+  };
+  var formatFragment = (designId, fragment) => {
+    if (designId === "named-function") {
+      return fragment;
+    }
+    if (designId === "callable-root") {
+      return {
+        html: fragment.html,
+        content: fragment.text,
+        headings: fragment.headingPath,
+        anchor: fragment.anchor,
+        tagName: fragment.sourceTag,
+        customRanking: {
+          position: fragment.position,
+          heading: fragment.headingRank
+        }
+      };
+    }
+    return {
+      kind: fragment.sourceTag === "pre" ? "preformatted" : "flow",
+      html: fragment.html,
+      text: fragment.text,
+      headings: fragment.headingPath,
+      anchor: fragment.anchor,
+      position: fragment.position,
+      headingRank: fragment.headingRank
+    };
+  };
+  var evaluate = (design, scenario) => {
+    const call = design.id === "callable-root" ? "extractRenderedHtml(renderedHtml)" : design.id === "compiled-profiles" ? "extractHtml(renderedHtml)" : "extract(renderedHtml)";
+    if (scenario.id === "invalid-input") {
+      return {
+        kind: "failure",
+        call: call.replace("renderedHtml", "42 as unknown as string"),
+        error: "TypeError: renderedHtml must be a string",
+        recovery: "Fix the caller. A custom extraction error would not enable a different recovery path."
+      };
+    }
+    if (scenario.id === "richer-content") {
+      if (design.id === "compiled-profiles") {
+        return {
+          kind: "success",
+          call: "createHtmlExtractor(extendedProfile).extract(renderedHtml)",
+          value: [
+            {
+              kind: "image-alternative",
+              html: '<img src="cover.jpg" alt="A lighthouse at dusk">',
+              text: "A lighthouse at dusk",
+              headings: [],
+              anchor: null,
+              position: 0,
+              headingRank: 100
+            }
+          ],
+          ownership: [
+            "Caller owns a public matching profile.",
+            "The HTML extractor owns profile validation and matching.",
+            "The fragmenter still owns grouping and Algolia records."
+          ]
+        };
+      }
+      return {
+        kind: "success",
+        call,
+        value: [],
+        ownership: [
+          "Compatibility extraction intentionally ignores image alternative text.",
+          "The richer-semantics decision can later add a deliberate interface change.",
+          "No speculative option becomes contractual today."
+        ]
+      };
+    }
+    return {
+      kind: "success",
+      call,
+      value: scenario.fragments.map((fragment) => formatFragment(design.id, fragment)),
+      ownership: [
+        "The HTML extractor owns parsing, traversal, heading state, anchors, serialization, and ordering.",
+        "The fragmenter owns grouping, preformatted merging, deep links, IDs, and post projection.",
+        "The indexer owns Algolia settings and persistence."
+      ]
+    };
+  };
+  var transition = (state2, action) => {
+    switch (action.type) {
+      case "select-design":
+        return {
+          ...state2,
+          designId: action.designId,
+          status: "ready",
+          outcome: null,
+          lastChange: `Selected ${getDesign(action.designId).name}.`
+        };
+      case "select-scenario":
+        return {
+          ...state2,
+          scenarioId: action.scenarioId,
+          status: "ready",
+          outcome: null,
+          lastChange: `Loaded ${getScenario(action.scenarioId).name}.`
+        };
+      case "run": {
+        const design = getDesign(state2.designId);
+        const scenario = getScenario(state2.scenarioId);
+        return {
+          ...state2,
+          status: "complete",
+          outcome: evaluate(design, scenario),
+          lastChange: `Ran ${design.name} against ${scenario.name}.`
+        };
+      }
+      case "start-walkthrough":
+        return {
+          ...initialState,
+          activeWalkthroughId: action.walkthroughId,
+          lastChange: `Started ${getWalkthrough(action.walkthroughId).name}.`
+        };
+      case "reset":
+        return initialState;
+    }
+  };
+  var escapeHtml = (value) => {
+    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  };
+  var prettyJson = (value) => JSON.stringify(value, null, 2);
+  var isDesignId = (value) => {
+    return designs.some((design) => design.id === value);
+  };
+  var isScenarioId = (value) => {
+    return scenarios.some((scenario) => scenario.id === value);
+  };
+  var renderOutcome = (outcome) => {
+    if (outcome === null) {
+      return '<p class="empty">Choose a design and scenario, then run the call.</p>';
+    }
+    if (outcome.kind === "failure") {
+      return `<div class="failure">
+            <p class="eyebrow">Synchronous failure</p>
+            <code>${escapeHtml(outcome.call)}</code>
+            <strong>${escapeHtml(outcome.error)}</strong>
+            <p>${escapeHtml(outcome.recovery)}</p>
+        </div>`;
+    }
+    return `<div class="outcome-grid">
+        <div>
+            <p class="eyebrow">Call</p>
+            <code>${escapeHtml(outcome.call)}</code>
+            <pre>${escapeHtml(prettyJson(outcome.value))}</pre>
+        </div>
+        <div>
+            <p class="eyebrow">Ownership after the call</p>
+            <ul>${outcome.ownership.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </div>
+    </div>`;
+  };
+  var renderWalkthrough = (walkthrough, state2) => {
+    const isActive = state2.activeWalkthroughId === walkthrough.id;
+    return `<section class="walkthrough-panel ${isActive ? "active" : ""}" data-walkthrough-panel="${walkthrough.id}">
+        <p>${escapeHtml(walkthrough.description)}</p>
+        <div class="walkthrough-steps">
+            ${walkthrough.steps.map((step, index) => {
+      const isComplete = isActive && index < state2.nextWalkthroughStep;
+      const isNext = isActive && index === state2.nextWalkthroughStep;
+      const disabled = !isNext;
+      return `<button
+                    class="step ${isComplete ? "complete" : ""}"
+                    data-action="walkthrough-step"
+                    data-step-index="${index}"
+                    ${disabled ? "disabled" : ""}
+                >
+                    <span>${isComplete ? "\u2713" : index + 1}</span>
+                    ${escapeHtml(step.label)}
+                </button>`;
+    }).join("")}
+        </div>
+    </section>`;
+  };
+  var style = `
+    :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f3f1ec;
+        color: #17211d;
+        --accent: #087f5b;
+        --accent-soft: #dff4eb;
+        --ink-muted: #617069;
+        --line: #d9ded9;
+        --surface: #ffffff;
+        --code: #10251e;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, select { font: inherit; }
+    button { min-height: 44px; }
+    a { color: var(--accent); }
+    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    code { overflow-wrap: anywhere; }
+
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 80px; }
+    .hero { max-width: 900px; margin-bottom: 32px; }
+    .kicker, .eyebrow { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { max-width: 760px; margin: 8px 0 14px; font-family: Georgia, serif; font-size: clamp(34px, 6vw, 64px); font-weight: 500; line-height: 1.02; }
+    .lede { max-width: 780px; color: var(--ink-muted); font-size: 19px; line-height: 1.6; }
+    .recommendation { border-left: 4px solid var(--accent); padding: 14px 18px; background: var(--accent-soft); line-height: 1.5; }
+
+    .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 10px 30px rgba(19, 38, 31, .05); }
+    .section { margin-top: 24px; padding: 24px; }
+    .section-header { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .section-header h2 { margin: 0; font-size: 22px; }
+    .section-header p { margin: 4px 0 0; color: var(--ink-muted); }
+
+    .design-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .design { display: flex; min-height: 190px; flex-direction: column; align-items: flex-start; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fafbf9; text-align: left; cursor: pointer; }
+    .design:hover, .design:focus-visible { border-color: var(--accent); outline: 3px solid rgba(8, 127, 91, .14); }
+    .design.selected { border: 2px solid var(--accent); background: var(--accent-soft); }
+    .design strong { font-size: 17px; }
+    .design p { color: var(--ink-muted); line-height: 1.45; }
+    .design small { margin-top: auto; color: #32443c; font-weight: 700; }
+
+    .details-grid, .outcome-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 24px; }
+    .facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 0; }
+    .facts div { padding: 12px; border-radius: 10px; background: #f5f7f5; }
+    .facts dt { color: var(--ink-muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .facts dd { margin: 5px 0 0; line-height: 1.4; }
+    pre { margin: 10px 0 0; padding: 18px; border-radius: 12px; background: var(--code); color: #e7fff4; font-size: 13px; line-height: 1.55; overflow: auto; }
+    .tradeoff { margin: 16px 0 0; padding: 14px; border-radius: 10px; background: #fff7df; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+    label { display: grid; gap: 6px; color: var(--ink-muted); font-size: 13px; font-weight: 700; }
+    select { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: white; color: #17211d; }
+    .run, .secondary { border: 0; border-radius: 9px; padding: 0 18px; font-weight: 800; cursor: pointer; }
+    .run { background: var(--accent); color: white; }
+    .secondary { border: 1px solid var(--line); background: white; color: #17211d; }
+    .run:hover, .run:focus-visible, .secondary:hover, .secondary:focus-visible { outline: 3px solid rgba(8, 127, 91, .18); }
+    .input-panel { margin-top: 16px; }
+    .input-panel pre { background: #f5f7f5; color: #22342c; }
+    .state-note { margin: 16px 0 0; color: var(--ink-muted); }
+    .empty { padding: 28px; border: 1px dashed var(--line); border-radius: 10px; color: var(--ink-muted); text-align: center; }
+    .failure { display: grid; gap: 10px; padding: 18px; border: 1px solid #f1b7b7; border-radius: 10px; background: #fff0f0; }
+    .failure p, .failure strong { margin: 0; }
+    .outcome-grid ul { padding-left: 20px; line-height: 1.65; }
+
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tab { border: 1px solid var(--line); border-radius: 999px; background: white; padding: 0 16px; color: #273a31; cursor: pointer; }
+    .tab.active { border-color: var(--accent); background: var(--accent-soft); color: #075a42; }
+    .walkthrough-panel { display: none; }
+    .walkthrough-panel.active { display: block; }
+    .walkthrough-steps { display: grid; gap: 8px; }
+    .step { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: white; color: #17211d; text-align: left; }
+    .step:not(:disabled) { cursor: pointer; border-color: var(--accent); }
+    .step:disabled { opacity: .55; }
+    .step.complete { background: var(--accent-soft); opacity: 1; }
+    .step span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: #e9edea; font-size: 12px; font-weight: 800; }
+
+    .footer { margin-top: 24px; color: var(--ink-muted); font-size: 13px; text-align: center; }
+
+    @media (max-width: 820px) {
+        .design-grid, .details-grid, .outcome-grid { grid-template-columns: 1fr; }
+        .controls { grid-template-columns: 1fr; }
+        .facts { grid-template-columns: 1fr; }
+    }
+`;
+  var root = globalThis.document.querySelector("#app");
+  if (root === null) {
+    throw new Error("Prototype root element was not found.");
+  }
+  var stylesheet = globalThis.document.createElement("style");
+  stylesheet.textContent = style;
+  globalThis.document.head.append(stylesheet);
+  var state = initialState;
+  var render = () => {
+    const design = getDesign(state.designId);
+    const scenario = getScenario(state.scenarioId);
+    const walkthrough = getWalkthrough(state.activeWalkthroughId);
+    root.innerHTML = `<main class="shell">
+        <header class="hero">
+            <p class="kicker">Throwaway prototype \xB7 Wayfinder decision</p>
+            <h1>How small should the public HTML extractor interface be?</h1>
+            <p class="lede">This demo tests the public seam: rendered HTML goes in; ordered extraction fragments come out. It does not prototype parser correctness or move grouping and Algolia records into the extractor.</p>
+            <p class="recommendation"><strong>Approved decision:</strong> use the named function. It has one stable operation, keeps parse5 and compatibility rules behind the seam, and leaves richer extraction to its own decision.</p>
+        </header>
+
+        <section class="card section">
+            <div class="section-header">
+                <div>
+                    <h2>1. Pick an interface</h2>
+                    <p>Three deliberately different ways to place the same seam.</p>
+                </div>
+            </div>
+            <div class="design-grid">
+                ${designs.map(
+      (candidate) => `<button class="design ${candidate.id === design.id ? "selected" : ""}" data-action="select-design" data-design-id="${candidate.id}">
+                    <strong>${escapeHtml(candidate.name)}</strong>
+                    <p>${escapeHtml(candidate.thesis)}</p>
+                    <small>${escapeHtml(candidate.surface)}</small>
+                </button>`
+    ).join("")}
+            </div>
+        </section>
+
+        <section class="card section">
+            <div class="section-header">
+                <div>
+                    <h2>${escapeHtml(design.name)}</h2>
+                    <p>${escapeHtml(design.thesis)}</p>
+                </div>
+            </div>
+            <div class="details-grid">
+                <div>
+                    <p class="eyebrow">Strict TypeScript interface</p>
+                    <pre>${escapeHtml(design.interfaceCode)}</pre>
+                    <p class="eyebrow">Caller</p>
+                    <pre>${escapeHtml(design.usageCode)}</pre>
+                </div>
+                <div>
+                    <dl class="facts">
+                        <div><dt>Surface</dt><dd>${escapeHtml(design.surface)}</dd></div>
+                        <div><dt>Modules</dt><dd>${escapeHtml(design.moduleFormat)}</dd></div>
+                        <div><dt>Options</dt><dd>${escapeHtml(design.options)}</dd></div>
+                        <div><dt>Errors</dt><dd>${escapeHtml(design.errors)}</dd></div>
+                    </dl>
+                    <p class="tradeoff"><strong>Leverage:</strong> ${escapeHtml(design.strength)}<br><br><strong>Cost:</strong> ${escapeHtml(design.cost)}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card section">
+            <div class="section-header">
+                <div>
+                    <h2>2. Drive a case</h2>
+                    <p>${escapeHtml(scenario.question)}</p>
+                </div>
+                <button class="secondary" data-action="reset">Reset</button>
+            </div>
+            <div class="controls">
+                <label>Interface
+                    <select data-action="design-select">
+                        ${designs.map((candidate) => `<option value="${candidate.id}" ${candidate.id === design.id ? "selected" : ""}>${escapeHtml(candidate.name)}</option>`).join("")}
+                    </select>
+                </label>
+                <label>Case
+                    <select data-action="scenario-select">
+                        ${scenarios.map((candidate) => `<option value="${candidate.id}" ${candidate.id === scenario.id ? "selected" : ""}>${escapeHtml(candidate.name)}</option>`).join("")}
+                    </select>
+                </label>
+                <button class="run" data-action="run">Run the call</button>
+            </div>
+            <div class="input-panel">
+                <p class="eyebrow">Rendered HTML or runtime input</p>
+                <pre>${escapeHtml(scenario.renderedHtml)}</pre>
+            </div>
+            <p class="state-note"><strong>Last change:</strong> ${escapeHtml(state.lastChange)} \xB7 Status: ${state.status}</p>
+            <div class="result">${renderOutcome(state.outcome)}</div>
+        </section>
+
+        <section class="card section">
+            <div class="section-header">
+                <div>
+                    <h2>3. Guided walkthroughs</h2>
+                    <p>Start a tab, then press its numbered steps in order.</p>
+                </div>
+            </div>
+            <div class="tabs" role="tablist" aria-label="Prototype walkthroughs">
+                ${walkthroughs.map((candidate) => `<button class="tab ${candidate.id === walkthrough.id ? "active" : ""}" data-action="start-walkthrough" data-walkthrough-id="${candidate.id}" role="tab" aria-selected="${candidate.id === walkthrough.id}">${escapeHtml(candidate.name)}</button>`).join("")}
+            </div>
+            ${walkthroughs.map((candidate) => renderWalkthrough(candidate, state)).join("")}
+        </section>
+
+        <p class="footer">Prototype source is strict TypeScript. The HTML file is generated only to make the artifact double-clickable.</p>
+    </main>`;
+  };
+  var advanceWalkthrough = (stepIndex) => {
+    const walkthrough = getWalkthrough(state.activeWalkthroughId);
+    const step = walkthrough.steps[stepIndex];
+    if (step === void 0 || stepIndex !== state.nextWalkthroughStep) {
+      return;
+    }
+    state = {
+      ...transition(state, step.action),
+      activeWalkthroughId: state.activeWalkthroughId,
+      nextWalkthroughStep: stepIndex + 1
+    };
+  };
+  root.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof globalThis.Element)) {
+      return;
+    }
+    const button = target.closest("button[data-action]");
+    if (button === null) {
+      return;
+    }
+    const action = button.dataset.action;
+    if (action === "select-design" && isDesignId(button.dataset.designId)) {
+      state = transition(state, { type: "select-design", designId: button.dataset.designId });
+    } else if (action === "run") {
+      state = transition(state, { type: "run" });
+    } else if (action === "reset") {
+      state = transition(state, { type: "reset" });
+    } else if (action === "start-walkthrough" && button.dataset.walkthroughId !== void 0) {
+      state = transition(state, {
+        type: "start-walkthrough",
+        walkthroughId: button.dataset.walkthroughId
+      });
+    } else if (action === "walkthrough-step" && button.dataset.stepIndex !== void 0) {
+      const stepIndex = Number.parseInt(button.dataset.stepIndex, 10);
+      if (Number.isInteger(stepIndex)) {
+        advanceWalkthrough(stepIndex);
+      }
+    }
+    render();
+  });
+  root.addEventListener("change", (event) => {
+    const target = event.target;
+    if (!(target instanceof globalThis.HTMLSelectElement)) {
+      return;
+    }
+    const action = target.dataset.action;
+    if (action === "design-select" && isDesignId(target.value)) {
+      state = transition(state, { type: "select-design", designId: target.value });
+    } else if (action === "scenario-select" && isScenarioId(target.value)) {
+      state = transition(state, { type: "select-scenario", scenarioId: target.value });
+    }
+    render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
