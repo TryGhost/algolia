@@ -2,7 +2,7 @@
 
 ## Decision
 
-A follow-on extractor version should index **searchable rendered meaning** from
+A follow-on extractor version should extract **searchable rendered meaning** from
 Ghost-rendered HTML. This is an additive semantic layer over the
 compatibility-first release: the observable extraction of `p`, `pre`, `td`, and
 `li` elements remains unchanged, including its existing traversal, whitespace,
@@ -20,6 +20,14 @@ order. It must not add a container fragment when qualifying descendants already
 represent the same meaning. A wrapper is a fallback only when it contains
 otherwise-unrepresented searchable meaning.
 
+Compatibility-preserved `p`, `pre`, `td`, and `li` elements count as qualifying
+descendants for this precedence rule. For example,
+`<blockquote><p>Quote</p><cite>Author</cite></blockquote>` emits the legacy `p`
+and the rich `cite`, but no duplicate `blockquote`; a plain
+`<blockquote>Quote</blockquote>` emits the `blockquote` fallback. Likewise,
+`<figcaption><p>Caption</p></figcaption>` emits the legacy `p` rather than a
+duplicate `figcaption`, while a plain-text `figcaption` emits a rich fragment.
+
 Add these general semantic units:
 
 - `th` for table headers, alongside compatibility-preserved `td` cells;
@@ -34,6 +42,11 @@ candidate is empty. A normalized comparison key suppresses duplicate meaning,
 such as an image alternative repeated by its caption, without rewriting the
 preserved source value. The richer public-interface decision owns the exact
 comparison normalization.
+
+Duplicate suppression applies only among rich candidates within the same local
+semantic container, such as an image and its figure caption. It never removes,
+rewrites, or suppresses a compatibility fragment, and it does not deduplicate
+identical meaning repeated in separate parts of the document.
 
 An image alternative is excluded when it is empty or whitespace-only, repeated
 by a caption, explicitly non-semantic, or part of known renderer-generated
