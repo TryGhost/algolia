@@ -35,3 +35,7 @@ _Avoid_: Mock response, live fixture
 **Live content smoke test**:
 A non-blocking check against a changing Ghost site that detects contract or structural drift without asserting exact editorial content.
 _Avoid_: Acceptance test, fixture test
+
+**Searchable rendered meaning**:
+Author-controlled meaning in rendered Ghost content intended for readers, including a meaningful image alternative even when it is not visually displayed. It excludes generated controls and states, provider chrome, URLs, decorative content, and content explicitly marked as non-semantic.
+_Avoid_: Visible text, all rendered text
