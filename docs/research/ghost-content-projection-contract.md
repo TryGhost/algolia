@@ -144,11 +144,13 @@ Reject a policy before processing content when it contains:
 - an unknown or repeated source;
 - a repeated output name;
 - an alias colliding with a protected field;
+- an alias equal to the package-owned `customRanking` container, whether used
+  by a projection field or ranking field;
 - an alias impersonating any canonical allowlist name, even when that field is
   omitted;
 - `heading` or `position` inside `customRanking`;
 - an Algolia-reserved name, including `_highlightResult`, `_snippetResult`,
-  `_rankingInfo`, `_distinctSeqID`, `_tags`, or `_geoloc`;
+  `_rankingInfo`, `_distinctSeqID`, `distinctSeqId`, `_tags`, or `_geoloc`;
 - a dot, leading underscore, wildcard, expression, arbitrary source path, or
   executable mapper.
 
@@ -181,17 +183,22 @@ For an enabled field:
 - a present value with the wrong documented type fails validation;
 - correctly typed values are copied without coercion or sanitization.
 
-Consumers render `excerpt` as escaped text. Fragment `html` remains HTML and
-is not redefined as sanitized display text.
+Consumers escape `excerpt` and every other projected text value before
+rendering it as text. The projection layer does not sanitize fragment `html`
+or Algolia highlight output; consumers sanitize both before rendering them as
+HTML.
 
 Ghost content that produces no extraction fragments emits one projection-only
-fallback record:
+fallback record. This example shows its fixed fields; policy-dependent optional
+fields and custom-ranking siblings are omitted:
 
 ```json
 {
   "objectID": "<content id>_0",
+  "slug": "<content slug>",
   "url": "<base content URL>",
   "html": "",
+  "title": "<content title>",
   "headings": [],
   "anchor": null,
   "customRanking": {
@@ -201,9 +208,9 @@ fallback record:
 }
 ```
 
-The fallback also contains the protected Ghost fields, every enabled optional
-field, and configured custom-ranking siblings. It uses the existing
-headingless rank and does not copy plaintext into `html`.
+The normative fallback contains every enabled optional field and configured
+custom-ranking sibling in addition to the fixed fields shown above. It uses the
+existing headingless rank and does not copy plaintext into `html`.
 
 ## Size, ordering, and failures
 

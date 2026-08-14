@@ -17,7 +17,7 @@ An Algolia record attribute whose name and meaning are owned by the package to p
 _Avoid_: Custom field, pass-through field
 
 **Optional projection field**:
-An allowlisted public Ghost content field that projection configuration may include, omit, or expose under a validated alias. Enabled optional fields are repeated in every Algolia record derived from that Ghost content.
+An allowlisted public Ghost source field or package-owned compatibility projection that projection configuration may include, omit, or expose under a validated alias. Enabled optional fields are repeated in every Algolia record derived from that Ghost content.
 _Avoid_: Custom field, arbitrary field
 
 **Extraction fragment**:

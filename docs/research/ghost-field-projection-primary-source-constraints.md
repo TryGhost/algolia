@@ -115,11 +115,12 @@ record.
 `objectID` uniquely identifies a record and is always returned, even if omitted
 from `attributesToRetrieve` or listed in `unretrievableAttributes`. It must not
 contain sensitive information. Algolia also reserves `_highlightResult`,
-`_snippetResult`, `_rankingInfo`, and `_distinctSeqID` for search responses;
-records should not use those names. `_tags` and `_geoloc` are record-side
-reserved attributes with imposed schemas. A configurable projection needs to
-prevent user-selected or future source names from colliding with these names or
-with package-owned record attributes.
+`_snippetResult`, `_rankingInfo`, and `_distinctSeqID` for search responses.
+`distinctSeqId` is a record-side reserved name. Records should not use any of
+those names. `_tags` and `_geoloc` are also record-side reserved attributes with
+imposed schemas. A configurable projection needs to prevent user-selected or
+future source names from colliding with these names or with package-owned
+record attributes.
 ([Algolia record attributes](https://www.algolia.com/doc/guides/sending-and-managing-data/prepare-your-data/in-depth/what-is-in-a-record))
 
 ### Stored, searchable, returned, and displayed are separate roles
