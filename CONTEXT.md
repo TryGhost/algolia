@@ -8,9 +8,17 @@ Ghost Algolia turns published Ghost content into structured records for an Algol
 A published post or page returned by the Ghost Content API, including its metadata and rendered HTML.
 _Avoid_: Page, document, article when the resource type is not important
 
-**Post projection**:
-The selected Ghost content fields that are carried into every Algolia record derived from that content.
-_Avoid_: Base record, Algolia post
+**Ghost content projection**:
+The protected record fields and configured optional projection fields that are carried into every Algolia record derived from Ghost content.
+_Avoid_: Post projection, base record, Algolia post
+
+**Protected record field**:
+An Algolia record attribute whose name and meaning are owned by the package to preserve identity, navigation, fragment structure, ranking, or deletion behaviour. Projection configuration cannot omit or override it.
+_Avoid_: Custom field, pass-through field
+
+**Optional projection field**:
+An allowlisted public Ghost source field or package-owned compatibility projection that projection configuration may include, omit, or expose under a validated alias. Enabled optional fields are repeated in every Algolia record derived from that Ghost content.
+_Avoid_: Custom field, arbitrary field
 
 **Extraction fragment**:
 An ordered unit of rendered HTML associated with its current heading path, anchor, and position.
