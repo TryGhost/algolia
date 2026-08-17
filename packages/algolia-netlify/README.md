@@ -30,7 +30,7 @@ The functions need the Algolia Application ID and an API key scoped to the targe
 - Add records (`addObject`)
 - Delete records matching a filter (`deleteIndex`)
 
-The publish webhook never reads or changes index settings. Settings remain user-owned after the explicit initial configuration, so the runtime key does not need the `settings` or `editSettings` permissions.
+Algolia's `deleteIndex` permission also permits deletion of the entire target index, so keep the runtime key scoped only to that index. The publish webhook never reads or changes index settings. Settings remain user-owned after the explicit initial configuration, so the runtime key does not need the `settings` or `editSettings` permissions.
 
 ### Deploy the Netlify Functions
 
