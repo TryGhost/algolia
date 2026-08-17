@@ -38,7 +38,7 @@ export default async function postPublished(request: Request): Promise<Response>
         const algoliaObjects = transforms.transformToAlgoliaObject([post]);
         const fragments = algoliaObjects.reduce(transforms.fragmentTransformer, []);
         const index = new IndexFactory(algoliaSettings());
-        await index.setSettingsForIndex();
+        await index.initIndex();
         await index.save(fragments);
         console.log('Fragments successfully saved to Algolia index');
         return textResponse(`Post "${String(post.title)}" has been added to the index.`);

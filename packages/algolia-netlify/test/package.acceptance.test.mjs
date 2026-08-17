@@ -189,8 +189,6 @@ overrides:
                 }
             ],
             requests: [
-                ['PUT', '/1/indexes/ghost-content/settings'],
-                ['GET', '/1/indexes/ghost-content/settings'],
                 ['POST', '/1/indexes/ghost-content/batch'],
                 ['POST', '/1/indexes/ghost-content/deleteByQuery']
             ]

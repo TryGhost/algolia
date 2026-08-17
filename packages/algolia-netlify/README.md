@@ -23,12 +23,14 @@ Use a restricted Algolia API key to limit the impact of unauthorized requests.
 
 ### Set up Algolia
 
-The functions need the Algolia Application ID and an API key that can update the target index. The general Admin API key works, but a key scoped to this index is preferable. A scoped key needs these permissions:
+Before enabling the webhooks, use the [`@tryghost/algolia` CLI](../algolia/README.md) to create and configure the initial index. The default CLI settings include `filterOnly(slug)`, which the unpublish webhook requires to delete every record associated with a post. If you provide custom index settings, retain `filterOnly(slug)` in `attributesForFaceting`.
+
+The functions need the Algolia Application ID and an API key scoped to the target index. The runtime key needs only these permissions:
 
 - Add records (`addObject`)
 - Delete records matching a filter (`deleteIndex`)
-- Get index settings (`settings`)
-- Set index settings (`editSettings`)
+
+The publish webhook never reads or changes index settings. Settings remain user-owned after the explicit initial configuration, so the runtime key does not need the `settings` or `editSettings` permissions.
 
 ### Deploy the Netlify Functions
 
@@ -59,7 +61,7 @@ Use the function URL shown by Netlify and pass the configured `NETLIFY_KEY` as t
 https://YOUR-SITE-ID.netlify.app/.netlify/functions/post-published?key=NETLIFY_KEY
 ```
 
-These webhooks keep future post changes synchronized. Use the [`@tryghost/algolia` CLI](../algolia/README.md) to create the initial index.
+These webhooks keep future post changes synchronized without changing the index settings.
 
 ## Development
 
