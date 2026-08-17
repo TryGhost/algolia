@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prototype: richer extraction-fragment representation</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script>"use strict";
+(() => {
+  // ../algolia-html-extractor/prototype/PROTOTYPE-richer-fragment-representation.ts
+  var context = (position, headingPath = [], anchor = null, headingRank = 100) => ({ headingPath, anchor, position, headingRank });
+  var candidate = (overrides) => ({
+    ...context(overrides.position ?? 0),
+    ...overrides
+  });
+  var designs = [
+    {
+      id: "emissions-only",
+      name: "Emissions only",
+      thesis: "Return one uniform emitted-fragment shape and keep candidate comparison, local scope, and parser identity inside the extractor.",
+      publicSurface: "The existing synchronous extract function plus a discriminated source value on each emitted fragment.",
+      extractorOwns: "Candidate discovery, card adapters, normalization, local duplicate suppression, safe HTML production, and source descriptions.",
+      fragmenterOwns: "Anchor grouping, the preformatted merge rule, record packing, Ghost projection, IDs, and Algolia records.",
+      strength: "A deep seam: every returned item is immediately groupable, and future normalization changes do not alter the public API.",
+      cost: "The html contract broadens from selected outer HTML to safe searchable HTML for attribute-derived meaning.",
+      interfaceCode: `export type FragmentSource =
+    | Readonly<{
+          kind: 'element';
+          tagName: string;
+          selection: 'content' | 'card-heading-fallback';
+      }>
+    | Readonly<{
+          kind: 'attribute';
+          tagName: 'img';
+          attributeName: 'alt';
+      }>;
+
+export type ExtractionFragment = Readonly<{
+    html: string;
+    text: string;
+    headingPath: readonly string[];
+    anchor: string | null;
+    position: number;
+    headingRank: HeadingRank;
+    source: FragmentSource;
+}>;
+
+export function extract(
+    renderedHtml: string
+): readonly ExtractionFragment[];`
+    },
+    {
+      id: "public-candidates",
+      name: "Public candidates",
+      thesis: "Expose every candidate, its local scope, normalized identity, and suppression decision so callers can audit extraction.",
+      publicSurface: "The extract function returns included and suppressed candidates with stable public candidate metadata.",
+      extractorOwns: "Candidate discovery and the initial suppression decision, while preserving its intermediate reasoning for callers.",
+      fragmenterOwns: "Filtering included candidates before grouping, then all existing record responsibilities.",
+      strength: "Maximum observability of why a caption wins over a repeated image alternative.",
+      cost: "Normalization, scope identity, suppression reasons, and parser traversal identity become permanent compatibility contracts.",
+      interfaceCode: `export type ExtractionCandidate = Readonly<{
+    candidateId: string;
+    localScopeId: string;
+    comparisonKey: string;
+    included: boolean;
+    suppressionReason: 'duplicate' | 'descendant-precedence' | null;
+    html: string;
+    text: string;
+    context: FragmentContext;
+    source: FragmentSource;
+}>;
+
+export function extract(
+    renderedHtml: string
+): readonly ExtractionCandidate[];`
+    },
+    {
+      id: "source-payloads",
+      name: "Source-specific payloads",
+      thesis: "Preserve the old outer-HTML promise by returning different payloads for elements, attributes, and fallbacks.",
+      publicSurface: "A discriminated union whose element arm has html while other arms carry raw source values.",
+      extractorOwns: "Selection and deduplication, but not the final conversion of non-element meaning into searchable HTML.",
+      fragmenterOwns: "Branching by source kind, escaping attribute text, choosing fallback markup, and then grouping records.",
+      strength: "The meaning of html never changes for element-based compatibility fragments.",
+      cost: "Every consumer reimplements safe HTML conversion, and the fragmenter becomes coupled to card and attribute policy.",
+      interfaceCode: `export type ExtractionFragment = Readonly<
+    FragmentContext &
+        (
+            | {source: {kind: 'element'; tagName: string}; html: string; text: string}
+            | {source: {kind: 'attribute'; name: 'alt'}; value: string}
+            | {source: {kind: 'card-heading'}; headingText: string}
+        )
+>;
+
+export function extract(
+    renderedHtml: string
+): readonly ExtractionFragment[];`
+    }
+  ];
+  var scenarios = [
+    {
+      id: "image-alternative",
+      name: "Image alternative only",
+      question: "Can attribute-derived meaning become a uniform fragment without inventing markup or making the fragmenter escape it?",
+      renderedHtml: '<figure><img src="harbour.jpg" alt="Harbour & lighthouse at dusk"></figure>',
+      candidates: [
+        candidate({
+          candidateId: "node-2@alt",
+          localScopeId: "figure-1",
+          comparisonKey: "harbour & lighthouse at dusk",
+          sourceKind: "attribute",
+          tagName: "img",
+          attributeName: "alt",
+          selection: "content",
+          html: "Harbour &amp; lighthouse at dusk",
+          text: "Harbour & lighthouse at dusk",
+          compatibility: false,
+          emitted: true,
+          suppressionReason: null
+        })
+      ]
+    },
+    {
+      id: "caption-duplicate",
+      name: "Alternative repeated by caption",
+      question: "Should a local normalized duplicate key be observable after the extractor has already chosen the caption?",
+      renderedHtml: '<figure><img alt="A lighthouse at dusk"><figcaption>A lighthouse at dusk</figcaption></figure>',
+      candidates: [
+        candidate({
+          candidateId: "node-2@alt",
+          localScopeId: "figure-1",
+          comparisonKey: "a lighthouse at dusk",
+          sourceKind: "attribute",
+          tagName: "img",
+          attributeName: "alt",
+          selection: "content",
+          html: "A lighthouse at dusk",
+          text: "A lighthouse at dusk",
+          compatibility: false,
+          emitted: false,
+          suppressionReason: "Repeated by the local figure caption."
+        }),
+        candidate({
+          candidateId: "node-3",
+          localScopeId: "figure-1",
+          comparisonKey: "a lighthouse at dusk",
+          sourceKind: "element",
+          tagName: "figcaption",
+          attributeName: null,
+          selection: "content",
+          html: "<figcaption>A lighthouse at dusk</figcaption>",
+          text: "A lighthouse at dusk",
+          compatibility: false,
+          emitted: true,
+          suppressionReason: null
+        })
+      ]
+    },
+    {
+      id: "separate-figures",
+      name: "Same meaning in separate figures",
+      question: "Does local duplicate suppression preserve repeated meaning in distinct parts of the document?",
+      renderedHtml: '<figure><img alt="Ghost logo"></figure><figure><img alt="Ghost logo"></figure>',
+      candidates: [
+        candidate({
+          candidateId: "node-2@alt",
+          localScopeId: "figure-1",
+          comparisonKey: "ghost logo",
+          sourceKind: "attribute",
+          tagName: "img",
+          attributeName: "alt",
+          selection: "content",
+          html: "Ghost logo",
+          text: "Ghost logo",
+          compatibility: false,
+          emitted: true,
+          suppressionReason: null
+        }),
+        candidate({
+          candidateId: "node-4@alt",
+          localScopeId: "figure-2",
+          comparisonKey: "ghost logo",
+          sourceKind: "attribute",
+          tagName: "img",
+          attributeName: "alt",
+          selection: "content",
+          html: "Ghost logo",
+          text: "Ghost logo",
+          compatibility: false,
+          emitted: true,
+          suppressionReason: null,
+          position: 1
+        })
+      ]
+    },
+    {
+      id: "legacy-preformatted",
+      name: "Legacy preformatted content",
+      question: "Does the richer source description still give the fragmenter the one source fact required by the legacy pre merge?",
+      renderedHtml: '<h2 id="commands">Commands</h2><pre><code>ghost start</code></pre>',
+      candidates: [
+        candidate({
+          candidateId: "node-3",
+          localScopeId: "document",
+          comparisonKey: "ghost start",
+          sourceKind: "element",
+          tagName: "pre",
+          attributeName: null,
+          selection: "content",
+          html: "<pre><code>ghost start</code></pre>",
+          text: "ghost start",
+          compatibility: true,
+          emitted: true,
+          suppressionReason: null,
+          headingPath: ["Commands"],
+          anchor: "commands",
+          headingRank: 80
+        })
+      ]
+    },
+    {
+      id: "heading-only-card",
+      name: "Heading-only card fallback",
+      question: "Can a fallback selection keep its source element and safe HTML without exposing the card adapter that selected it?",
+      renderedHtml: '<div class="kg-card kg-header-card"><h2>Launch week</h2></div>',
+      candidates: [
+        candidate({
+          candidateId: "node-2",
+          localScopeId: "card-1",
+          comparisonKey: "launch week",
+          sourceKind: "element",
+          tagName: "h2",
+          attributeName: null,
+          selection: "card-heading-fallback",
+          html: "<h2>Launch week</h2>",
+          text: "Launch week",
+          compatibility: false,
+          emitted: true,
+          suppressionReason: null,
+          headingPath: ["Launch week"],
+          headingRank: 80
+        })
+      ]
+    },
+    {
+      id: "blockquote-descendants",
+      name: "Blockquote descendant precedence",
+      question: "Can the public output omit a wrapper candidate once a compatibility paragraph and rich citation already represent it?",
+      renderedHtml: "<blockquote><p>Make it work.</p><cite>Kent Beck</cite></blockquote>",
+      candidates: [
+        candidate({
+          candidateId: "node-2",
+          localScopeId: "blockquote-1",
+          comparisonKey: "make it work.",
+          sourceKind: "element",
+          tagName: "p",
+          attributeName: null,
+          selection: "content",
+          html: "<p>Make it work.</p>",
+          text: "Make it work.",
+          compatibility: true,
+          emitted: true,
+          suppressionReason: null
+        }),
+        candidate({
+          candidateId: "node-3",
+          localScopeId: "blockquote-1",
+          comparisonKey: "kent beck",
+          sourceKind: "element",
+          tagName: "cite",
+          attributeName: null,
+          selection: "content",
+          html: "<cite>Kent Beck</cite>",
+          text: "Kent Beck",
+          compatibility: false,
+          emitted: true,
+          suppressionReason: null,
+          position: 1
+        }),
+        candidate({
+          candidateId: "node-1",
+          localScopeId: "blockquote-1",
+          comparisonKey: "make it work. kent beck",
+          sourceKind: "element",
+          tagName: "blockquote",
+          attributeName: null,
+          selection: "content",
+          html: "<blockquote><p>Make it work.</p><cite>Kent Beck</cite></blockquote>",
+          text: "Make it work.Kent Beck",
+          compatibility: false,
+          emitted: false,
+          suppressionReason: "Qualifying descendants take precedence."
+        })
+      ]
+    }
+  ];
+  var walkthroughs = [
+    {
+      id: "private-deduplication",
+      name: "Private deduplication",
+      description: "Watch the extractor suppress a repeated image alternative without exporting its comparison machinery.",
+      steps: [
+        {
+          label: "Choose emissions only",
+          action: { type: "select-design", designId: "emissions-only" }
+        },
+        {
+          label: "Load the caption duplicate",
+          action: { type: "select-scenario", scenarioId: "caption-duplicate" }
+        },
+        { label: "Extract emitted fragments", action: { type: "run" } }
+      ]
+    },
+    {
+      id: "uniform-html",
+      name: "Uniform HTML",
+      description: "Compare who must turn an image alternative into safe searchable HTML.",
+      steps: [
+        {
+          label: "Choose source-specific payloads",
+          action: { type: "select-design", designId: "source-payloads" }
+        },
+        {
+          label: "Load an image alternative",
+          action: { type: "select-scenario", scenarioId: "image-alternative" }
+        },
+        { label: "Inspect the fragmenter burden", action: { type: "run" } },
+        {
+          label: "Switch to emissions only",
+          action: { type: "select-design", designId: "emissions-only" }
+        },
+        { label: "Inspect the uniform fragment", action: { type: "run" } }
+      ]
+    },
+    {
+      id: "stable-source",
+      name: "Stable source facts",
+      description: "Check legacy pre merging and heading fallback without exposing parse5 nodes or card adapter configuration.",
+      steps: [
+        {
+          label: "Choose emissions only",
+          action: { type: "select-design", designId: "emissions-only" }
+        },
+        {
+          label: "Load legacy preformatted content",
+          action: { type: "select-scenario", scenarioId: "legacy-preformatted" }
+        },
+        { label: "Inspect the source description", action: { type: "run" } },
+        {
+          label: "Load the heading-only card",
+          action: { type: "select-scenario", scenarioId: "heading-only-card" }
+        },
+        { label: "Inspect the fallback fragment", action: { type: "run" } }
+      ]
+    }
+  ];
+  var initialState = {
+    designId: "emissions-only",
+    scenarioId: "caption-duplicate",
+    status: "ready",
+    outcome: null,
+    activeWalkthroughId: "private-deduplication",
+    nextWalkthroughStep: 0,
+    lastChange: "Ready to compare three fragment representations."
+  };
+  var getDesign = (id) => {
+    const design = designs.find((item) => item.id === id);
+    if (design === void 0) {
+      throw new Error(`Unknown design: ${id}`);
+    }
+    return design;
+  };
+  var getScenario = (id) => {
+    const scenario = scenarios.find((item) => item.id === id);
+    if (scenario === void 0) {
+      throw new Error(`Unknown scenario: ${id}`);
+    }
+    return scenario;
+  };
+  var getWalkthrough = (id) => {
+    const walkthrough = walkthroughs.find((item) => item.id === id);
+    if (walkthrough === void 0) {
+      throw new Error(`Unknown walkthrough: ${id}`);
+    }
+    return walkthrough;
+  };
+  var publicSource = (item) => {
+    if (item.sourceKind === "attribute") {
+      return { kind: "attribute", tagName: "img", attributeName: "alt" };
+    }
+    return { kind: "element", tagName: item.tagName, selection: item.selection };
+  };
+  var publicContext = (item) => ({
+    headingPath: item.headingPath,
+    anchor: item.anchor,
+    position: item.position,
+    headingRank: item.headingRank
+  });
+  var emissionsOnlyValue = (scenario) => scenario.candidates.filter((item) => item.emitted).map((item) => ({
+    html: item.html,
+    text: item.text,
+    ...publicContext(item),
+    source: publicSource(item)
+  }));
+  var publicCandidatesValue = (scenario) => scenario.candidates.map((item) => ({
+    candidateId: item.candidateId,
+    localScopeId: item.localScopeId,
+    comparisonKey: item.comparisonKey,
+    included: item.emitted,
+    suppressionReason: item.suppressionReason,
+    html: item.html,
+    text: item.text,
+    context: publicContext(item),
+    source: publicSource(item)
+  }));
+  var sourcePayloadValue = (scenario) => scenario.candidates.filter((item) => item.emitted).map((item) => {
+    if (item.sourceKind === "attribute") {
+      return {
+        ...publicContext(item),
+        source: { kind: "attribute", name: "alt" },
+        value: item.text
+      };
+    }
+    if (item.selection === "card-heading-fallback") {
+      return {
+        ...publicContext(item),
+        source: { kind: "card-heading" },
+        headingText: item.text
+      };
+    }
+    return {
+      ...publicContext(item),
+      source: { kind: "element", tagName: item.tagName },
+      html: item.html,
+      text: item.text
+    };
+  });
+  var evaluate = (design, scenario) => {
+    const privateState = scenario.candidates.map((item) => ({
+      candidateId: item.candidateId,
+      localScopeId: item.localScopeId,
+      comparisonKey: item.comparisonKey,
+      emitted: item.emitted,
+      reason: item.suppressionReason
+    }));
+    if (design.id === "public-candidates") {
+      return {
+        publicValue: publicCandidatesValue(scenario),
+        fragmenterView: [
+          "Filter candidates whose included field is true.",
+          "Ignore candidate IDs, local scopes, comparison keys, and suppression reasons.",
+          "Then group the remaining values by anchor and preserve the pre special case."
+        ],
+        privateState: "Nothing stays private: candidate mechanics cross the seam.",
+        verdict: "The fragmenter receives facts it does not use, and internal normalization becomes versioned API."
+      };
+    }
+    if (design.id === "source-payloads") {
+      return {
+        publicValue: sourcePayloadValue(scenario),
+        fragmenterView: [
+          "Branch on every source kind.",
+          "Escape attribute values and choose HTML for card-heading fallbacks.",
+          "Only then can grouping, packing, and record creation start."
+        ],
+        privateState,
+        verdict: "The old outer-HTML promise survives, but semantic HTML production leaks into every consumer."
+      };
+    }
+    return {
+      publicValue: emissionsOnlyValue(scenario),
+      fragmenterView: [
+        "Every item already has safe searchable html and preserved source text.",
+        "Use source.kind === element and source.tagName === pre for the legacy pre merge.",
+        "Group by anchor; candidate normalization and card policy are irrelevant here."
+      ],
+      privateState,
+      verdict: "Recommended: public source facts explain the emitted value while selection machinery remains private."
+    };
+  };
+  var transition = (state2, action) => {
+    switch (action.type) {
+      case "select-design":
+        return {
+          ...state2,
+          designId: action.designId,
+          status: "ready",
+          outcome: null,
+          lastChange: `Selected ${getDesign(action.designId).name}.`
+        };
+      case "select-scenario":
+        return {
+          ...state2,
+          scenarioId: action.scenarioId,
+          status: "ready",
+          outcome: null,
+          lastChange: `Loaded ${getScenario(action.scenarioId).name}.`
+        };
+      case "run": {
+        const design = getDesign(state2.designId);
+        const scenario = getScenario(state2.scenarioId);
+        return {
+          ...state2,
+          status: "complete",
+          outcome: evaluate(design, scenario),
+          lastChange: `Ran ${design.name} against ${scenario.name}.`
+        };
+      }
+      case "start-walkthrough":
+        return {
+          ...initialState,
+          activeWalkthroughId: action.walkthroughId,
+          lastChange: `Started ${getWalkthrough(action.walkthroughId).name}.`
+        };
+      case "reset":
+        return initialState;
+    }
+  };
+  var escapeHtml = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  var prettyJson = (value) => JSON.stringify(value, null, 2);
+  var isDesignId = (value) => designs.some((item) => item.id === value);
+  var isScenarioId = (value) => scenarios.some((item) => item.id === value);
+  var renderOutcome = (outcome) => {
+    if (outcome === null) {
+      return '<p class="empty">Choose a representation and case, then extract.</p>';
+    }
+    return `<div class="outcome-grid">
+        <div>
+            <p class="eyebrow">Public return value</p>
+            <pre>${escapeHtml(prettyJson(outcome.publicValue))}</pre>
+        </div>
+        <div>
+            <p class="eyebrow">Fragmenter sees</p>
+            <ol>${outcome.fragmenterView.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>
+            <p class="verdict">${escapeHtml(outcome.verdict)}</p>
+        </div>
+        <details>
+            <summary>Private candidate pass</summary>
+            <pre>${escapeHtml(prettyJson(outcome.privateState))}</pre>
+        </details>
+    </div>`;
+  };
+  var renderWalkthrough = (walkthrough, state2) => {
+    const isActive = state2.activeWalkthroughId === walkthrough.id;
+    return `<section class="walkthrough-panel ${isActive ? "active" : ""}">
+        <p>${escapeHtml(walkthrough.description)}</p>
+        <div class="walkthrough-steps">
+            ${walkthrough.steps.map((step, index) => {
+      const isComplete = isActive && index < state2.nextWalkthroughStep;
+      const isNext = isActive && index === state2.nextWalkthroughStep;
+      return `<button class="step ${isComplete ? "complete" : ""}" data-action="walkthrough-step" data-step-index="${index}" ${isNext ? "" : "disabled"}>
+                        <span>${isComplete ? "\u2713" : index + 1}</span>${escapeHtml(step.label)}
+                    </button>`;
+    }).join("")}
+        </div>
+    </section>`;
+  };
+  var style = `
+    :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f3f1ec;
+        color: #17211d;
+        --accent: #087f5b;
+        --accent-soft: #dff4eb;
+        --ink-muted: #617069;
+        --line: #d9ded9;
+        --surface: #ffffff;
+        --code: #10251e;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, select { font: inherit; }
+    button { min-height: 44px; }
+    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 80px; }
+    .hero { max-width: 900px; margin-bottom: 32px; }
+    .kicker, .eyebrow { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { max-width: 850px; margin: 8px 0 14px; font-family: Georgia, serif; font-size: clamp(34px, 6vw, 62px); font-weight: 500; line-height: 1.03; }
+    .lede { max-width: 820px; color: var(--ink-muted); font-size: 19px; line-height: 1.6; }
+    .recommendation { border-left: 4px solid var(--accent); padding: 14px 18px; background: var(--accent-soft); line-height: 1.5; }
+    .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 10px 30px rgba(19, 38, 31, .05); }
+    .section { margin-top: 24px; padding: 24px; }
+    .section-header { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .section-header h2 { margin: 0; font-size: 22px; }
+    .section-header p { margin: 4px 0 0; color: var(--ink-muted); }
+    .design-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .design { display: flex; min-height: 210px; flex-direction: column; align-items: flex-start; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fafbf9; text-align: left; cursor: pointer; }
+    .design:hover, .design:focus-visible { border-color: var(--accent); outline: 3px solid rgba(8, 127, 91, .14); }
+    .design.selected { border: 2px solid var(--accent); background: var(--accent-soft); }
+    .design strong { font-size: 17px; }
+    .design p { color: var(--ink-muted); line-height: 1.45; }
+    .design small { margin-top: auto; color: #32443c; font-weight: 700; }
+    .details-grid, .outcome-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 24px; }
+    .facts { display: grid; gap: 12px; margin: 0; }
+    .facts div { padding: 12px; border-radius: 10px; background: #f5f7f5; }
+    .facts dt { color: var(--ink-muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .facts dd { margin: 5px 0 0; line-height: 1.45; }
+    pre { margin: 10px 0 0; padding: 18px; border-radius: 12px; background: var(--code); color: #e7fff4; font-size: 13px; line-height: 1.55; overflow: auto; }
+    .tradeoff, .verdict { margin: 16px 0 0; padding: 14px; border-radius: 10px; background: #fff7df; line-height: 1.5; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+    label { display: grid; gap: 6px; color: var(--ink-muted); font-size: 13px; font-weight: 700; }
+    select { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: white; color: #17211d; }
+    .run, .secondary { border: 0; border-radius: 9px; padding: 0 18px; font-weight: 800; cursor: pointer; }
+    .run { background: var(--accent); color: white; }
+    .secondary { border: 1px solid var(--line); background: white; color: #17211d; }
+    .run:hover, .run:focus-visible, .secondary:hover, .secondary:focus-visible { outline: 3px solid rgba(8, 127, 91, .18); }
+    .input-panel { margin-top: 16px; }
+    .input-panel pre { background: #f5f7f5; color: #22342c; }
+    .state-note { margin: 16px 0; color: var(--ink-muted); }
+    .empty { padding: 28px; border: 1px dashed var(--line); border-radius: 10px; color: var(--ink-muted); text-align: center; }
+    .outcome-grid ol { padding-left: 22px; line-height: 1.65; }
+    details { grid-column: 1 / -1; }
+    summary { cursor: pointer; color: var(--ink-muted); font-weight: 700; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tab { border: 1px solid var(--line); border-radius: 999px; background: white; padding: 0 16px; color: #273a31; cursor: pointer; }
+    .tab.active { border-color: var(--accent); background: var(--accent-soft); color: #075a42; }
+    .walkthrough-panel { display: none; }
+    .walkthrough-panel.active { display: block; }
+    .walkthrough-steps { display: grid; gap: 8px; }
+    .step { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: white; color: #17211d; text-align: left; }
+    .step:not(:disabled) { cursor: pointer; border-color: var(--accent); }
+    .step:disabled { opacity: .55; }
+    .step.complete { background: var(--accent-soft); opacity: 1; }
+    .step span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: #e9edea; font-size: 12px; font-weight: 800; }
+    .footer { margin-top: 24px; color: var(--ink-muted); font-size: 13px; text-align: center; }
+    @media (max-width: 820px) {
+        .design-grid, .details-grid, .outcome-grid, .controls { grid-template-columns: 1fr; }
+    }
+`;
+  var root = globalThis.document.querySelector("#app");
+  if (root === null) {
+    throw new Error("Prototype root element was not found.");
+  }
+  var stylesheet = globalThis.document.createElement("style");
+  stylesheet.textContent = style;
+  globalThis.document.head.append(stylesheet);
+  var state = initialState;
+  var render = () => {
+    const design = getDesign(state.designId);
+    const scenario = getScenario(state.scenarioId);
+    const walkthrough = getWalkthrough(state.activeWalkthroughId);
+    root.innerHTML = `<main class="shell">
+        <header class="hero">
+            <p class="kicker">Throwaway prototype \xB7 Wayfinder decision</p>
+            <h1>What should a richer extraction fragment expose?</h1>
+            <p class="lede">This demo tests one boundary: richer semantic candidates must become stable public fragments without leaking parse5 nodes, card configuration, or the extractor's local duplicate machinery.</p>
+            <p class="recommendation"><strong>Working recommendation:</strong> return emitted fragments only. Give every fragment uniform safe <code>html</code>, preserved <code>text</code>, context, and a small discriminated <code>source</code>; keep comparison keys and local scope identities private.</p>
+        </header>
+
+        <section class="card section">
+            <div class="section-header"><div><h2>1. Pick a representation</h2><p>Three different ownership boundaries for the same richer semantics.</p></div></div>
+            <div class="design-grid">
+                ${designs.map((item) => `<button class="design ${item.id === design.id ? "selected" : ""}" data-action="select-design" data-design-id="${item.id}"><strong>${escapeHtml(item.name)}</strong><p>${escapeHtml(item.thesis)}</p><small>${escapeHtml(item.publicSurface)}</small></button>`).join("")}
+            </div>
+        </section>
+
+        <section class="card section">
+            <div class="section-header"><div><h2>${escapeHtml(design.name)}</h2><p>${escapeHtml(design.thesis)}</p></div></div>
+            <div class="details-grid">
+                <div><p class="eyebrow">Strict TypeScript interface</p><pre>${escapeHtml(design.interfaceCode)}</pre></div>
+                <div>
+                    <dl class="facts">
+                        <div><dt>Extractor owns</dt><dd>${escapeHtml(design.extractorOwns)}</dd></div>
+                        <div><dt>Fragmenter owns</dt><dd>${escapeHtml(design.fragmenterOwns)}</dd></div>
+                    </dl>
+                    <p class="tradeoff"><strong>Leverage:</strong> ${escapeHtml(design.strength)}<br><br><strong>Cost:</strong> ${escapeHtml(design.cost)}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card section">
+            <div class="section-header"><div><h2>2. Drive a case</h2><p>${escapeHtml(scenario.question)}</p></div><button class="secondary" data-action="reset">Reset</button></div>
+            <div class="controls">
+                <label>Representation<select data-action="design-select">${designs.map((item) => `<option value="${item.id}" ${item.id === design.id ? "selected" : ""}>${escapeHtml(item.name)}</option>`).join("")}</select></label>
+                <label>Case<select data-action="scenario-select">${scenarios.map((item) => `<option value="${item.id}" ${item.id === scenario.id ? "selected" : ""}>${escapeHtml(item.name)}</option>`).join("")}</select></label>
+                <button class="run" data-action="run">Extract</button>
+            </div>
+            <div class="input-panel"><p class="eyebrow">Rendered HTML</p><pre>${escapeHtml(scenario.renderedHtml)}</pre></div>
+            <p class="state-note"><strong>Last change:</strong> ${escapeHtml(state.lastChange)} \xB7 Status: ${state.status}</p>
+            ${renderOutcome(state.outcome)}
+        </section>
+
+        <section class="card section">
+            <div class="section-header"><div><h2>3. Guided walkthroughs</h2><p>Start a tab, then press its numbered steps in order.</p></div></div>
+            <div class="tabs" role="tablist" aria-label="Prototype walkthroughs">
+                ${walkthroughs.map((item) => `<button class="tab ${item.id === walkthrough.id ? "active" : ""}" data-action="start-walkthrough" data-walkthrough-id="${item.id}" role="tab" aria-selected="${item.id === walkthrough.id}">${escapeHtml(item.name)}</button>`).join("")}
+            </div>
+            ${walkthroughs.map((item) => renderWalkthrough(item, state)).join("")}
+        </section>
+        <p class="footer">Prototype source is strict TypeScript. The generated HTML is a double-clickable review artifact, not production implementation.</p>
+    </main>`;
+  };
+  var advanceWalkthrough = (stepIndex) => {
+    const walkthrough = getWalkthrough(state.activeWalkthroughId);
+    const step = walkthrough.steps[stepIndex];
+    if (step === void 0 || stepIndex !== state.nextWalkthroughStep) {
+      return;
+    }
+    state = {
+      ...transition(state, step.action),
+      activeWalkthroughId: state.activeWalkthroughId,
+      nextWalkthroughStep: stepIndex + 1
+    };
+  };
+  root.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof globalThis.Element)) {
+      return;
+    }
+    const button = target.closest("button[data-action]");
+    if (button === null) {
+      return;
+    }
+    const action = button.dataset.action;
+    if (action === "select-design" && isDesignId(button.dataset.designId)) {
+      state = transition(state, { type: "select-design", designId: button.dataset.designId });
+    } else if (action === "run") {
+      state = transition(state, { type: "run" });
+    } else if (action === "reset") {
+      state = transition(state, { type: "reset" });
+    } else if (action === "start-walkthrough" && button.dataset.walkthroughId !== void 0) {
+      state = transition(state, {
+        type: "start-walkthrough",
+        walkthroughId: button.dataset.walkthroughId
+      });
+    } else if (action === "walkthrough-step" && button.dataset.stepIndex !== void 0) {
+      const stepIndex = Number.parseInt(button.dataset.stepIndex, 10);
+      if (Number.isInteger(stepIndex)) {
+        advanceWalkthrough(stepIndex);
+      }
+    }
+    render();
+  });
+  root.addEventListener("change", (event) => {
+    const target = event.target;
+    if (!(target instanceof globalThis.HTMLSelectElement)) {
+      return;
+    }
+    if (target.dataset.action === "design-select" && isDesignId(target.value)) {
+      state = transition(state, { type: "select-design", designId: target.value });
+    } else if (target.dataset.action === "scenario-select" && isScenarioId(target.value)) {
+      state = transition(state, { type: "select-scenario", scenarioId: target.value });
+    }
+    render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
