@@ -8,6 +8,14 @@ Ghost Algolia turns published Ghost content into structured records for an Algol
 A published post or page returned by the Ghost Content API, including its metadata and rendered HTML.
 _Avoid_: Page, document, article when the resource type is not important
 
+**Ghost content type**:
+The resource kind of Ghost content: either `post` or `page`.
+_Avoid_: Source, endpoint, page flag
+
+**Ghost content identity**:
+The stable Ghost content ID shared by every Algolia record derived from one post or page, independent of its mutable slug or content type.
+_Avoid_: Slug, URL, fragment object ID
+
 **Ghost content projection**:
 The protected record fields and configured optional projection fields that are carried into every Algolia record derived from Ghost content.
 _Avoid_: Post projection, base record, Algolia post
