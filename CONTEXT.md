@@ -29,8 +29,20 @@ An allowlisted public Ghost source field or package-owned compatibility projecti
 _Avoid_: Custom field, arbitrary field
 
 **Extraction fragment**:
-An ordered unit of rendered HTML associated with its current heading path, anchor, and position.
+An ordered emitted unit of searchable rendered meaning with searchable fragment HTML, preserved source text, heading context, and a fragment source.
 _Avoid_: Chunk, paragraph record
+
+**Extraction candidate**:
+Potential searchable rendered meaning considered before descendant precedence and local duplicate suppression. A candidate becomes an extraction fragment only when the HTML extractor emits it.
+_Avoid_: Extraction fragment, parser node
+
+**Searchable fragment HTML**:
+The safe HTML representation carried by every extraction fragment so downstream grouping and indexing never need to reinterpret its source.
+_Avoid_: Outer HTML, raw attribute value
+
+**Fragment source**:
+A stable description of whether an extraction fragment came from element content or an attribute, including whether an element was selected as ordinary content or as a card-heading fallback.
+_Avoid_: Parser node, candidate ID, card adapter
 
 **HTML extractor**:
 The component that converts rendered HTML into ordered extraction fragments.
