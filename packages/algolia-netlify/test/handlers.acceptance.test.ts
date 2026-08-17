@@ -46,9 +46,6 @@ const postsPage = JSON.parse(
 const expectedRecords = JSON.parse(
     await readFile(path.join(ghostFixtureDirectory, 'expected-algolia-records.json'), 'utf8')
 ) as Array<Record<string, unknown>>;
-const expectedSettings = JSON.parse(
-    await readFile(path.join(ghostFixtureDirectory, 'expected-index-settings.json'), 'utf8')
-) as Record<string, unknown>;
 const richPost = postsPage.posts.find(post => post.slug === 'ghost-6-rendered-content-contract');
 const ghostUserAgent = 'Ghost/6.57.1 (https://github.com/TryGhost/Ghost)';
 const legacyGhostUserAgent = 'Ghost(https://github.com/TryGhost/Ghost)';
@@ -171,12 +168,9 @@ describe('modern Netlify webhook handlers', () => {
             'Post "Ghost 6 rendered content contract" has been added to the index.'
         );
         expect(requests.map(request => [request.method, new URL(request.url).pathname])).toEqual([
-            ['PUT', '/1/indexes/ghost-content/settings'],
-            ['GET', '/1/indexes/ghost-content/settings'],
             ['POST', '/1/indexes/ghost-content/batch']
         ]);
-        expect(JSON.parse(requests[0].data ?? '')).toEqual(expectedSettings);
-        const batch = JSON.parse(requests[2].data ?? '') as {
+        const batch = JSON.parse(requests[0].data ?? '') as {
             requests: Array<{action: string; body: Record<string, unknown>}>;
         };
         expect(batch.requests).toEqual(
@@ -302,8 +296,6 @@ describe('modern Netlify webhook handlers', () => {
 
     it.each([
         ['post-published', 1],
-        ['post-published', 2],
-        ['post-published', 3],
         ['post-unpublished', 1]
     ] as const)(
         'returns JSON when Algolia request fails for %s at request %i',
