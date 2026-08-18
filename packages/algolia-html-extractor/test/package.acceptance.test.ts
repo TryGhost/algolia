@@ -66,6 +66,9 @@ describe('@tryghost/algolia-html-extractor packed package', () => {
             temporaryDirectory,
             'node_modules/@tryghost/algolia-html-extractor'
         );
+        const sourceManifest = (await readJson(path.join(packageDirectory, 'package.json'))) as {
+            version: string;
+        };
         const manifest = (await readJson(path.join(installedPackage, 'package.json'))) as {
             version: string;
             dependencies: Record<string, string>;
@@ -73,7 +76,7 @@ describe('@tryghost/algolia-html-extractor packed package', () => {
             main?: unknown;
             module?: unknown;
         };
-        expect(manifest.version).toBe('0.0.0');
+        expect(manifest.version).toBe(sourceManifest.version);
         expect(Object.keys(manifest.dependencies)).toEqual(['parse5']);
         expect(manifest.dependencies.parse5).toMatch(/^\d+\.\d+\.\d+$/);
         expect(manifest.main).toBeUndefined();
