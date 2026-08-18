@@ -18,9 +18,9 @@
     "format": "oxfmt .",
     "preship": "git diff --quiet && git diff --cached --quiet || (echo 'Error: working tree must be clean before shipping' && exit 1) && pnpm test",
     "ship": "nx release version --git-push --git-remote ${GHOST_UPSTREAM:-origin}",
-    "ship:patch": "pnpm ship patch --projects=@tryghost/algolia,@tryghost/algolia-fragmenter,@tryghost/algolia-indexer,@tryghost/algolia-netlify",
-    "ship:minor": "pnpm ship minor --projects=@tryghost/algolia,@tryghost/algolia-fragmenter,@tryghost/algolia-indexer,@tryghost/algolia-netlify",
-    "ship:major": "pnpm ship major --projects=@tryghost/algolia,@tryghost/algolia-fragmenter,@tryghost/algolia-indexer,@tryghost/algolia-netlify"
+    "ship:patch": "pnpm ship patch",
+    "ship:minor": "pnpm ship minor",
+    "ship:major": "pnpm ship major"
   },
   "devDependencies": {
     "@bcoe/v8-coverage": "1.0.2",
