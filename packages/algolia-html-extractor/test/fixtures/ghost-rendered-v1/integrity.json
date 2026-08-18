@@ -1,0 +1,34 @@
+{
+  "evidence.json": {
+    "bytes": 1037,
+    "sha256": "ae31fe19fc615f2aa2d9f7190bc74afd887805c51264e9f710c30ff3b951c4cc"
+  },
+  "expected-fragments.json": {
+    "bytes": 1531,
+    "sha256": "3e5f8b4094785a168ef72b23a5a3db9c6540131f0111d0177576b883a9da61dd"
+  },
+  "expected-final-records.json": {
+    "bytes": 1227,
+    "sha256": "547decd5921de227fced056fa7ab032cbe37974f61220b5ecc449917e1fed148"
+  },
+  "controlled-source.mts": {
+    "bytes": 2781,
+    "sha256": "95fecfd4545ae7d9de02e9fb13785b5bc84b9db1df40fe398029c8e847f1742a"
+  },
+  "capture.mts": {
+    "bytes": 1971,
+    "sha256": "7b1def791cabc935d0a9a5d3271406896f916b461cc97045d357291e5a1cb6b2"
+  },
+  "renderer.mts": {
+    "bytes": 2363,
+    "sha256": "8f38aa00ad825ee24bb0a604223f8decbc60a4ee01bfd2ad994ffd42ccea49ce"
+  },
+  "controlled-capture.json": {
+    "bytes": 17200,
+    "sha256": "90e314a5e21d6df83e21235bbd5f78a0250f6c234e4e7932ad19bc7ef130eb09"
+  },
+  "controlled-expectations.json": {
+    "bytes": 5989,
+    "sha256": "c583dd1003175e1548eff2a525ef358ef8e80b9378d51609a31caf3e9870cf60"
+  }
+}

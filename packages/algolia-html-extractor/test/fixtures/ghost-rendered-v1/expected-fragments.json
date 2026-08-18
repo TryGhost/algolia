@@ -1,0 +1,47 @@
+[
+  {
+    "html": "<p>Rendered by Ghost 6 from synthetic source HTML with an <a href=\"http://127.0.0.1:23689/internal-destination/\">internal link</a>.</p>",
+    "text": "Rendered by Ghost 6 from synthetic source HTML with an internal link.",
+    "headingPath": ["Fixture overview"],
+    "anchor": "fixture-overview",
+    "position": 0,
+    "headingRank": 80,
+    "sourceTag": "p"
+  },
+  {
+    "html": "<li>First deterministic item</li>",
+    "text": "First deterministic item",
+    "headingPath": ["Fixture overview", "Structured blocks"],
+    "anchor": "structured-blocks",
+    "position": 1,
+    "headingRank": 70,
+    "sourceTag": "li"
+  },
+  {
+    "html": "<li>Second deterministic item</li>",
+    "text": "Second deterministic item",
+    "headingPath": ["Fixture overview", "Structured blocks"],
+    "anchor": "structured-blocks",
+    "position": 2,
+    "headingRank": 70,
+    "sourceTag": "li"
+  },
+  {
+    "html": "<pre><code class=\"language-js\">const fixture = true;\nconsole.log(fixture);</code></pre>",
+    "text": "const fixture = true;\nconsole.log(fixture);",
+    "headingPath": ["Fixture overview", "Structured blocks"],
+    "anchor": "structured-blocks",
+    "position": 3,
+    "headingRank": 70,
+    "sourceTag": "pre"
+  },
+  {
+    "html": "<p>End of the rendered acceptance fixture.</p>",
+    "text": "End of the rendered acceptance fixture.",
+    "headingPath": ["Fixture overview", "Structured blocks"],
+    "anchor": "structured-blocks",
+    "position": 4,
+    "headingRank": 70,
+    "sourceTag": "p"
+  }
+]

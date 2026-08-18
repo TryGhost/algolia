@@ -1,0 +1,11 @@
+{
+  "ghostVersion": "6.57.1",
+  "sourceFormat": "html import converted by Ghost",
+  "slug": "ghost-6-rendered-content-contract",
+  "uuid": "00000000-0000-4000-8000-000000000101",
+  "sourceProof": {
+    "path": "packages/algolia/test/fixtures/ghost-v6/ghost-renderer-proof.json",
+    "sha256": "9a244eb05c432e2e3d4ec1a4821364f94d025f8e3419e2cb1c3e456a552ccc95"
+  },
+  "html": "<h2 id=\"fixture-overview\">Fixture overview</h2><p>Rendered by Ghost 6 from synthetic source HTML with an <a href=\"http://127.0.0.1:23689/internal-destination/\">internal link</a>.</p><h3 id=\"structured-blocks\">Structured blocks</h3><ul><li>First deterministic item</li><li>Second deterministic item</li></ul><pre><code class=\"language-js\">const fixture = true;\nconsole.log(fixture);</code></pre><figure class=\"kg-card kg-image-card\"><img src=\"https://fixture.invalid/images/content-card.png\" class=\"kg-image\" alt=\"Synthetic fixture image\" loading=\"lazy\" width=\"1200\" height=\"630\"></figure><p>End of the rendered acceptance fixture.</p>"
+}

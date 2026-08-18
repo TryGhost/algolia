@@ -2,19 +2,18 @@
 
 ## Decision
 
-Use `parse5@7.3.0` as the parser and serializer primitive for the compatibility-first public extractor.
+Use `parse5` as the parser and serializer primitive for the compatibility-first public extractor. The initial implementation established parity on version 7.3.0, but parser updates should go through the normal dependency update flow.
 
 Implement the extraction state machine as clean-room Ghost code against parse5's tree-adapter data. Do not port the abandoned JavaScript package or the Ruby extractor.
 
-## Why parse5 7.3.0
+## Why parse5
 
 - It implements WHATWG HTML parsing and serialization, which is the right baseline for malformed HTML, entities, tables, and browser-like tree construction.
 - It is MIT-licensed and has one runtime dependency, `entities`.
-- Version 7.3.0 publishes conditional `import` and `require` exports. That lets a synchronous public extractor serve both ESM consumers and the fragmenter's existing CommonJS `require` seam without bundling the parser or converting the fragmenter to ESM.
-- It is itself implemented in TypeScript and publishes bundled declaration files for both its ESM and CommonJS builds. The planned monorepo TypeScript migration therefore does not require parse5 8: source-language migration and an ESM-only package contract are separate decisions. The extractor can be authored in TypeScript now while preserving the compatibility-first dual-module boundary.
+- It is implemented in TypeScript and publishes declaration files that the extractor can consume directly.
 - It exposes parsing and serialization primitives without a browser simulation, network stack, or general selector engine that this fixed traversal contract does not need.
 
-Parse5 8 is the current major but is ESM-only. Using it now would require an ESM-only extractor, asynchronous loading from CommonJS, converting the fragmenter, or bundling a second CJS artifact. Each option expands the compatibility-first slice. Pin 7.3.0 and add a Renovate compatibility rule preventing an automatic parse5 8 upgrade until the public package's module contract is intentionally revisited.
+The extractor is ESM-only, so parse5's module format does not require a Renovate version restriction. Renovate can propose parser updates. The compatibility suite decides whether an update is safe by comparing exact public fragments and final records with reviewed literals.
 
 ## Rejected alternatives
 
@@ -25,7 +24,7 @@ Parse5 8 is the current major but is ESM-only. Using it now would require an ESM
 
 ## Validation required during implementation
 
-The parser choice is conditional on the exact differential suite passing against the frozen legacy contract. Pay particular attention to `outerHTML` serialization, entity spelling, document fragments, malformed tables, foreign content, void elements, and nested selected nodes. Any normalized difference must return to the map as a compatibility decision rather than being accepted incidentally.
+The parser choice is conditional on the exact differential suite passing against the frozen legacy contract. The suite covers `outerHTML` serialization, entity spelling, document parsing rather than fragment parsing, malformed tables, foreign content, void elements, and nested selected nodes. A parser update that changes those results needs a compatibility decision; its output should not be accepted by rewriting fixtures as part of the dependency update.
 
 The Netlify package must continue to expose the parser to its file tracer through an explicit direct dependency or an equivalently verified packaged seam.
 

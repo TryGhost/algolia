@@ -7,12 +7,13 @@ JavaScript tools for turning Ghost posts into records and keeping an Algolia sea
 
 ## Tools
 
-This pnpm monorepo contains four public packages:
+This pnpm monorepo contains five packages:
 
 - [`@tryghost/algolia`](packages/algolia/README.md) provides a CLI for initially indexing a Ghost site's published posts.
 - [`@tryghost/algolia-netlify`](packages/algolia-netlify/README.md) provides Netlify Functions that process Ghost post webhooks and update an index.
 - [`@tryghost/algolia-fragmenter`](packages/algolia-fragmenter/README.md) converts Ghost posts into Algolia records and splits their HTML by heading.
 - [`@tryghost/algolia-indexer`](packages/algolia-indexer/README.md) manages Algolia index settings, records, and deletions.
+- [`@tryghost/algolia-html-extractor`](packages/algolia-html-extractor/README.md) extracts ordered text fragments from rendered Ghost HTML.
 
 ## Usage
 
@@ -53,7 +54,8 @@ Package-specific development and verification commands are documented in each pa
 
 ## Publishing
 
-The repository versions its four public packages independently with Nx. Use the root `ship:*` commands from a clean checkout of `main`:
+The repository uses Nx to version packages independently. For routine releases, run one of the
+root aliases from a clean checkout of `main`:
 
 ```sh
 pnpm ship:patch
@@ -61,14 +63,16 @@ pnpm ship:minor
 pnpm ship:major
 ```
 
-Unscoped commands version all four packages. To version only specific packages, pass Nx's standard project selector and use `--dry-run` first:
+To release one package, call `pnpm ship` with its Nx project name. Preview the result first:
 
 ```sh
-pnpm ship:patch --projects=@tryghost/algolia --dry-run
-pnpm ship:patch --projects=@tryghost/algolia
+pnpm ship patch --projects=@tryghost/algolia --dry-run
+pnpm ship patch --projects=@tryghost/algolia
 ```
 
-This maintainer-only operation runs the full suite, updates selected package versions and required internal dependants, creates the release commit and package tags, and pushes them to the configured upstream. The [`Publish` workflow](.github/workflows/publish.yml) then publishes new versions through npm trusted publishing with provenance. Never run `npm publish` by hand.
+`ship` runs the test suite, updates the selected versions and their internal dependants, creates the
+release commit and tags, then pushes them upstream. The [`Publish` workflow](.github/workflows/publish.yml)
+publishes those versions through npm trusted publishing. Never run `npm publish` by hand.
 
 ---
 

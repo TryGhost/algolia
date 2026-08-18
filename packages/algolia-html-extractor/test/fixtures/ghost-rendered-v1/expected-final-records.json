@@ -1,0 +1,34 @@
+[
+  {
+    "objectID": "controlled-ghost-content_0",
+    "slug": "ghost-6-rendered-content-contract",
+    "url": "https://fixture.invalid/ghost-6-rendered-content-contract/#fixture-overview",
+    "html": "<p>Rendered by Ghost 6 from synthetic source HTML with an <a href=\"http://127.0.0.1:23689/internal-destination/\">internal link</a>.</p>",
+    "image": null,
+    "title": "Synthetic Ghost renderer proof",
+    "tags": [],
+    "authors": [],
+    "headings": ["Fixture overview"],
+    "anchor": "fixture-overview",
+    "customRanking": {
+      "position": 0,
+      "heading": 80
+    }
+  },
+  {
+    "objectID": "controlled-ghost-content_1",
+    "slug": "ghost-6-rendered-content-contract",
+    "url": "https://fixture.invalid/ghost-6-rendered-content-contract/#structured-blocks",
+    "html": "<li>First deterministic item</li><li>Second deterministic item</li> const fixture = true;\nconsole.log(fixture);<p>End of the rendered acceptance fixture.</p>",
+    "image": null,
+    "title": "Synthetic Ghost renderer proof",
+    "tags": [],
+    "authors": [],
+    "headings": ["Fixture overview", "Structured blocks"],
+    "anchor": "structured-blocks",
+    "customRanking": {
+      "position": 1,
+      "heading": 70
+    }
+  }
+]

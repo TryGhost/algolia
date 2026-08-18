@@ -71,6 +71,7 @@ packages/algolia/config*.json
 
 # Generated npm package output
 packages/algolia-netlify/dist/
+packages/algolia-html-extractor/dist/
 
 # Nx local cache and workspace data
 .nx/

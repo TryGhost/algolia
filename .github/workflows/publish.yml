@@ -61,6 +61,7 @@ jobs:
             packages/algolia/package.json
             packages/algolia-fragmenter/package.json
             packages/algolia-indexer/package.json
+            packages/algolia-html-extractor/package.json
             packages/algolia-netlify/package.json
           )
           to_publish=()
@@ -69,9 +70,24 @@ jobs:
             name=$(jq -r .name "$manifest")
             version=$(jq -r .version "$manifest")
             case "$name" in
-              @tryghost/algolia|@tryghost/algolia-fragmenter|@tryghost/algolia-indexer|@tryghost/algolia-netlify) ;;
+              @tryghost/algolia|@tryghost/algolia-fragmenter|@tryghost/algolia-indexer|@tryghost/algolia-html-extractor|@tryghost/algolia-netlify) ;;
               *) echo "Unexpected package name: $name" >&2; exit 1 ;;
             esac
+            if [[ "$name" == "@tryghost/algolia-html-extractor" && "$version" == "0.0.0" ]]; then
+              echo "Skipping $name@$version until its first-release checkpoint"
+              continue
+            fi
+            if [[ "$name" == "@tryghost/algolia-html-extractor" ]]; then
+              if npm view "$name" version >/dev/null 2>"$registry_error"; then
+                :
+              elif grep -q 'E404' "$registry_error"; then
+                echo "Skipping $name@$version until its first-release checkpoint"
+                continue
+              else
+                cat "$registry_error" >&2
+                exit 1
+              fi
+            fi
             if npm view "$name@$version" version >/dev/null 2>"$registry_error"; then
               echo "Skipping $name@$version because it is already published"
             elif grep -q 'E404' "$registry_error"; then
