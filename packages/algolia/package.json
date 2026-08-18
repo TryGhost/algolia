@@ -33,8 +33,8 @@
     "@tryghost/algolia-fragmenter": "workspace:^",
     "@tryghost/algolia-indexer": "workspace:^",
     "@tryghost/content-api": "1.12.10",
-    "@tryghost/errors": "3.3.7",
-    "@tryghost/pretty-cli": "3.3.7",
+    "@tryghost/errors": "3.3.8",
+    "@tryghost/pretty-cli": "3.3.8",
     "fs-extra": "11.4.0"
   }
 }
