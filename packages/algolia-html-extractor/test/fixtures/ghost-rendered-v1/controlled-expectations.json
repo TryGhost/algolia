@@ -1,0 +1,165 @@
+[
+  {
+    "id": "legacy-selected-flow",
+    "fragments": [
+      {
+        "html": "<p>Before <strong>inline</strong> &amp; café 👻 with <a href=\"https://fixture.invalid/guide/\">a synthetic link</a>.</p>",
+        "text": "Before inline & café 👻 with a synthetic link.",
+        "headingPath": ["Legacy selected flow"],
+        "anchor": "legacy-selected-flow",
+        "position": 0,
+        "headingRank": 80,
+        "sourceTag": "p"
+      },
+      {
+        "html": "<li>First ordered</li>",
+        "text": "First ordered",
+        "headingPath": ["Legacy selected flow", "Lists and code"],
+        "anchor": "lists-and-code",
+        "position": 1,
+        "headingRank": 70,
+        "sourceTag": "li"
+      },
+      {
+        "html": "<li>Second ordered<ul><li>Nested unordered</li></ul></li>",
+        "text": "Second orderedNested unordered",
+        "headingPath": ["Legacy selected flow", "Lists and code"],
+        "anchor": "lists-and-code",
+        "position": 2,
+        "headingRank": 70,
+        "sourceTag": "li"
+      },
+      {
+        "html": "<li>Nested unordered</li>",
+        "text": "Nested unordered",
+        "headingPath": ["Legacy selected flow", "Lists and code"],
+        "anchor": "lists-and-code",
+        "position": 3,
+        "headingRank": 70,
+        "sourceTag": "li"
+      },
+      {
+        "html": "<pre><code class=\"language-js\">const selected = true;\nconsole.log(selected);</code></pre>",
+        "text": "const selected = true;\nconsole.log(selected);",
+        "headingPath": ["Legacy selected flow", "Lists and code"],
+        "anchor": "lists-and-code",
+        "position": 4,
+        "headingRank": 70,
+        "sourceTag": "pre"
+      },
+      {
+        "html": "<td>Selected body cell</td>",
+        "text": "Selected body cell",
+        "headingPath": ["Legacy selected flow", "Lists and code"],
+        "anchor": "lists-and-code",
+        "position": 5,
+        "headingRank": 70,
+        "sourceTag": "td"
+      },
+      {
+        "html": "<p>After the controlled table.</p>",
+        "text": "After the controlled table.",
+        "headingPath": ["Legacy selected flow", "Lists and code"],
+        "anchor": "lists-and-code",
+        "position": 6,
+        "headingRank": 70,
+        "sourceTag": "p"
+      }
+    ],
+    "finalRecords": [
+      {
+        "objectID": "controlled-legacy-selected-flow_0",
+        "slug": "legacy-selected-flow",
+        "url": "https://fixture.invalid/legacy-selected-flow/#legacy-selected-flow",
+        "html": "<p>Before <strong>inline</strong> &amp; café 👻 with <a href=\"https://fixture.invalid/guide/\">a synthetic link</a>.</p>",
+        "image": null,
+        "title": "Exercise every legacy-selected tag in a Ghost-rendered hierarchy.",
+        "tags": [],
+        "authors": [],
+        "headings": ["Legacy selected flow"],
+        "anchor": "legacy-selected-flow",
+        "customRanking": {"position": 0, "heading": 80}
+      },
+      {
+        "objectID": "controlled-legacy-selected-flow_1",
+        "slug": "legacy-selected-flow",
+        "url": "https://fixture.invalid/legacy-selected-flow/#lists-and-code",
+        "html": "<li>First ordered</li><li>Second ordered<ul><li>Nested unordered</li></ul></li><li>Nested unordered</li> const selected = true;\nconsole.log(selected);<td>Selected body cell</td><p>After the controlled table.</p>",
+        "image": null,
+        "title": "Exercise every legacy-selected tag in a Ghost-rendered hierarchy.",
+        "tags": [],
+        "authors": [],
+        "headings": ["Legacy selected flow", "Lists and code"],
+        "anchor": "lists-and-code",
+        "customRanking": {"position": 1, "heading": 70}
+      }
+    ]
+  },
+  {
+    "id": "intentional-semantic-gaps",
+    "fragments": [
+      {
+        "html": "<td>Selected semantic cell</td>",
+        "text": "Selected semantic cell",
+        "headingPath": ["Intentional semantic gaps"],
+        "anchor": "intentional-semantic-gaps",
+        "position": 0,
+        "headingRank": 80,
+        "sourceTag": "td"
+      }
+    ],
+    "finalRecords": [
+      {
+        "objectID": "controlled-intentional-semantic-gaps_0",
+        "slug": "intentional-semantic-gaps",
+        "url": "https://fixture.invalid/intentional-semantic-gaps/#intentional-semantic-gaps",
+        "html": "<td>Selected semantic cell</td>",
+        "image": null,
+        "title": "Freeze Ghost-rendered structures that compatibility intentionally ignores.",
+        "tags": [],
+        "authors": [],
+        "headings": ["Intentional semantic gaps"],
+        "anchor": "intentional-semantic-gaps",
+        "customRanking": {"position": 0, "heading": 80}
+      }
+    ]
+  },
+  {
+    "id": "controlled-card-boundary",
+    "fragments": [
+      {
+        "html": "<p>Before the synthetic image card.</p>",
+        "text": "Before the synthetic image card.",
+        "headingPath": ["Controlled card boundary"],
+        "anchor": "controlled-card-boundary",
+        "position": 0,
+        "headingRank": 80,
+        "sourceTag": "p"
+      },
+      {
+        "html": "<p>After the synthetic image card.</p>",
+        "text": "After the synthetic image card.",
+        "headingPath": ["Controlled card boundary"],
+        "anchor": "controlled-card-boundary",
+        "position": 1,
+        "headingRank": 80,
+        "sourceTag": "p"
+      }
+    ],
+    "finalRecords": [
+      {
+        "objectID": "controlled-controlled-card-boundary_0",
+        "slug": "controlled-card-boundary",
+        "url": "https://fixture.invalid/controlled-card-boundary/#controlled-card-boundary",
+        "html": "<p>Before the synthetic image card.</p><p>After the synthetic image card.</p>",
+        "image": null,
+        "title": "Reproduce the existing controlled image-card boundary without a live census.",
+        "tags": [],
+        "authors": [],
+        "headings": ["Controlled card boundary"],
+        "anchor": "controlled-card-boundary",
+        "customRanking": {"position": 0, "heading": 80}
+      }
+    ]
+  }
+]

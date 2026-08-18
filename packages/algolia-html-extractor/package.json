@@ -1,0 +1,47 @@
+{
+  "name": "@tryghost/algolia-html-extractor",
+  "version": "0.0.0",
+  "description": "Extract ordered searchable fragments from Ghost-rendered HTML",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TryGhost/algolia.git",
+    "directory": "packages/algolia-html-extractor"
+  },
+  "author": "Ghost Foundation",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "test": "NODE_ENV=testing vitest run --root .",
+    "typecheck": "tsc --project tsconfig.json",
+    "lint": "oxlint --quiet . && oxfmt --check .",
+    "posttest": "pnpm typecheck && pnpm lint",
+    "build": "tsc --project tsconfig.build.json",
+    "prepack": "pnpm build"
+  },
+  "files": [
+    "dist/index.d.mts",
+    "dist/index.d.mts.map",
+    "dist/index.mjs",
+    "dist/index.mjs.map"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "parse5": "7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2"
+  }
+}

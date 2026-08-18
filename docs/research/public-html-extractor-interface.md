@@ -24,16 +24,15 @@ export function extract(renderedHtml: string): readonly ExtractionFragment[];
 
 The package has no default export, class, factory, configuration object, parser injection, or public subpath. Its interface is rendered HTML in and ordered extraction fragments out.
 
-All source, tests, build tooling, and smoke tooling added for this package must be authored in strict TypeScript. ESM and CommonJS JavaScript, source maps, and declarations are generated artifacts and must not be hand-authored or hand-edited.
+All source, tests, build tooling, and smoke tooling added for this package must be authored in strict TypeScript. ESM JavaScript, source maps, and declarations are generated artifacts and must not be hand-authored or hand-edited.
 
 ## Module contract
 
-The strict TypeScript implementation produces conditional package exports:
+The strict TypeScript implementation produces an ESM-only package:
 
 - ESM consumers import the named `extract` function from the generated `index.mjs` entry and receive `index.d.mts` declarations.
-- CommonJS consumers synchronously require the same named `extract` function from the generated `index.cjs` entry and receive `index.d.cts` declarations.
 - The package root `.` is the only public export seam.
-- Runtime and declaration acceptance tests cover both module conditions from a clean packed package.
+- Runtime and declaration acceptance tests cover the ESM entry from a clean packed package and verify that CommonJS is not exported.
 
 ```ts
 import {
@@ -44,15 +43,7 @@ import {
 const fragments: readonly ExtractionFragment[] = extract(ghostContent.html);
 ```
 
-CommonJS callers use the equivalent namespace shape:
-
-```ts
-import extractor = require('@tryghost/algolia-html-extractor');
-
-const fragments = extractor.extract(ghostContent.html);
-```
-
-The package pins `parse5@7.3.0` as a direct runtime dependency. Parse5 types, tree-adapter nodes, traversal primitives, and serialization functions remain behind the package seam.
+The package keeps `parse5` as its only direct runtime dependency. Its version can move through normal dependency updates when the exact compatibility suite passes. Parse5 types, tree-adapter nodes, traversal primitives, and serialization functions remain behind the package seam.
 
 ## Extraction-fragment contract
 
@@ -89,7 +80,7 @@ Extraction is synchronous and parses the complete input. Time and memory are pro
 
 ## Rejected interfaces
 
-- A callable default export makes the common call slightly shorter but requires different ESM and CommonJS declaration shapes and creates avoidable default-import interoperability risk.
+- A callable default export makes the common call slightly shorter but creates avoidable default-import interoperability risk.
 - A public profile compiler moves extraction policy to callers and makes a matching language, ordering rules, validation errors, and extension semantics permanent support obligations.
 - A class or factory implies state and lifecycle that the extractor does not own.
 - Compatibility-shaped fields such as `content`, `headings`, and `customRanking` conflate extraction fragments with the fragmenter's Algolia record policy.
