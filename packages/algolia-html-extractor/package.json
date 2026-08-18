@@ -1,6 +1,6 @@
 {
   "name": "@tryghost/algolia-html-extractor",
-  "version": "0.0.0",
+  "version": "0.0.1-0",
   "description": "Extract ordered searchable fragments from Ghost-rendered HTML",
   "repository": {
     "type": "git",
