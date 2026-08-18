@@ -11,5 +11,5 @@ allowBuilds:
   unix-dgram: false
 
 minimumReleaseAgeExclude:
-  - '@tryghost/errors@3.3.8'
-  - '@tryghost/pretty-cli@3.3.8'
+  - '@tryghost/errors'
+  - '@tryghost/pretty-cli'
