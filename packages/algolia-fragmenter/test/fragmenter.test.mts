@@ -1,19 +1,31 @@
 import {describe, expect, it} from 'vitest';
 
-import fragmenter from '../index.js';
+import {fragmentTransformer, transformToAlgoliaObject} from '../src/index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
-const readFixture = fileName => {
+type TestPost = {
+    id: string;
+    slug: string;
+    url: string;
+    html: string;
+    feature_image: string | null;
+    title: string;
+    tags?: readonly Readonly<Record<string, unknown>>[] | null;
+    authors?: readonly Readonly<Record<string, unknown>>[] | null;
+    [key: string]: unknown;
+};
+
+const readFixture = (fileName: string): string => {
     return fs.readFileSync(path.join(testDirectory, `fixtures`, `${fileName}.html`), {
         encoding: `utf8`
     });
 };
 
-const createPost = (overrides = {}) => ({
+const createPost = (overrides: Partial<TestPost> = {}): TestPost => ({
     id: 'post-1',
     slug: 'getting-started',
     url: 'https://example.com/getting-started/',
@@ -25,8 +37,8 @@ const createPost = (overrides = {}) => ({
     ...overrides
 });
 
-const fragmentPosts = posts => {
-    return fragmenter.transformToAlgoliaObject(posts).reduce(fragmenter.fragmentTransformer, []);
+const fragmentPosts = (posts: readonly TestPost[]) => {
+    return transformToAlgoliaObject(posts).reduce(fragmentTransformer, []);
 };
 
 describe('Algolia fragmenter public contracts', function () {
@@ -39,7 +51,7 @@ describe('Algolia fragmenter public contracts', function () {
             })
         ];
 
-        expect(fragmenter.transformToAlgoliaObject(posts)).toEqual([
+        expect(transformToAlgoliaObject(posts)).toEqual([
             {
                 objectID: 'post-1',
                 slug: 'getting-started',
@@ -59,7 +71,7 @@ describe('Algolia fragmenter public contracts', function () {
             createPost({id: 'kept-id', slug: 'kept', title: 'Kept post'})
         ];
 
-        expect(fragmenter.transformToAlgoliaObject(posts, ['ignored'])).toEqual([
+        expect(transformToAlgoliaObject(posts, ['ignored'])).toEqual([
             {
                 objectID: 'kept-id',
                 slug: 'kept',
@@ -78,7 +90,7 @@ describe('Algolia fragmenter public contracts', function () {
         delete postWithMissingRelations.tags;
         delete postWithMissingRelations.authors;
 
-        const records = fragmenter.transformToAlgoliaObject([
+        const records = transformToAlgoliaObject([
             createPost({id: 'null-relations', tags: null, authors: null}),
             postWithMissingRelations
         ]);

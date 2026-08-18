@@ -16,6 +16,7 @@ export default defineConfig({
                 'packages/*/index.js',
                 'packages/*/lib/**/*.js',
                 'packages/algolia/bin/**/*.js',
+                'packages/algolia-fragmenter/src/index.mts',
                 'packages/algolia-html-extractor/index.mts',
                 'packages/algolia-netlify/functions/**/*.{ts,mts}'
             ],

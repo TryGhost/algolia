@@ -9,6 +9,10 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "paths": {
+      "@tryghost/algolia-fragmenter": ["../algolia-fragmenter/src/index.mts"],
+      "@tryghost/algolia-html-extractor": ["../algolia-html-extractor/index.mts"]
+    },
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

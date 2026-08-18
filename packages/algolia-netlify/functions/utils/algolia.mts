@@ -1,7 +1,7 @@
 import IndexFactory from '@tryghost/algolia-indexer';
-import transforms from '@tryghost/algolia-fragmenter';
-// Keep transitive CommonJS dependencies visible to Netlify's file tracer.
-import 'algolia-html-extractor';
+import {fragmentTransformer, transformToAlgoliaObject} from '@tryghost/algolia-fragmenter';
 import 'algoliasearch';
+
+const transforms = {fragmentTransformer, transformToAlgoliaObject};
 
 export {IndexFactory, transforms};

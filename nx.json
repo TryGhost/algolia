@@ -15,5 +15,10 @@
       "workspaceChangelog": false
     }
   },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"]
+    }
+  },
   "analytics": false
 }

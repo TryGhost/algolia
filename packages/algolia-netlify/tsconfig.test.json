@@ -5,5 +5,12 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["node", "vite/client", "vitest/globals"]
   },
-  "include": ["test/**/*.ts", "functions/**/*.ts", "functions/**/*.mts", "types/**/*.d.ts"]
+  "include": [
+    "test/**/*.ts",
+    "functions/**/*.ts",
+    "functions/**/*.mts",
+    "types/**/*.d.ts",
+    "../algolia-fragmenter/src/**/*.mts",
+    "../algolia-html-extractor/index.mts"
+  ]
 }
