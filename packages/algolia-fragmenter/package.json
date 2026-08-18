@@ -11,21 +11,36 @@
   "engines": {
     "node": ">=24"
   },
-  "main": "index.js",
+  "type": "module",
+  "types": "./lib/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.mts",
+      "import": "./lib/index.mjs"
+    }
+  },
   "scripts": {
     "dev": "echo \"Implement me!\"",
+    "prebuild": "pnpm --filter @tryghost/algolia-html-extractor build",
+    "pretest": "pnpm build",
     "test": "NODE_ENV=testing vitest run --root .",
+    "typecheck": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.build.json",
+    "prepack": "pnpm build",
     "lint": "oxlint --quiet . && oxfmt --check .",
-    "posttest": "pnpm lint"
+    "posttest": "pnpm typecheck && pnpm lint"
   },
   "files": [
-    "index.js",
     "lib"
   ],
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "algolia-html-extractor": "0.0.1"
+    "@tryghost/algolia-html-extractor": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2"
   }
 }

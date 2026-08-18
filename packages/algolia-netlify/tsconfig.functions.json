@@ -5,5 +5,11 @@
     "lib": ["ES2023", "DOM"],
     "types": ["node"]
   },
-  "include": ["functions/**/*.ts", "functions/**/*.mts", "types/**/*.d.ts"]
+  "include": [
+    "functions/**/*.ts",
+    "functions/**/*.mts",
+    "types/**/*.d.ts",
+    "../algolia-fragmenter/src/**/*.mts",
+    "../algolia-html-extractor/index.mts"
+  ]
 }

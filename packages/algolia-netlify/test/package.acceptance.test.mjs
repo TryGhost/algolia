@@ -36,11 +36,10 @@ describe('@tryghost/algolia-netlify package', () => {
             );
             return JSON.parse(result.stdout);
         };
-        const [packedFragmenter, packedIndexer, packed] = await Promise.all([
-            packPackage('@tryghost/algolia-fragmenter'),
-            packPackage('@tryghost/algolia-indexer'),
-            packPackage('@tryghost/algolia-netlify')
-        ]);
+        const packedExtractor = await packPackage('@tryghost/algolia-html-extractor');
+        const packedFragmenter = await packPackage('@tryghost/algolia-fragmenter');
+        const packedIndexer = await packPackage('@tryghost/algolia-indexer');
+        const packed = await packPackage('@tryghost/algolia-netlify');
         await writeFile(
             path.join(temporaryDirectory, 'package.json'),
             JSON.stringify(
@@ -59,6 +58,7 @@ describe('@tryghost/algolia-netlify package', () => {
             `
 packages: []
 overrides:
+  '@tryghost/algolia-html-extractor': 'file:./${path.basename(packedExtractor.filename)}'
   '@tryghost/algolia-fragmenter': 'file:./${path.basename(packedFragmenter.filename)}'
   '@tryghost/algolia-indexer': 'file:./${path.basename(packedIndexer.filename)}'
         `.trimStart()
@@ -81,7 +81,6 @@ overrides:
         expect(Object.keys(manifest.dependencies).sort()).toEqual([
             '@tryghost/algolia-fragmenter',
             '@tryghost/algolia-indexer',
-            'algolia-html-extractor',
             'algoliasearch'
         ]);
         expect(manifest.exports).toEqual({

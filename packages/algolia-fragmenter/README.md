@@ -19,13 +19,17 @@ pnpm add @tryghost/algolia-fragmenter
 Convert Ghost Content API posts, then reduce the resulting records into fragments:
 
 ```js
-const transforms = require('@tryghost/algolia-fragmenter');
+import {fragmentTransformer, transformToAlgoliaObject} from '@tryghost/algolia-fragmenter';
 
-const records = transforms.transformToAlgoliaObject(posts);
-const fragments = records.reduce(transforms.fragmentTransformer, []);
+const records = transformToAlgoliaObject(posts);
+const fragments = records.reduce(fragmentTransformer, []);
 ```
 
 `transformToAlgoliaObject` accepts an optional array of post slugs to exclude as its second argument. `fragmentTransformer` is designed to be passed directly to `Array#reduce`.
+
+Both operations are deprecated compatibility wrappers. They remain available with their existing output while a deeper record-building API is introduced separately.
+
+This package is ESM-only and requires Node.js 24 or later.
 
 ## Development
 

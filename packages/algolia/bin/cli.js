@@ -5,7 +5,6 @@ const fs = require('fs-extra');
 const utils = require('../lib/utils');
 const {fetchPosts} = require('../lib/fetch-posts');
 const GhostContentAPI = require('@tryghost/content-api');
-const transforms = require('@tryghost/algolia-fragmenter');
 const IndexFactory = require('@tryghost/algolia-indexer');
 
 prettyCLI.preface('Command line utilities to batch index content from Ghost to Algolia');
@@ -53,6 +52,7 @@ prettyCLI.command({
     },
     run: async argv => {
         const mainTimer = Date.now();
+        const transforms = await import('@tryghost/algolia-fragmenter');
         let context = {errors: [], posts: []};
 
         if (argv.verbose) {

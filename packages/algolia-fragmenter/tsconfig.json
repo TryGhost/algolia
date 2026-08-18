@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@tryghost/algolia-fragmenter": ["./src/index.mts"],
+      "@tryghost/algolia-html-extractor": ["../algolia-html-extractor/index.mts"]
+    },
+    "strict": true,
+    "target": "ES2023",
+    "types": ["node", "vitest/globals"],
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.mts", "test/**/*.ts", "test/**/*.mts"]
+}

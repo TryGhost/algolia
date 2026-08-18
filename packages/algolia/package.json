@@ -17,6 +17,7 @@
   "scripts": {
     "dev": "algolia",
     "algolia": "algolia",
+    "pretest": "pnpm --filter @tryghost/algolia-html-extractor build && pnpm --filter @tryghost/algolia-fragmenter build",
     "test": "NODE_ENV=testing vitest run --root .",
     "lint": "oxlint --quiet . && oxfmt --check .",
     "posttest": "pnpm lint"
