@@ -59,4 +59,25 @@ describe('HTML extractor first-release guard', () => {
         );
         expect(versionLookup).toBeGreaterThan(checkpointSkip);
     });
+
+    it('limits the first-release bootstrap to the extractor prerelease', async () => {
+        const workflow = await readFile(
+            path.join(workspaceDirectory, '.github/workflows/publish.yml'),
+            'utf8'
+        );
+
+        expect(workflow).toContain('bootstrap-html-extractor:');
+        expect(workflow).toContain('environment: npm-bootstrap');
+        expect(workflow).toContain("BOOTSTRAP_PACKAGE: '@tryghost/algolia-html-extractor'");
+        expect(workflow).toContain("BOOTSTRAP_VERSION: '0.0.1-0'");
+        expect(workflow).toMatch(
+            /^\s+run: pnpm nx release publish --projects="\$BOOTSTRAP_PACKAGE" --first-release --tag=next --dry-run$/m
+        );
+        expect(workflow).toContain(
+            'NODE_AUTH_TOKEN: ${{ secrets.NPM_HTML_EXTRACTOR_BOOTSTRAP_TOKEN }}'
+        );
+        expect(workflow).toMatch(
+            /^\s+pnpm nx release publish --projects="\$BOOTSTRAP_PACKAGE" --first-release --tag=next$/m
+        );
+    });
 });
