@@ -1,31 +1,19 @@
 import { extract } from '@tryghost/algolia-html-extractor';
-const createLegacyFragment = (fragment) => ({
-    html: fragment.html,
-    content: fragment.text,
-    headings: [...fragment.headingPath],
-    anchor: fragment.anchor,
-    sourceTag: fragment.sourceTag,
-    customRanking: {
-        position: fragment.position,
-        heading: fragment.headingRank
-    }
-});
-const reduceFragmentsUnderHeadings = (groups, fragment) => {
-    const existingGroup = groups.find(group => group.anchor === fragment.anchor);
-    if (existingGroup === undefined) {
-        groups.push(fragment);
-        return groups;
-    }
-    existingGroup.html += fragment.sourceTag === 'pre' ? ` ${fragment.content}` : fragment.html;
-    existingGroup.content += ` ${fragment.content}`;
-    return groups;
-};
-const toAlgoliaRecord = (ghostContent, fragment, index) => {
-    const { content: _content, sourceTag: _sourceTag, ...groupedFragment } = fragment;
-    const url = fragment.anchor === null ? ghostContent.url : `${ghostContent.url}#${fragment.anchor}`;
+import { groupFragmentsByAnchor, mergeRecordHtml } from './grouping.mjs';
+export { createAlgoliaRecords } from './create-algolia-records.mjs';
+export { FragmenterError } from './errors.mjs';
+const toAlgoliaRecord = (ghostContent, group, index) => {
+    const [first] = group.fragments;
+    const url = group.anchor === null ? ghostContent.url : `${ghostContent.url}#${group.anchor}`;
     return {
         ...ghostContent,
-        ...groupedFragment,
+        html: mergeRecordHtml(group.fragments),
+        headings: [...first.headingPath],
+        anchor: group.anchor,
+        customRanking: {
+            position: first.position,
+            heading: first.headingRank
+        },
         url,
         objectID: `${ghostContent.objectID}_${index}`
     };
@@ -34,10 +22,8 @@ const toAlgoliaRecord = (ghostContent, fragment, index) => {
  * @deprecated Retained for compatibility while the deep record-building API is introduced.
  */
 export const fragmentTransformer = (recordAccumulator, ghostContent) => {
-    const groupedFragments = extract(ghostContent.html)
-        .map(createLegacyFragment)
-        .reduce(reduceFragmentsUnderHeadings, []);
-    const records = groupedFragments.map((fragment, index) => toAlgoliaRecord(ghostContent, fragment, index));
+    const groups = groupFragmentsByAnchor(extract(ghostContent.html));
+    const records = groups.map((group, index) => toAlgoliaRecord(ghostContent, group, index));
     return [...recordAccumulator, ...records];
 };
 const projectLegacyRelations = (value, fieldName) => {

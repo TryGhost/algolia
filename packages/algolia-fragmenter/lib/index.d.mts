@@ -1,5 +1,11 @@
-export type GhostContent = Readonly<Record<string, unknown>>;
-export type AlgoliaRecord = Record<string, unknown>;
+import type { GhostContent } from './projection.mjs';
+import type { AlgoliaRecord } from './records.mjs';
+export { createAlgoliaRecords } from './create-algolia-records.mjs';
+export { FragmenterError } from './errors.mjs';
+export type { ExpectedValueType, FragmenterErrorCode, FragmenterIssue, GhostContentIssue, GhostContentIssueReason, PolicyIssue, PolicyIssueReason, RecordSizeIssue } from './errors.mjs';
+export type { ContentProjection, CreateAlgoliaRecordsOptions, OptionalProjectionSource, ProjectionField, RankingField, RankingSource } from './policy.mjs';
+export type { GhostContent } from './projection.mjs';
+export type { AlgoliaRecord } from './records.mjs';
 /**
  * @deprecated Retained for compatibility while the deep record-building API is introduced.
  */
