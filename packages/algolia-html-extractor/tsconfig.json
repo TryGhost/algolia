@@ -15,5 +15,5 @@
     "types": ["node", "vitest/globals"],
     "verbatimModuleSyntax": true
   },
-  "include": ["index.mts", "test/**/*.ts", "test/**/*.mts"]
+  "include": ["index.mts", "smoke/**/*.mts", "test/**/*.ts", "test/**/*.mts"]
 }

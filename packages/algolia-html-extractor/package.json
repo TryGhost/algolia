@@ -26,6 +26,7 @@
     "lint": "oxlint --quiet . && oxfmt --check .",
     "posttest": "pnpm typecheck && pnpm lint",
     "build": "tsc --project tsconfig.build.json",
+    "smoke:live": "node smoke/cli.mts",
     "prepack": "pnpm build"
   },
   "files": [
