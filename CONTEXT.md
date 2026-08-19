@@ -28,6 +28,10 @@ _Avoid_: Custom field, pass-through field
 An allowlisted public Ghost source field or package-owned compatibility projection that projection configuration may include, omit, or expose under a validated alias. Enabled optional fields are repeated in every Algolia record derived from that Ghost content.
 _Avoid_: Custom field, arbitrary field
 
+**Ranking sibling**:
+An additional custom-ranking value carried beside the package-owned heading and position values, sourced from an allowlisted numeric or boolean Ghost field under a validated alias.
+_Avoid_: Custom ranking field, ranking attribute, sort field
+
 **Extraction fragment**:
 An ordered emitted unit of searchable rendered meaning with searchable fragment HTML, preserved source text, heading context, and a fragment source.
 _Avoid_: Chunk, paragraph record
@@ -44,6 +48,10 @@ _Avoid_: Outer HTML, raw attribute value
 A stable description of whether an extraction fragment came from element content or an attribute, including whether an element was selected as ordinary content or as a card-heading fallback.
 _Avoid_: Parser node, candidate ID, card adapter
 
+**Anchor group**:
+The ordered extraction fragments of one Ghost content item that share the same anchor, kept in first-seen anchor order. It is the unit that fixes an Algolia record's deep link, heading context, and identifier.
+_Avoid_: Heading group, section, chunk
+
 **HTML extractor**:
 The component that converts rendered HTML into ordered extraction fragments.
 _Avoid_: Fragmenter, transformer
@@ -55,6 +63,22 @@ _Avoid_: HTML extractor
 **Algolia record**:
 The final indexed object containing projected Ghost fields, grouped extracted content, and ranking metadata.
 _Avoid_: Extraction fragment, Algolia post
+
+**Fallback record**:
+The single Algolia record emitted for Ghost content that produces no extraction fragments. It carries the Ghost content projection with empty fragment content and the headingless rank.
+_Avoid_: Empty record, placeholder record, stub
+
+**Continuation record**:
+An Algolia record carrying the later whole extraction fragments of one anchor group that did not fit within the record byte ceiling. It repeats the same projection and deep link under a stable suffixed object ID.
+_Avoid_: Split record, overflow record, record page
+
+**Record byte ceiling**:
+The largest compact UTF-8 byte size allowed for one complete Algolia record, chosen so output stays valid on Algolia's smallest plan.
+_Avoid_: Size limit, 10 KB limit, character count
+
+**Preflight**:
+The offline check that validates caller policy, Ghost content, and every complete Algolia record before any Algolia request. Failing preflight produces no records at all.
+_Avoid_: Dry run (for this record check; the term still belongs to release tooling), validation pass, sanity check
 
 **Ghost-rendered fixture**:
 An immutable Content API response produced by Ghost from controlled source content and retained as deterministic test evidence.

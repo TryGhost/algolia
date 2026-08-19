@@ -98,10 +98,34 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
         expect(packedFragmenter.files.map(file => file.path).sort()).toEqual([
             'LICENSE',
             'README.md',
+            'lib/create-algolia-records.d.mts',
+            'lib/create-algolia-records.d.mts.map',
+            'lib/create-algolia-records.mjs',
+            'lib/create-algolia-records.mjs.map',
+            'lib/errors.d.mts',
+            'lib/errors.d.mts.map',
+            'lib/errors.mjs',
+            'lib/errors.mjs.map',
+            'lib/grouping.d.mts',
+            'lib/grouping.d.mts.map',
+            'lib/grouping.mjs',
+            'lib/grouping.mjs.map',
             'lib/index.d.mts',
             'lib/index.d.mts.map',
             'lib/index.mjs',
             'lib/index.mjs.map',
+            'lib/policy.d.mts',
+            'lib/policy.d.mts.map',
+            'lib/policy.mjs',
+            'lib/policy.mjs.map',
+            'lib/projection.d.mts',
+            'lib/projection.d.mts.map',
+            'lib/projection.mjs',
+            'lib/projection.mjs.map',
+            'lib/records.d.mts',
+            'lib/records.d.mts.map',
+            'lib/records.mjs',
+            'lib/records.mjs.map',
             'package.json'
         ]);
 
@@ -122,16 +146,41 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
                 import * as fragmenter from '@tryghost/algolia-fragmenter';
                 import transforms from '@tryghost/algolia-fragmenter';
                 import {
+                    createAlgoliaRecords,
+                    FragmenterError,
                     fragmentTransformer,
                     transformToAlgoliaObject
                 } from '@tryghost/algolia-fragmenter';
                 const records = transformToAlgoliaObject([${JSON.stringify(runtimeInput)}])
                     .reduce(fragmentTransformer, []);
+                const deepRecords = createAlgoliaRecords([${JSON.stringify(runtimeInput)}], {
+                    contentProjection: {
+                        fields: ['image'],
+                        customRanking: [{source: 'featured', as: 'isFeatured'}]
+                    }
+                });
+                let policyFailure = null;
+                try {
+                    createAlgoliaRecords([${JSON.stringify(runtimeInput)}], {
+                        contentProjection: {fields: ['plaintext']}
+                    });
+                } catch (error) {
+                    policyFailure = {
+                        name: error.name,
+                        code: error.code,
+                        issueCount: error.issues.length,
+                        firstIssueKind: error.issues[0].kind,
+                        isFragmenterError: error instanceof FragmenterError
+                    };
+                }
                 console.log(JSON.stringify({
                     exports: Object.keys(fragmenter).sort(),
                     defaultExports: Object.keys(transforms).sort(),
                     records,
-                    synchronous: !(records instanceof Promise)
+                    synchronous: !(records instanceof Promise),
+                    deepRecords,
+                    deepSynchronous: !(deepRecords instanceof Promise),
+                    policyFailure
                 }));
             `
         );
@@ -155,10 +204,37 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
             }
         ];
         expect(JSON.parse(esmResult.stdout)).toEqual({
-            exports: ['default', 'fragmentTransformer', 'transformToAlgoliaObject'],
+            exports: [
+                'FragmenterError',
+                'createAlgoliaRecords',
+                'default',
+                'fragmentTransformer',
+                'transformToAlgoliaObject'
+            ],
             defaultExports: ['fragmentTransformer', 'transformToAlgoliaObject'],
             records: expectedRecords,
-            synchronous: true
+            synchronous: true,
+            deepRecords: [
+                {
+                    objectID: 'packed_0',
+                    slug: 'packed',
+                    url: 'https://fixture.invalid/packed/#packed-heading',
+                    html: '<p>Ready.</p>',
+                    title: 'Packed consumer',
+                    headings: ['Packed'],
+                    anchor: 'packed-heading',
+                    image: null,
+                    customRanking: {position: 0, heading: 80, isFeatured: null}
+                }
+            ],
+            deepSynchronous: true,
+            policyFailure: {
+                name: 'FragmenterError',
+                code: 'INVALID_POLICY',
+                issueCount: 1,
+                firstIssueKind: 'policy',
+                isFragmenterError: true
+            }
         });
 
         const commonJsConsumer = path.join(temporaryDirectory, 'consumer.cjs');
@@ -176,12 +252,45 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
             `
                 import fragmenter from '@tryghost/algolia-fragmenter';
                 import {
+                    createAlgoliaRecords,
+                    FragmenterError,
                     fragmentTransformer,
-                    transformToAlgoliaObject
+                    transformToAlgoliaObject,
+                    type AlgoliaRecord,
+                    type ContentProjection,
+                    type CreateAlgoliaRecordsOptions,
+                    type ProjectionField,
+                    type RankingField
                 } from '@tryghost/algolia-fragmenter';
                 const transformed = transformToAlgoliaObject([${JSON.stringify(runtimeInput)}]);
                 transformed.reduce(fragmentTransformer, []);
                 fragmenter.transformToAlgoliaObject([]).reduce(fragmenter.fragmentTransformer, []);
+
+                const fields: readonly ProjectionField[] = [
+                    'image',
+                    {source: 'reading_time', as: 'readingMinutes'}
+                ];
+                const customRanking: readonly RankingField[] = [
+                    {source: 'featured', as: 'isFeatured'}
+                ];
+                const contentProjection: ContentProjection = {fields, customRanking};
+                const options: CreateAlgoliaRecordsOptions = {
+                    ignoreSlugs: ['ignored'],
+                    contentProjection
+                };
+                let reported = '';
+                try {
+                    const deepRecords: readonly AlgoliaRecord[] = createAlgoliaRecords(
+                        [${JSON.stringify(runtimeInput)}],
+                        options
+                    );
+                    reported = String(deepRecords.length);
+                } catch (error) {
+                    if (error instanceof FragmenterError) {
+                        reported = error.code + error.issues.map(issue => issue.kind).join();
+                    }
+                }
+                export default reported;
             `
         );
         const tsc = path.join(packageDirectory, 'node_modules/.bin/tsc');
@@ -205,12 +314,28 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
             sources: string[];
             sourcesContent?: string[];
         };
-        for (const mapName of ['index.mjs.map', 'index.d.mts.map']) {
-            const sourceMap = JSON.parse(
-                await readFile(path.join(installedPackage, 'lib', mapName), 'utf8')
-            ) as SourceMap;
-            expect(sourceMap.sources).toEqual(['../src/index.mts']);
-            expect(sourceMap.sourcesContent?.join('\n') ?? '').not.toContain(workspaceDirectory);
+        const emittedModules = [
+            'create-algolia-records',
+            'errors',
+            'grouping',
+            'index',
+            'policy',
+            'projection',
+            'records'
+        ];
+        for (const moduleName of emittedModules) {
+            for (const extension of ['mjs.map', 'd.mts.map']) {
+                const sourceMap = JSON.parse(
+                    await readFile(
+                        path.join(installedPackage, 'lib', `${moduleName}.${extension}`),
+                        'utf8'
+                    )
+                ) as SourceMap;
+                expect(sourceMap.sources).toEqual([`../src/${moduleName}.mts`]);
+                expect(sourceMap.sourcesContent?.join('\n') ?? '').not.toContain(
+                    workspaceDirectory
+                );
+            }
         }
 
         const declarations = await readFile(path.join(installedPackage, 'lib/index.d.mts'), 'utf8');
