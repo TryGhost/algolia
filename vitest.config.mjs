@@ -18,6 +18,7 @@ export default defineConfig({
                 'packages/algolia/bin/**/*.js',
                 'packages/algolia-fragmenter/src/index.mts',
                 'packages/algolia-html-extractor/index.mts',
+                'packages/algolia-html-extractor/smoke/live-ghost-content-smoke.mts',
                 'packages/algolia-netlify/functions/**/*.{ts,mts}'
             ],
             exclude: [
