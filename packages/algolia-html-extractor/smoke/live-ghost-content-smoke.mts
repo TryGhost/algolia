@@ -369,8 +369,48 @@ const STRUCTURAL_ATTRIBUTE_NAMES = [
     'data-kg-custom-thumbnail',
     'data-kg-transistor-embed'
 ] as const;
+const GHOST_STRUCTURAL_CLASS_TOKENS = [
+    'kg-card',
+    'kg-card-hascaption',
+    'kg-content-wide',
+    'kg-gallery-container',
+    'kg-gallery-image',
+    'kg-gallery-row',
+    'kg-image',
+    'kg-layout-split',
+    'kg-width-full',
+    'kg-width-regular',
+    'kg-width-wide'
+] as const;
+const GHOST_CARD_FAMILY_CLASS_TOKENS = [
+    'kg-audio-card',
+    'kg-blockquote-alt',
+    'kg-bookmark-card',
+    'kg-button-card',
+    'kg-callout-card',
+    'kg-code-card',
+    'kg-cta-card',
+    'kg-embed-card',
+    'kg-file-card',
+    'kg-gallery-card',
+    'kg-header-card',
+    'kg-image-card',
+    'kg-nft-card',
+    'kg-product-card',
+    'kg-signup-card',
+    'kg-toggle-card',
+    'kg-transistor-card',
+    'kg-video-card'
+] as const;
 const SELECTED_TAGS = ['p', 'pre', 'td', 'li'] as const;
 const HEADING_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const;
+const GHOST_CLASS_TOKEN_SET: ReadonlySet<string> = new Set([
+    ...GHOST_STRUCTURAL_CLASS_TOKENS,
+    ...GHOST_CARD_FAMILY_CLASS_TOKENS
+]);
+const GHOST_CARD_FAMILY_CLASS_TOKEN_SET: ReadonlySet<string> = new Set(
+    GHOST_CARD_FAMILY_CLASS_TOKENS
+);
 const SELECTED_TAG_SET: ReadonlySet<string> = new Set(SELECTED_TAGS);
 const HEADING_TAG_SET: ReadonlySet<string> = new Set(HEADING_TAGS);
 
@@ -383,7 +423,9 @@ const getPresentAttributeNames = (element: Element): readonly string[] => {
 
 const getGhostClassTokens = (element: Element): readonly string[] => {
     const classValue = element.attrs.find(attribute => attribute.name === 'class')?.value ?? '';
-    return [...new Set(classValue.split(/\s+/u).filter(token => token.startsWith('kg-')))].sort();
+    return [
+        ...new Set(classValue.split(/\s+/u).filter(token => GHOST_CLASS_TOKEN_SET.has(token)))
+    ].toSorted();
 };
 
 const hasNonEmptyAnchor = (element: Element): boolean => {
@@ -462,7 +504,8 @@ const normalizeStructure = (renderedHtml: string): string => {
             semanticGaps.blockquote ||= child.tagName === 'blockquote';
             semanticGaps.figure ||= child.tagName === 'figure';
             semanticGaps.cardWrapper ||= kgClasses.some(
-                className => className === 'kg-card' || className.endsWith('-card')
+                className =>
+                    className === 'kg-card' || GHOST_CARD_FAMILY_CLASS_TOKEN_SET.has(className)
             );
 
             visit(child, nodeIndex);
