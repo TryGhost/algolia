@@ -291,9 +291,9 @@ describe('runLiveGhostContentSmoke', () => {
             createOptions(
                 createSuccessfulTransport(
                     [
-                        `<figure class="private-class kg-card kg-z-card" ${privateAttributes} data-private="private-one"></figure>`,
-                        `<figure class="other-class kg-z-card kg-card" ${samePresenceWithDifferentValues} data-private="private-two"></figure>`,
-                        '<figure class="kg-card kg-z-card" data-kg-toggle-state="private-three"></figure>'
+                        `<figure class="private-class kg-card kg-image-card kg-card" ${privateAttributes} data-private="private-one"></figure>`,
+                        `<figure class="other-class kg-image-card kg-card" ${samePresenceWithDifferentValues} data-private="private-two"></figure>`,
+                        '<figure class="kg-card kg-image-card" data-kg-toggle-state="private-three"></figure>'
                     ],
                     []
                 ),
@@ -307,6 +307,95 @@ describe('runLiveGhostContentSmoke', () => {
 
         expect(report.signatures.map(({count}) => count).toSorted((a, b) => a - b)).toEqual([1, 2]);
         expect(summaries[0]).not.toMatch(/private|other|\.invalid|toggle|thumbnail|embed/i);
+    });
+
+    it('drops unowned kg class values from signatures and card detection', async () => {
+        const report = await runLiveGhostContentSmoke(
+            createOptions(
+                createSuccessfulTransport(
+                    [
+                        '<figure class="kg-private-a kg-private-card"></figure>',
+                        '<figure class="kg-private-b kg-v2"></figure>'
+                    ],
+                    []
+                )
+            )
+        );
+        const canonicalStructure = {
+            version: 1,
+            nodes: [
+                {tag: 'html', parent: null, kgClasses: [], attributes: []},
+                {tag: 'head', parent: 0, kgClasses: [], attributes: []},
+                {tag: 'body', parent: 0, kgClasses: [], attributes: []},
+                {tag: 'figure', parent: 2, kgClasses: [], attributes: []}
+            ],
+            headings: [],
+            selectedCounts: {p: 0, pre: 0, td: 0, li: 0},
+            semanticGaps: {
+                caption: false,
+                tableHeader: false,
+                blockquote: false,
+                figure: true,
+                cardWrapper: false
+            }
+        };
+
+        expect(report.signatures).toEqual([{id: signatureFor(canonicalStructure), count: 2}]);
+    });
+
+    it('recognizes the reviewed Ghost card family roots as wrappers', async () => {
+        const familyClassTokens = [
+            'kg-audio-card',
+            'kg-blockquote-alt',
+            'kg-bookmark-card',
+            'kg-button-card',
+            'kg-callout-card',
+            'kg-code-card',
+            'kg-cta-card',
+            'kg-embed-card',
+            'kg-file-card',
+            'kg-gallery-card',
+            'kg-header-card',
+            'kg-image-card',
+            'kg-nft-card',
+            'kg-product-card',
+            'kg-signup-card',
+            'kg-toggle-card',
+            'kg-transistor-card',
+            'kg-video-card'
+        ] as const;
+        const report = await runLiveGhostContentSmoke(
+            createOptions(
+                createSuccessfulTransport(
+                    familyClassTokens.map(className => `<div class="${className}"></div>`),
+                    []
+                )
+            )
+        );
+        const expectedIds = familyClassTokens
+            .map(className =>
+                signatureFor({
+                    version: 1,
+                    nodes: [
+                        {tag: 'html', parent: null, kgClasses: [], attributes: []},
+                        {tag: 'head', parent: 0, kgClasses: [], attributes: []},
+                        {tag: 'body', parent: 0, kgClasses: [], attributes: []},
+                        {tag: 'div', parent: 2, kgClasses: [className], attributes: []}
+                    ],
+                    headings: [],
+                    selectedCounts: {p: 0, pre: 0, td: 0, li: 0},
+                    semanticGaps: {
+                        caption: false,
+                        tableHeader: false,
+                        blockquote: false,
+                        figure: false,
+                        cardWrapper: true
+                    }
+                })
+            )
+            .toSorted();
+
+        expect(report.signatures.map(({id}) => id)).toEqual(expectedIds);
     });
 
     it('emits the canonical preorder structure from a worked structural example', async () => {
