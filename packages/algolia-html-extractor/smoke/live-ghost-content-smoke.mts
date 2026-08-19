@@ -116,13 +116,20 @@ export class SmokeError extends Error {
     readonly category: FailureCategory;
     readonly code: SmokeErrorCode;
     readonly report: SmokeReport;
+    readonly reportingCode: 'summary-failure' | undefined;
 
-    constructor(category: FailureCategory, code: SmokeErrorCode, report: SmokeReport) {
+    constructor(
+        category: FailureCategory,
+        code: SmokeErrorCode,
+        report: SmokeReport,
+        reportingCode?: 'summary-failure'
+    ) {
         super(`Live Ghost content smoke failed: ${category}`);
         this.name = 'SmokeError';
         this.category = category;
         this.code = code;
         this.report = report;
+        this.reportingCode = reportingCode;
     }
 }
 
@@ -588,11 +595,15 @@ const writeSummary = async (
     report: SmokeReport,
     observedAt: string,
     state: SmokeState,
-    baseline: Readonly<Record<SignatureId, number>> | undefined
+    baseline: Readonly<Record<SignatureId, number>> | undefined,
+    failure?: SmokeAbort
 ): Promise<void> => {
     try {
         await options.summarySink(formatSmokeSummary(report));
     } catch {
+        if (failure !== undefined) {
+            throw new SmokeError(failure.category, failure.code, report, 'summary-failure');
+        }
         const failureReport = createReport('operational-failure', observedAt, state, baseline);
         throw new SmokeError('operational-failure', 'summary-failure', failureReport);
     }
@@ -620,7 +631,7 @@ export async function runLiveGhostContentSmoke(
                 ? error
                 : new SmokeAbort('operational-failure', 'transport-failure');
         const report = createReport(failure.category, observedAt, state, baseline);
-        await writeSummary(options, report, observedAt, state, baseline);
+        await writeSummary(options, report, observedAt, state, baseline, failure);
         throw new SmokeError(failure.category, failure.code, report);
     }
 

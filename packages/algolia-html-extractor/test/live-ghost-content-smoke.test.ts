@@ -168,7 +168,9 @@ describe('runLiveGhostContentSmoke', () => {
             },
             drift: {added: [], missing: [], countChanged: []}
         });
-        expect(report.signatures.map(signature => signature.count).sort()).toEqual([1, 2]);
+        expect(
+            report.signatures.map(signature => signature.count).toSorted((a, b) => a - b)
+        ).toEqual([1, 2]);
         expect(report.signatures.every(({id}) => /^sha256:[0-9a-f]{64}$/.test(id))).toBe(true);
         expect(
             transport.mock.calls.map(([request]) => [request.contentType, request.page])
@@ -303,7 +305,7 @@ describe('runLiveGhostContentSmoke', () => {
             )
         );
 
-        expect(report.signatures.map(({count}) => count).sort()).toEqual([1, 2]);
+        expect(report.signatures.map(({count}) => count).toSorted((a, b) => a - b)).toEqual([1, 2]);
         expect(summaries[0]).not.toMatch(/private|other|\.invalid|toggle|thumbnail|embed/i);
     });
 
@@ -634,6 +636,32 @@ describe('runLiveGhostContentSmoke', () => {
             category: 'operational-failure',
             code: 'summary-failure',
             message: 'Live Ghost content smoke failed: operational-failure'
+        });
+        await expect(execution).rejects.not.toThrow(/private|test-content-api-key/i);
+    });
+
+    it('preserves the smoke failure when writing its summary also fails', async () => {
+        const transport = vi.fn<SmokeTransport>(async request => ({
+            status: 200,
+            redirected: false,
+            body: {
+                [request.contentType]: 'private invalid collection',
+                meta: {pagination: 'private invalid pagination'}
+            }
+        }));
+        const execution = runLiveGhostContentSmoke(
+            createOptions(transport, {
+                summarySink: () => {
+                    throw new Error('private sink failure and test-content-api-key');
+                }
+            })
+        );
+
+        await expect(execution).rejects.toMatchObject({
+            category: 'schema-drift',
+            code: 'invalid-schema',
+            reportingCode: 'summary-failure',
+            report: {category: 'schema-drift'}
         });
         await expect(execution).rejects.not.toThrow(/private|test-content-api-key/i);
     });
