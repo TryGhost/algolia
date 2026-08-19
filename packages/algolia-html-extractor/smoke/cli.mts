@@ -7,6 +7,8 @@ import {
     type SmokeTransportRequest
 } from './live-ghost-content-smoke.mts';
 
+const REQUEST_TIMEOUT_MS = 30_000;
+
 const createRequestUrl = (request: SmokeTransportRequest): URL => {
     const requestUrl = new URL(`/ghost/api/content/${request.contentType}/`, request.target);
     requestUrl.searchParams.set('key', request.contentApiKey);
@@ -21,7 +23,8 @@ const transport: SmokeTransport = async request => {
     const response = await fetch(createRequestUrl(request), {
         method: 'GET',
         headers: {'Accept-Version': request.apiVersion},
-        redirect: request.redirect
+        redirect: request.redirect,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
     });
 
     let body: unknown = null;

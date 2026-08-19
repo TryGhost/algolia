@@ -32,24 +32,17 @@ describe('live Ghost content smoke workflow', () => {
             /^ {4}if: github\.repository == 'TryGhost\/algolia' && github\.ref == 'refs\/heads\/main'$/m
         );
 
-        const actionReferences = [...workflow.matchAll(/^\s*- uses: ([^@\s]+)@([^\s#]+)/gm)].map(
-            ([, action, reference]) => ({action, reference})
-        );
+        const actionReferences = [
+            ...workflow.matchAll(/^[ \t]+(?:-[ \t]+)?uses:[ \t]+(.+)$/gm)
+        ].map(([, value]) => value?.replace(/[ \t]+#.*$/, ''));
 
         expect(actionReferences).toEqual([
-            {
-                action: 'actions/checkout',
-                reference: expect.stringMatching(/^[0-9a-f]{40}$/)
-            },
-            {
-                action: 'pnpm/action-setup',
-                reference: expect.stringMatching(/^[0-9a-f]{40}$/)
-            },
-            {
-                action: 'actions/setup-node',
-                reference: expect.stringMatching(/^[0-9a-f]{40}$/)
-            }
+            expect.stringMatching(/^actions\/checkout@[0-9a-f]{40}$/),
+            expect.stringMatching(/^pnpm\/action-setup@[0-9a-f]{40}$/),
+            expect.stringMatching(/^actions\/setup-node@[0-9a-f]{40}$/)
         ]);
+
+        expect(workflow).toMatch(/^ {4}timeout-minutes: 15$/m);
 
         expect(stepContaining(workflow, 'actions/checkout@')).toMatch(
             /^ {10}persist-credentials: false$/m
