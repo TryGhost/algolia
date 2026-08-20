@@ -1,5 +1,6 @@
 import {execFile} from 'node:child_process';
-import {readdir, stat} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {readdir, readFile, stat} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {promisify} from 'node:util';
@@ -18,11 +19,15 @@ const snapshotBuildOutputs = async () => {
     for (const directory of buildOutputDirectories) {
         const absoluteDirectory = path.join(workspaceDirectory, directory);
         for (const filename of (await readdir(absoluteDirectory)).sort()) {
-            const stats = await stat(path.join(absoluteDirectory, filename), {bigint: true});
+            const absoluteFile = path.join(absoluteDirectory, filename);
+            const stats = await stat(absoluteFile, {bigint: true});
             snapshot[`${directory}/${filename}`] = {
                 size: stats.size,
                 mtimeNs: stats.mtimeNs,
-                ino: stats.ino
+                ino: stats.ino,
+                contentSha256: createHash('sha256')
+                    .update(await readFile(absoluteFile))
+                    .digest('hex')
             };
         }
     }
