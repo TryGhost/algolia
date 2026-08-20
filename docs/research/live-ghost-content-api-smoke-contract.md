@@ -252,7 +252,8 @@ On every run, write one compact, deterministic report to the GitHub job summary:
 - UTC observation time, explicit safe origin, and API version;
 - pages and items read per resource;
 - items without an `html` value per resource, as a count only, so the summary is
-  itself the complete census of empty-bodied published content;
+  itself the complete census of items with `html: null`, whether empty-bodied,
+  members-only, or paid;
 - total distinct normalized signatures;
 - signature identifier and aggregate count for each observed signature;
 - added, missing, and count-changed identifiers relative to baseline.
