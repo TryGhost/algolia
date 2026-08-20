@@ -3,6 +3,11 @@ packages:
 
 linkWorkspacePackages: true
 
+# ipx@3 (via netlify-cli > @netlify/images) pins sharp@^0.34, which has known
+# libvips CVEs (GHSA-f88m-g3jw-g9cj); force the patched 0.35 line until ipx@4 ships.
+overrides:
+  sharp: ^0.35.3
+
 allowBuilds:
   esbuild: true
   netlify-cli: false
