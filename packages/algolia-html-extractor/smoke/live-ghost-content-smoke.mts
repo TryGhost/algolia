@@ -40,6 +40,7 @@ export type SmokeTransport = (request: SmokeTransportRequest) => Promise<SmokeTr
 export type ResourceTotals = Readonly<{
     pages: number;
     items: number;
+    itemsWithoutHtml: number;
 }>;
 
 export type SmokeReport = Readonly<{
@@ -88,7 +89,7 @@ type Node = DefaultTreeAdapterTypes.Node;
 type ParentNode = DefaultTreeAdapterTypes.ParentNode;
 
 type SmokeState = {
-    totals: Record<GhostContentType, {pages: number; items: number}>;
+    totals: Record<GhostContentType, {pages: number; items: number; itemsWithoutHtml: number}>;
     signatureCounts: Map<SignatureId, number>;
 };
 
@@ -135,8 +136,8 @@ export class SmokeError extends Error {
 
 const createState = (): SmokeState => ({
     totals: {
-        posts: {pages: 0, items: 0},
-        pages: {pages: 0, items: 0}
+        posts: {pages: 0, items: 0, itemsWithoutHtml: 0},
+        pages: {pages: 0, items: 0, itemsWithoutHtml: 0}
     },
     signatureCounts: new Map()
 });
@@ -195,6 +196,10 @@ const formatIdentifiers = (identifiers: readonly SignatureId[]): string => {
     return identifiers.length === 0 ? 'none' : identifiers.join(', ');
 };
 
+const formatResourceTotals = (contentType: GhostContentType, totals: ResourceTotals): string => {
+    return `| ${contentType} | ${totals.pages} | ${totals.items} | ${totals.itemsWithoutHtml} |`;
+};
+
 export function formatSmokeSummary(report: SmokeReport): string {
     const signatureLines = report.signatures.map(({id, count}) => `| ${id} | ${count} |`);
     const signatureTable = signatureLines.length === 0 ? '| none | 0 |' : signatureLines.join('\n');
@@ -207,10 +212,10 @@ export function formatSmokeSummary(report: SmokeReport): string {
         `Target: ${report.target}`,
         `API version: ${report.apiVersion}`,
         '',
-        '| Resource | Pages | Items |',
-        '| --- | ---: | ---: |',
-        `| posts | ${report.totals.posts.pages} | ${report.totals.posts.items} |`,
-        `| pages | ${report.totals.pages.pages} | ${report.totals.pages.items} |`,
+        '| Resource | Pages | Items | Without html |',
+        '| --- | ---: | ---: | ---: |',
+        formatResourceTotals('posts', report.totals.posts),
+        formatResourceTotals('pages', report.totals.pages),
         '',
         `Distinct signatures: ${report.signatures.length}`,
         '',
@@ -578,6 +583,30 @@ const observeHtml = (renderedHtml: string, state: SmokeState): void => {
     state.signatureCounts.set(signature, (state.signatureCounts.get(signature) ?? 0) + 1);
 };
 
+const observeItem = (item: unknown, contentType: GhostContentType, state: SmokeState): void => {
+    if (!isObject(item)) {
+        throw new SmokeAbort('schema-drift', 'invalid-schema');
+    }
+
+    const totals = state.totals[contentType];
+
+    // Ghost returns a null html value for an item with an empty rendered body. Such an item is
+    // counted so resource totals still reconcile with the declared pagination total, but it
+    // carries no structure to census and reaches neither the normalizer nor the extractor.
+    if (item.html === null) {
+        totals.itemsWithoutHtml += 1;
+        totals.items += 1;
+        return;
+    }
+
+    if (typeof item.html !== 'string') {
+        throw new SmokeAbort('schema-drift', 'invalid-schema');
+    }
+
+    observeHtml(item.html, state);
+    totals.items += 1;
+};
+
 const readContentType = async (
     options: LiveGhostContentSmokeOptions,
     contentType: GhostContentType,
@@ -608,11 +637,7 @@ const readContentType = async (
         }
 
         for (const item of items) {
-            if (!isObject(item) || typeof item.html !== 'string') {
-                throw new SmokeAbort('schema-drift', 'invalid-schema');
-            }
-            observeHtml(item.html, state);
-            state.totals[contentType].items += 1;
+            observeItem(item, contentType, state);
         }
         state.totals[contentType].pages += 1;
 
@@ -665,7 +690,11 @@ export async function runLiveGhostContentSmoke(
         baseline = validateBaseline(options.baseline);
         await readContentType(options, 'posts', state);
         await readContentType(options, 'pages', state);
-        if (state.totals.posts.items + state.totals.pages.items === 0) {
+        // A combined read that observed no html value at all, whether from no items or only
+        // items without html, exercised neither the normalizer nor the extractor. It is no
+        // evidence of the live contract and must never become a baseline.
+        const hasStructuralEvidence = state.signatureCounts.size > 0;
+        if (!hasStructuralEvidence) {
             throw new SmokeAbort('schema-drift', 'empty-census');
         }
     } catch (error) {

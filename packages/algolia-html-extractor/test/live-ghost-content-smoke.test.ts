@@ -25,23 +25,23 @@ const createOptions = (
     ...overrides
 });
 
-const createSuccessfulTransport = (
-    postHtml: readonly string[],
-    pageHtml: readonly string[]
+const createSinglePageTransport = (
+    postItems: readonly unknown[],
+    pageItems: readonly unknown[]
 ): SmokeTransport => {
     return vi.fn<SmokeTransport>(async request => {
-        const htmlValues = request.contentType === 'posts' ? postHtml : pageHtml;
+        const items = request.contentType === 'posts' ? postItems : pageItems;
         return {
             status: 200,
             redirected: false,
             body: {
-                [request.contentType]: htmlValues.map(html => ({html})),
+                [request.contentType]: items,
                 meta: {
                     pagination: {
                         page: 1,
                         limit: 100,
                         pages: 1,
-                        total: htmlValues.length,
+                        total: items.length,
                         next: null,
                         prev: null
                     }
@@ -51,10 +51,39 @@ const createSuccessfulTransport = (
     });
 };
 
+const createSuccessfulTransport = (
+    postHtml: readonly (string | null)[],
+    pageHtml: readonly (string | null)[]
+): SmokeTransport => {
+    return createSinglePageTransport(
+        postHtml.map(html => ({html})),
+        pageHtml.map(html => ({html}))
+    );
+};
+
 const signatureFor = (canonicalStructure: unknown): `sha256:${string}` => {
     const serializedStructure = JSON.stringify(canonicalStructure);
     return `sha256:${createHash('sha256').update(serializedStructure, 'utf8').digest('hex')}`;
 };
+
+const PARAGRAPH_STRUCTURE = {
+    version: 1,
+    nodes: [
+        {tag: 'html', parent: null, kgClasses: [], attributes: []},
+        {tag: 'head', parent: 0, kgClasses: [], attributes: []},
+        {tag: 'body', parent: 0, kgClasses: [], attributes: []},
+        {tag: 'p', parent: 2, kgClasses: [], attributes: []}
+    ],
+    headings: [],
+    selectedCounts: {p: 1, pre: 0, td: 0, li: 0},
+    semanticGaps: {
+        caption: false,
+        tableHeader: false,
+        blockquote: false,
+        figure: false,
+        cardWrapper: false
+    }
+} as const;
 
 describe('runLiveGhostContentSmoke', () => {
     it.each([
@@ -163,8 +192,8 @@ describe('runLiveGhostContentSmoke', () => {
             target: 'https://main.ghost.is',
             apiVersion: 'v6.0',
             totals: {
-                posts: {pages: 2, items: 2},
-                pages: {pages: 1, items: 1}
+                posts: {pages: 2, items: 2, itemsWithoutHtml: 0},
+                pages: {pages: 1, items: 1, itemsWithoutHtml: 0}
             },
             drift: {added: [], missing: [], countChanged: []}
         });
@@ -195,6 +224,137 @@ describe('runLiveGhostContentSmoke', () => {
         expect(summaries[0]).not.toMatch(
             /private|prose|quotation|heading|\.invalid|post-id|test-content-api-key/i
         );
+    });
+
+    it('counts items without html, keeps them out of the census, and never extracts them', async () => {
+        const summaries: string[] = [];
+
+        const report = await runLiveGhostContentSmoke(
+            createOptions(
+                createSuccessfulTransport(
+                    ['<p>Private prose one</p>', null, '<p>Private prose two</p>'],
+                    [null]
+                ),
+                {
+                    summarySink: summary => {
+                        summaries.push(summary);
+                    }
+                }
+            )
+        );
+
+        expect(report.category).toBe('ok');
+        expect(report.totals).toEqual({
+            posts: {pages: 1, items: 3, itemsWithoutHtml: 1},
+            pages: {pages: 1, items: 1, itemsWithoutHtml: 1}
+        });
+        expect(report.signatures).toEqual([{id: signatureFor(PARAGRAPH_STRUCTURE), count: 2}]);
+        expect(summaries[0]).not.toMatch(/private|prose/i);
+    });
+
+    it('reconciles declared totals when items without html span pages and resources', async () => {
+        const responses: SmokeTransportResponse[] = [
+            {
+                status: 200,
+                redirected: false,
+                body: {
+                    posts: [{html: null}, {html: '<p>Private prose one</p>'}],
+                    meta: {
+                        pagination: {page: 1, limit: 100, pages: 2, total: 3, next: 2, prev: null}
+                    }
+                }
+            },
+            {
+                status: 200,
+                redirected: false,
+                body: {
+                    posts: [{html: null}],
+                    meta: {
+                        pagination: {page: 2, limit: 100, pages: 2, total: 3, next: null, prev: 1}
+                    }
+                }
+            },
+            {
+                status: 200,
+                redirected: false,
+                body: {
+                    pages: [{html: null}, {html: '<p>Private prose two</p>'}],
+                    meta: {
+                        pagination: {
+                            page: 1,
+                            limit: 100,
+                            pages: 1,
+                            total: 2,
+                            next: null,
+                            prev: null
+                        }
+                    }
+                }
+            }
+        ];
+        const transport = vi.fn<SmokeTransport>(async () => {
+            const response = responses.shift();
+            if (response === undefined) {
+                throw new Error('unexpected request');
+            }
+            return response;
+        });
+
+        const report = await runLiveGhostContentSmoke(createOptions(transport));
+
+        expect(report.category).toBe('ok');
+        expect(report.totals).toEqual({
+            posts: {pages: 2, items: 3, itemsWithoutHtml: 2},
+            pages: {pages: 1, items: 2, itemsWithoutHtml: 1}
+        });
+        expect(report.signatures).toEqual([{id: signatureFor(PARAGRAPH_STRUCTURE), count: 2}]);
+    });
+
+    it('renders the aggregate of items without html as a summary column', async () => {
+        const summaries: string[] = [];
+
+        await runLiveGhostContentSmoke(
+            createOptions(createSuccessfulTransport(['<p>Private prose</p>', null], [null]), {
+                summarySink: summary => {
+                    summaries.push(summary);
+                }
+            })
+        );
+
+        expect(summaries[0]).toContain(
+            [
+                '| Resource | Pages | Items | Without html |',
+                '| --- | ---: | ---: | ---: |',
+                '| posts | 1 | 2 | 1 |',
+                '| pages | 1 | 1 | 1 |'
+            ].join('\n')
+        );
+    });
+
+    it.each([
+        ['a numeric html value', {html: 12}],
+        ['an array html value', {html: []}],
+        ['an object html value', {html: {private: 'private item value'}}],
+        ['a missing html property', {private: 'private item value'}],
+        ['an explicitly undefined html value', {html: undefined}],
+        ['a non-object item', 'private item value'],
+        ['a null item', null]
+    ])('keeps %s fatal', async (_name, item) => {
+        const summaries: string[] = [];
+
+        const execution = runLiveGhostContentSmoke(
+            createOptions(createSinglePageTransport([item], []), {
+                summarySink: summary => {
+                    summaries.push(summary);
+                }
+            })
+        );
+
+        await expect(execution).rejects.toMatchObject({
+            category: 'schema-drift',
+            code: 'invalid-schema'
+        });
+        expect(summaries[0]).not.toMatch(/private/i);
     });
 
     it('rejects an invalid baseline before transport without echoing its entries', async () => {
@@ -690,6 +850,55 @@ describe('runLiveGhostContentSmoke', () => {
         });
     });
 
+    it('rejects a combined census whose items all lack html while reporting their counts', async () => {
+        const summaries: string[] = [];
+
+        const execution = runLiveGhostContentSmoke(
+            createOptions(createSuccessfulTransport([null, null], [null]), {
+                summarySink: summary => {
+                    summaries.push(summary);
+                }
+            })
+        );
+
+        await expect(execution).rejects.toMatchObject({
+            category: 'schema-drift',
+            code: 'empty-census'
+        });
+        expect(summaries).toHaveLength(1);
+        expect(summaries[0]).toContain('| posts | 1 | 2 | 2 |');
+        expect(summaries[0]).toContain('| pages | 1 | 1 | 1 |');
+        expect(summaries[0]).toContain('Distinct signatures: 0');
+    });
+
+    it('keeps baseline comparison unaffected by items without html', async () => {
+        const postHtml = ['<p>First private value</p>'];
+        const pageHtml = ['<blockquote>Second private value</blockquote>'];
+        const bootstrap = await runLiveGhostContentSmoke(
+            createOptions(createSuccessfulTransport(postHtml, pageHtml))
+        );
+        const reviewedBaseline = Object.fromEntries(
+            bootstrap.signatures.map(({id, count}) => [id, count])
+        ) as Record<`sha256:${string}`, number>;
+
+        const withoutHtml = await runLiveGhostContentSmoke(
+            createOptions(
+                createSuccessfulTransport([null, ...postHtml, null], [...pageHtml, null]),
+                {
+                    baseline: reviewedBaseline
+                }
+            )
+        );
+
+        expect(withoutHtml.category).toBe('ok');
+        expect(withoutHtml.drift).toEqual({added: [], missing: [], countChanged: []});
+        expect(withoutHtml.signatures).toEqual(bootstrap.signatures);
+        expect(withoutHtml.totals).toEqual({
+            posts: {pages: 1, items: 3, itemsWithoutHtml: 2},
+            pages: {pages: 1, items: 2, itemsWithoutHtml: 1}
+        });
+    });
+
     it('accepts the real extractor interface invariants across every compatibility source tag', async () => {
         const renderedHtml = [
             '<h2><a id="private-anchor">Private heading</a></h2>',
@@ -705,8 +914,8 @@ describe('runLiveGhostContentSmoke', () => {
 
         expect(report.category).toBe('ok');
         expect(report.totals).toEqual({
-            posts: {pages: 1, items: 1},
-            pages: {pages: 1, items: 0}
+            posts: {pages: 1, items: 1, itemsWithoutHtml: 0},
+            pages: {pages: 1, items: 0, itemsWithoutHtml: 0}
         });
         expect(report.signatures).toHaveLength(1);
     });
