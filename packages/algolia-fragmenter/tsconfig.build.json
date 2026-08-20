@@ -3,12 +3,14 @@
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,
+    "incremental": true,
     "inlineSources": true,
     "noEmit": false,
     "outDir": "lib",
     "paths": {},
     "rootDir": "src",
-    "sourceMap": true
+    "sourceMap": true,
+    "tsBuildInfoFile": "node_modules/.cache/tsconfig.build.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.mts"]
 }

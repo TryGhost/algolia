@@ -4,11 +4,13 @@
     "allowImportingTsExtensions": false,
     "declaration": true,
     "declarationMap": true,
+    "incremental": true,
     "inlineSources": true,
     "noEmit": false,
     "outDir": "dist",
     "rootDir": ".",
-    "sourceMap": true
+    "sourceMap": true,
+    "tsBuildInfoFile": "node_modules/.cache/tsconfig.build.tsbuildinfo"
   },
   "include": ["index.mts"]
 }
