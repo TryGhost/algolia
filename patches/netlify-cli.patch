@@ -1,0 +1,20 @@
+diff --git a/dist/commands/base-command.js b/dist/commands/base-command.js
+index cb8b30f23b270933350dcaec6cb9a336ebf72390..cd0151aba71726498c28e71f32d8cd652af24b73 100644
+--- a/dist/commands/base-command.js
++++ b/dist/commands/base-command.js
+@@ -114,9 +114,13 @@ async function selectWorkspace(project, filter) {
+     return selected.path;
+ }
+ async function getRepositoryRoot(cwd) {
+-    const res = await findUp('.git', { cwd, type: 'directory' });
++    // `.git` is a directory in a standard checkout but a file in a git worktree
++    const res = await findUp((directory) => (existsSync(join(directory, '.git')) ? directory : undefined), {
++        cwd,
++        type: 'directory',
++    });
+     if (res) {
+-        return join(res, '..');
++        return res;
+     }
+ }
+ export function storeToken(globalConfig, { userId, name, email, accessToken }) {
