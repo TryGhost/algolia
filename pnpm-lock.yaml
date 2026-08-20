@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@netlify/config': 3f7fb3e9f184413d5b76da489221d2e0a03164a2c01fb5aa5406d829335eef3e
+  netlify-cli: 2f63d36e26d64621837c892279c0017056c9a84f0e694194a062b2e59e97824e
+
 importers:
 
   .:
@@ -106,7 +110,7 @@ importers:
         version: 0.28.2
       netlify-cli:
         specifier: 27.1.1
-        version: 27.1.1(@types/node@24.13.3)(picomatch@4.0.5)(supports-color@10.2.2)
+        version: 27.1.1(patch_hash=2f63d36e26d64621837c892279c0017056c9a84f0e694194a062b2e59e97824e)(@types/node@24.13.3)(picomatch@4.0.5)(supports-color@10.2.2)
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -7842,7 +7846,7 @@ snapshots:
       '@bugsnag/js': 8.10.0
       '@netlify/blobs': 10.7.13(supports-color@10.2.2)
       '@netlify/cache-utils': 7.1.1
-      '@netlify/config': 25.2.2
+      '@netlify/config': 25.2.2(patch_hash=3f7fb3e9f184413d5b76da489221d2e0a03164a2c01fb5aa5406d829335eef3e)
       '@netlify/edge-bundler': 16.0.3
       '@netlify/functions-utils': 7.1.4(supports-color@10.2.2)
       '@netlify/git-utils': 7.1.0
@@ -7914,7 +7918,7 @@ snapshots:
     dependencies:
       '@netlify/runtime-utils': 2.3.0
 
-  '@netlify/config@25.2.2':
+  '@netlify/config@25.2.2(patch_hash=3f7fb3e9f184413d5b76da489221d2e0a03164a2c01fb5aa5406d829335eef3e)':
     dependencies:
       '@netlify/api': 15.1.1
       '@netlify/headers-parser': 10.1.1
@@ -7981,7 +7985,7 @@ snapshots:
     dependencies:
       '@netlify/ai': 0.4.4
       '@netlify/blobs': 10.7.13(supports-color@10.2.2)
-      '@netlify/config': 25.2.2
+      '@netlify/config': 25.2.2(patch_hash=3f7fb3e9f184413d5b76da489221d2e0a03164a2c01fb5aa5406d829335eef3e)
       '@netlify/database-dev': 0.10.1
       '@netlify/dev-utils': 5.0.0
       '@netlify/edge-functions-dev': 1.0.24
@@ -11625,7 +11629,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  netlify-cli@27.1.1(@types/node@24.13.3)(picomatch@4.0.5)(supports-color@10.2.2):
+  netlify-cli@27.1.1(patch_hash=2f63d36e26d64621837c892279c0017056c9a84f0e694194a062b2e59e97824e)(@types/node@24.13.3)(picomatch@4.0.5)(supports-color@10.2.2):
     dependencies:
       '@fastify/static': 10.1.3
       '@netlify/ai': 0.4.4
@@ -11633,7 +11637,7 @@ snapshots:
       '@netlify/blobs': 10.7.13(supports-color@10.2.2)
       '@netlify/build': 36.3.5(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(picomatch@4.0.5)
       '@netlify/build-info': 11.3.0
-      '@netlify/config': 25.2.2
+      '@netlify/config': 25.2.2(patch_hash=3f7fb3e9f184413d5b76da489221d2e0a03164a2c01fb5aa5406d829335eef3e)
       '@netlify/dev': 4.18.13(supports-color@10.2.2)
       '@netlify/dev-utils': 4.4.7
       '@netlify/edge-bundler': 16.0.3

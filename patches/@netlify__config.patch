@@ -1,0 +1,29 @@
+diff --git a/lib/options/repository_root.js b/lib/options/repository_root.js
+index 3802695e3061b92f4a1e8a71ed3e21509ecff7e1..56e40f9e189407b0c7490a80d57c0f63c328d3fd 100644
+--- a/lib/options/repository_root.js
++++ b/lib/options/repository_root.js
+@@ -1,16 +1,20 @@
+-import { dirname } from 'path';
++import { existsSync } from 'fs';
++import { join } from 'path';
+ import { findUp } from 'find-up';
+ // Find out repository root among (in priority order):
+ //  - `repositoryRoot` option
+-//  - find a `.git` directory up from `cwd`
++//  - find a `.git` entry up from `cwd` (a directory in a standard checkout, a file in a git worktree)
+ //  - `cwd` (fallback)
+ export const getRepositoryRoot = async function ({ repositoryRoot, cwd }) {
+     if (repositoryRoot !== undefined) {
+         return repositoryRoot;
+     }
+-    const repositoryRootA = await findUp('.git', { cwd, type: 'directory' });
++    const repositoryRootA = await findUp((directory) => (existsSync(join(directory, '.git')) ? directory : undefined), {
++        cwd,
++        type: 'directory',
++    });
+     if (repositoryRootA === undefined) {
+         return cwd;
+     }
+-    return dirname(repositoryRootA);
++    return repositoryRootA;
+ };

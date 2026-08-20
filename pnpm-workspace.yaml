@@ -13,3 +13,7 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@tryghost/errors'
   - '@tryghost/pretty-cli'
+
+patchedDependencies:
+  '@netlify/config': patches/@netlify__config.patch
+  netlify-cli: patches/netlify-cli.patch
