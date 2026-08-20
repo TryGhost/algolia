@@ -138,8 +138,8 @@ describe('live Ghost content smoke CLI', () => {
 
         const summary = await readFile(summaryPath, 'utf8');
         expect(summary).toContain('Result: ok');
-        expect(summary).toContain('| posts | 1 | 1 |');
-        expect(summary).toContain('| pages | 1 | 0 |');
+        expect(summary).toContain('| posts | 1 | 1 | 0 |');
+        expect(summary).toContain('| pages | 1 | 0 | 0 |');
         expect(summary).not.toMatch(/Private fixture prose|test-content-api-key/i);
     });
 
