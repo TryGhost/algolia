@@ -39,7 +39,7 @@ const records = createAlgoliaRecords(posts, {
 ```
 
 - `ignoreSlugs` excludes content by slug before the rest of its fields are validated.
-- `contentProjection.fields` is the complete optional field set; it replaces the default set rather than patching it, and `[]` selects no optional fields. Without `contentProjection`, the optional fields are `image`, `tags`, `authors`, and `excerpt`.
+- `contentProjection.fields` is required whenever `contentProjection` is supplied and is the complete optional field set; it replaces the default set rather than patching it, and `[]` selects no optional fields. Without `contentProjection`, the optional fields are `image`, `tags`, `authors`, and `excerpt`.
 - `contentProjection.customRanking` adds ranking siblings beside the package-owned `position` and `heading` values. Each sibling needs a validated alias.
 
 The optional source allowlist is `image`, `tags`, `authors`, `excerpt`, `custom_excerpt`, `feature_image_alt`, `feature_image_caption`, `canonical_url`, `featured`, `visibility`, `created_at`, `updated_at`, `published_at`, and `reading_time`. Ranking siblings may only be sourced from `featured` and `reading_time`. A field may be aliased with `{source, as}`, where `as` matches `^[A-Za-z][A-Za-z0-9_]*$` and changes only the output key.
@@ -66,7 +66,7 @@ try {
 }
 ```
 
-Policy issues carry the configuration `path` that must change. Content issues add the batch `index`, the Ghost content id, and the expected type. Size issues add the record's `objectID`, the anchor and source position when available, the measured `bytes`, the 9,999-byte `limit`, and the `excess`.
+Policy issues carry the configuration `path` that must change. Content issues add the batch `index`, the Ghost content id, and the expected type; both are `null` when the batch itself is not an array, and the content id is also `null` when the content has no usable `id`. Size issues add the record's `objectID`, the anchor and source position when available, the measured `bytes`, the 9,999-byte `limit`, and the `excess`.
 
 ### Deprecated wrappers
 
