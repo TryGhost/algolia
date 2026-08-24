@@ -277,12 +277,16 @@ describe('Ghost 6 CLI acceptance', function () {
             };
             const normalizeRequest = request => {
                 const url = new URL(request.url);
+                // algoliasearch 5.57+ stamps every request with a randomly generated
+                // request-id header, so it cannot be part of a deterministic request contract.
+                const headers = {...request.headers};
+                delete headers['request-id'];
                 return {
                     method: request.method,
                     origin: url.origin,
                     pathname: url.pathname,
                     query: Object.fromEntries(url.searchParams),
-                    headers: request.headers
+                    headers
                 };
             };
 
