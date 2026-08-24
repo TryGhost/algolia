@@ -2,6 +2,10 @@ import {defineConfig} from 'vitest/config';
 
 export default defineConfig({
     test: {
+        include: [
+            'packages/*/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}',
+            'test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}'
+        ],
         coverage: {
             provider: 'custom',
             customProviderModule: './test/coverage-provider.mjs',
