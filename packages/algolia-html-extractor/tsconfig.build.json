@@ -10,7 +10,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "sourceMap": true,
-    "tsBuildInfoFile": "node_modules/.cache/tsconfig.build.tsbuildinfo"
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["index.mts"]
 }

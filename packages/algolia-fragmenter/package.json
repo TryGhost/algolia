@@ -31,7 +31,8 @@
     "posttest": "pnpm typecheck && pnpm lint"
   },
   "files": [
-    "lib"
+    "lib",
+    "!lib/.tsbuildinfo"
   ],
   "publishConfig": {
     "access": "public"

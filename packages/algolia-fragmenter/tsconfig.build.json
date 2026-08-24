@@ -10,7 +10,7 @@
     "paths": {},
     "rootDir": "src",
     "sourceMap": true,
-    "tsBuildInfoFile": "node_modules/.cache/tsconfig.build.tsbuildinfo"
+    "tsBuildInfoFile": "lib/.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.mts"]
 }
