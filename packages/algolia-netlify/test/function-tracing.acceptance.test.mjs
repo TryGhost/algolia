@@ -64,6 +64,7 @@ describe('Netlify function dependency tracing', () => {
 
                 expect(archiveIndex).toContain('packages/algolia-html-extractor/package.json');
                 expect(archiveIndex).toContain('packages/algolia-html-extractor/dist/index.mjs');
+                expect(archiveIndex).toContain('/node_modules/parse5/dist/index.js');
             }
         } finally {
             await execFileAsync('pnpm', ['--filter', '@tryghost/algolia-html-extractor', 'build'], {
