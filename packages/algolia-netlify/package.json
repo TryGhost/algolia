@@ -55,6 +55,6 @@
   "dependencies": {
     "@tryghost/algolia-fragmenter": "workspace:^",
     "@tryghost/algolia-indexer": "workspace:^",
-    "algoliasearch": "5.56.0"
+    "algoliasearch": "5.57.0"
   }
 }
