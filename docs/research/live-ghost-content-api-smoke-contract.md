@@ -171,8 +171,12 @@ The smoke program has four layers of assertions:
 1. **Target and transport:** exact origin and API version, non-empty key,
    successful non-redirected JSON responses.
 2. **Content API schema:** resource arrays, pagination object, valid progress to
-   `next === null`, at least one Ghost content item in the combined read, and a
-   string `html` value for every item.
+   `next === null`, a string or `null` `html` value for every item, and at least
+   one observed `html` string in the combined read. A `null` value is counted
+   per resource, contributes no signature, and never reaches the normalizer or
+   the extractor; every other non-string value remains schema drift. Because a
+   read whose items all carry `null` exercises neither the normalizer nor the
+   extractor, it fails as an empty census exactly like a read with no items.
 3. **Normalizer privacy and determinism:** parsing succeeds; two passes over the
    same in-memory HTML yield the same normalized signature; and emitted
    signatures contain only the structural allowlist above.
@@ -180,6 +184,20 @@ The smoke program has four layers of assertions:
    A new identifier fails the live workflow. Missing identifiers and changed
    occurrence counts are reported but do not fail, because mutable editorial
    content can remove or duplicate structures without changing Ghost's renderer.
+
+Amended on 2026-08-20. Layer 2 originally required a string `html` value for
+every item. Two manual dispatches failed `schema-drift` on that assertion alone
+([run 32368632595](https://github.com/TryGhost/algolia/actions/runs/32368632595),
+[run 32372419243](https://github.com/TryGhost/algolia/actions/runs/32372419243)).
+A maintainer-led aggregate classification of the first posts page found
+`{"null": 8, "string": 92}` over healthy pagination, and all eight `null`-`html`
+items were `public`: empty-bodied published posts, not restricted content. Ghost
+returns `null` `html` for an empty published post, and equally for members-only
+and paid posts, so the pinned assertion contradicted live Content API behaviour
+and made every dispatch fail regardless of key or timing. Empty published posts
+are mutable editorial content, which this contract requires to be reported
+rather than treated as fatal.
+([amendment](https://github.com/TryGhost/algolia/issues/239))
 
 Once `@tryghost/algolia-html-extractor` exists, also invoke its public `extract`
 seam for every live HTML value and assert only interface invariants: no throw,
@@ -233,6 +251,9 @@ On every run, write one compact, deterministic report to the GitHub job summary:
   `structural-drift`, or `extractor-failure`;
 - UTC observation time, explicit safe origin, and API version;
 - pages and items read per resource;
+- items without an `html` value per resource, as a count only, so the summary is
+  itself the complete census of items with `html: null`, whether empty-bodied,
+  members-only, or paid;
 - total distinct normalized signatures;
 - signature identifier and aggregate count for each observed signature;
 - added, missing, and count-changed identifiers relative to baseline.
@@ -316,6 +337,7 @@ revealing automation.
 
 - [Plan a maintained HTML-to-Algolia extraction pipeline](https://github.com/TryGhost/algolia/issues/186)
 - [Define the live Ghost Content API smoke contract](https://github.com/TryGhost/algolia/issues/191)
+- [Live smoke schema contract fails on published posts with null html](https://github.com/TryGhost/algolia/issues/239)
 - [Provision read-only `main.ghost.is` Content API access](https://github.com/TryGhost/algolia/issues/190#issuecomment-5289038849)
 - [`CONTEXT.md`](../../CONTEXT.md)
 - [`ghost-html-evidence-corpus.md`](ghost-html-evidence-corpus.md)
