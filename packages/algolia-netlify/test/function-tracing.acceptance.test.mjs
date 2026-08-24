@@ -13,6 +13,9 @@ const extractorDistDirectory = path.resolve(
     workspaceDirectory,
     'packages/algolia-html-extractor/dist'
 );
+// The workspace root has no netlify binary; resolve the pinned CLI from this package so the
+// test does not depend on a globally installed netlify-cli.
+const netlifyBinary = path.join(packageDirectory, 'node_modules/.bin/netlify');
 
 describe('Netlify function dependency tracing', () => {
     it('packages the compatibility extractor through the ESM fragmenter', async () => {
@@ -43,13 +46,15 @@ describe('Netlify function dependency tracing', () => {
 
         try {
             await execFileAsync(
-                'pnpm',
-                ['exec', 'netlify', 'build', '--offline', '--filter', '@tryghost/algolia-netlify'],
+                netlifyBinary,
+                ['build', '--offline', '--filter', '@tryghost/algolia-netlify'],
                 {
                     cwd: workspaceDirectory,
                     env: {...process.env, NODE_ENV: 'production'}
                 }
-            );
+            ).catch(error => {
+                throw new Error(`${error.message}\n${error.stdout ?? ''}\n${error.stderr ?? ''}`);
+            });
 
             for (const functionName of ['post-published', 'post-unpublished']) {
                 const archive = await readFile(
