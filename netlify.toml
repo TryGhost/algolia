@@ -1,5 +1,8 @@
 [build]
-  command = "pnpm typecheck"
+  # Deploys run only this command; package "prebuild" scripts never run on Netlify. The
+  # extractor's gitignored dist/ must exist before functions bundling, or the bundler silently
+  # drops the package from the function archives and the functions crash at runtime.
+  command = "pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck"
   functions = "packages/algolia-netlify/functions"
   publish = "packages/algolia-netlify/public"
 
