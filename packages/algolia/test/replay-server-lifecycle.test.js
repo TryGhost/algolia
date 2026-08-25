@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 
 import {EventEmitter} from 'node:events';
 
-import {stopOwnedServer} from './helpers/replay-server-lifecycle.js';
+import {stopOwnedServer} from './helpers/replay-server-lifecycle.ts';
 
 describe('replay server lifecycle', function () {
     it('finishes when an owned server closes without an exit event', async function () {

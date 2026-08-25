@@ -1,25 +1,37 @@
-export const stopOwnedServer = async (server, ownedServers) => {
+import type {EventEmitter} from 'node:events';
+
+export type OwnedServer = EventEmitter &
+    Readonly<{
+        exitCode: number | null;
+        signalCode: NodeJS.Signals | null;
+        kill: (signal?: NodeJS.Signals | number) => boolean | void;
+    }>;
+
+export const stopOwnedServer = async (
+    server: OwnedServer,
+    ownedServers: Set<OwnedServer>
+): Promise<void> => {
     if (!ownedServers.delete(server)) {
         throw new Error('Refusing to stop an unowned replay server.');
     }
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
         let settled = false;
-        const cleanup = () => {
+        const cleanup = (): void => {
             server.removeListener('exit', handleExit);
             server.removeListener('close', handleExit);
             server.removeListener('error', handleError);
         };
-        const settle = (complete, value) => {
+        const settle = (complete: () => void): void => {
             if (settled) {
                 return;
             }
             settled = true;
             cleanup();
-            complete(value);
+            complete();
         };
-        const handleExit = () => settle(resolve);
-        const handleError = error => settle(reject, error);
+        const handleExit = (): void => settle(resolve);
+        const handleError = (error: Error): void => settle(() => reject(error));
 
         server.once('exit', handleExit);
         server.once('close', handleExit);
@@ -33,7 +45,7 @@ export const stopOwnedServer = async (server, ownedServers) => {
         try {
             server.kill('SIGTERM');
         } catch (error) {
-            settle(reject, error);
+            settle(() => reject(error));
         }
     });
 };

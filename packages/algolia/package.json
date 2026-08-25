@@ -19,8 +19,9 @@
     "algolia": "algolia",
     "pretest": "pnpm --filter @tryghost/algolia-html-extractor build && pnpm --filter @tryghost/algolia-fragmenter build",
     "test": "NODE_ENV=testing vitest run --root .",
+    "typecheck": "tsc --project tsconfig.test.json",
     "lint": "oxlint --quiet . && oxfmt --check .",
-    "posttest": "pnpm lint"
+    "posttest": "pnpm typecheck && pnpm lint"
   },
   "files": [
     "bin",
@@ -37,5 +38,9 @@
     "@tryghost/errors": "3.3.10",
     "@tryghost/pretty-cli": "3.3.10",
     "fs-extra": "11.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2"
   }
 }

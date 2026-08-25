@@ -15,7 +15,7 @@
     "test:coverage": "NODE_ENV=testing vitest run --coverage",
     "posttest:coverage": "node ./test/verify-coverage.mjs",
     "posttest": "pnpm typecheck && pnpm lint",
-    "typecheck": "pnpm --filter @tryghost/algolia-fragmenter typecheck && pnpm --filter @tryghost/algolia-netlify typecheck && pnpm --filter @tryghost/algolia-html-extractor typecheck",
+    "typecheck": "pnpm --filter @tryghost/algolia-fragmenter typecheck && pnpm --filter @tryghost/algolia-netlify typecheck && pnpm --filter @tryghost/algolia-html-extractor typecheck && pnpm --filter @tryghost/algolia typecheck",
     "lint": "oxlint --quiet && oxfmt --check .",
     "lint:fix": "oxlint --fix && oxfmt .",
     "format": "oxfmt .",

@@ -77,6 +77,25 @@ describe('fetchPosts', function () {
         });
     });
 
+    it('omits include when the projection needs no Ghost relations', async function () {
+        const browsePosts = vi.fn().mockResolvedValue([{id: 'projected-post'}]);
+
+        const result = await fetchPosts(browsePosts, {limit: 20, include: undefined});
+
+        expect(result).toEqual([{id: 'projected-post'}]);
+        expect(browsePosts).toHaveBeenCalledWith({limit: 20});
+    });
+
+    it('requests only the Ghost relations required by the projection', async function () {
+        for (const include of ['tags', 'authors']) {
+            const browsePosts = vi.fn().mockResolvedValue([{id: 'projected-post'}]);
+
+            await fetchPosts(browsePosts, {limit: 20, include});
+
+            expect(browsePosts).toHaveBeenCalledWith({limit: 20, include});
+        }
+    });
+
     it('fetches only the requested page when limit and page are explicit', async function () {
         const requestedPage = [{id: 'requested-post'}];
         requestedPage.meta = {pagination: {next: 4}};
