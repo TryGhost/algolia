@@ -30,15 +30,15 @@
   },
   "scripts": {
     "dev": "pnpm --dir ../.. exec netlify dev --filter @tryghost/algolia-netlify",
-    "prebuild": "pnpm --filter @tryghost/algolia-html-extractor build && pnpm --filter @tryghost/algolia-fragmenter build",
-    "pretest": "pnpm --filter @tryghost/algolia-html-extractor build && pnpm --filter @tryghost/algolia-fragmenter build",
+    "prebuild": "pnpm --filter @tryghost/algolia-fragmenter build",
+    "pretest": "pnpm --filter @tryghost/algolia-fragmenter build",
     "test": "NODE_ENV=testing vitest run --root .",
     "typecheck": "tsc --project tsconfig.functions.json && tsc --project tsconfig.test.json",
     "lint": "oxlint --quiet . && oxfmt --check .",
     "posttest": "pnpm typecheck && pnpm lint",
     "build": "NODE_ENV=production pnpm --dir ../.. exec netlify build --offline --filter @tryghost/algolia-netlify",
     "build:package": "node scripts/build-package.mjs && tsc --project tsconfig.package.json && node scripts/clean-package.mjs",
-    "prepack": "pnpm --filter @tryghost/algolia-html-extractor build && pnpm --filter @tryghost/algolia-fragmenter build && pnpm build:package"
+    "prepack": "pnpm --filter @tryghost/algolia-fragmenter build && pnpm build:package"
   },
   "files": [
     "dist"
