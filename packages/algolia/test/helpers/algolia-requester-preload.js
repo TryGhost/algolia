@@ -189,8 +189,19 @@ const responseFor = request => {
             };
         }
         const {filters} = JSON.parse(request.data);
-        const slug = filters.startsWith('slug:') ? filters.slice('slug:'.length) : null;
-        updateState(records => records.filter(record => slug === null || record.slug !== slug));
+        if (
+            typeof filters !== 'string' ||
+            !filters.startsWith('slug:') ||
+            filters.length === 'slug:'.length
+        ) {
+            return {
+                status: 400,
+                content: JSON.stringify({message: `Unsupported delete filter: ${filters}.`}),
+                isTimedOut: false
+            };
+        }
+        const slug = filters.slice('slug:'.length);
+        updateState(records => records.filter(record => record.slug !== slug));
         return {
             status: 200,
             content: JSON.stringify({

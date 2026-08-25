@@ -24,7 +24,7 @@ Copy [`example.config.json`](example.config.json) to a local file such as `confi
 
 Configuration files contain secrets and should not be committed. Files matching `packages/algolia/config*.json` are ignored by this repository.
 
-The CLI requires `@tryghost/algolia-fragmenter` 0.4.0 or newer. The package dependency supplies a compatible version; do not override it with an older fragmenter.
+`@tryghost/algolia` depends on `@tryghost/algolia-fragmenter` 0.4.0 or later. Do not override it with an older version.
 
 After installing the package in another project, run its binary through that project's package runner:
 
@@ -50,7 +50,7 @@ node bin/cli.js index config.json [options]
 
 ### Ghost content projection
 
-The optional top-level `contentProjection` object selects which Ghost fields are repeated in every Algolia record. When it is omitted, the CLI projects `image`, `tags`, `authors`, and `excerpt`. Supplying it replaces that default list, so an empty `fields` array selects no optional fields:
+Use the optional top-level `contentProjection` object to choose which Ghost fields the CLI copies into every Algolia record. If you leave it out, the CLI uses `image`, `tags`, `authors`, and `excerpt`. If you provide it, its `fields` array replaces those defaults. An empty array selects no optional fields:
 
 ```json
 {
@@ -70,17 +70,17 @@ The optional top-level `contentProjection` object selects which Ghost fields are
 }
 ```
 
-Available fields are `image`, `tags`, `authors`, `excerpt`, `custom_excerpt`, `feature_image_alt`, `feature_image_caption`, `canonical_url`, `featured`, `visibility`, `created_at`, `updated_at`, `published_at`, and `reading_time`. Optional fields can use a validated `{source, as}` alias. Ranking siblings support only `featured` and `reading_time` and require an alias. See the [Fragmenter projection contract](../algolia-fragmenter/README.md#options) for value normalization and exact `FragmenterError` behavior.
+Available fields are `image`, `tags`, `authors`, `excerpt`, `custom_excerpt`, `feature_image_alt`, `feature_image_caption`, `canonical_url`, `featured`, `visibility`, `created_at`, `updated_at`, `published_at`, and `reading_time`. To rename an optional field, use a validated `{source, as}` alias. Ranking siblings support only `featured` and `reading_time`, and they require an alias. See the [Fragmenter projection contract](../algolia-fragmenter/README.md#options) for value normalization and exact `FragmenterError` behavior.
 
-The CLI validates projection policy before making a Ghost or Algolia request. It never sends a Ghost `fields` parameter. It requests `tags`, `authors`, both, or neither through `include` according to the enabled fields, including aliased fields.
+The CLI validates the projection before making a Ghost or Algolia request. It never sends a Ghost `fields` parameter. Its `include` parameter requests `tags`, `authors`, both, or neither based on the selected fields, including aliases.
 
-Projection and index settings are independent. Adding `excerpt`, an alias, or a ranking sibling does not make it searchable, retrievable, faceted, highlighted, snippeted, or ranked. In particular, the default `excerpt` is display-only unless you explicitly reference it in `algolia.indexSettings`. The CLI continues to apply the configured `algolia.indexSettings`, or the indexer's existing defaults when that object is omitted; it does not derive settings from `contentProjection`.
+`contentProjection` changes record data only. It does not update Algolia settings. The default `excerpt` is display-only unless you reference it in `algolia.indexSettings`. The CLI applies the configured settings, or the indexer's defaults when `algolia.indexSettings` is omitted.
 
-Slug replacement requires the effective index settings to contain `filterOnly(slug)`. Algolia settings updates are partial, so a custom `algolia.indexSettings` patch may omit `attributesForFaceting` and preserve the index's existing facets. If the patch explicitly replaces `attributesForFaceting`, it must retain the exact `filterOnly(slug)` entry; otherwise, the CLI rejects the configuration before any Ghost or Algolia request. The CLI never adds or repairs the facet implicitly, and the indexer's defaults already include it.
+Slug replacement works only when the effective index settings contain `filterOnly(slug)`. Algolia settings updates are partial, so a custom `algolia.indexSettings` patch may omit `attributesForFaceting` and keep the index's existing facets. If the patch replaces `attributesForFaceting`, it must retain the exact `filterOnly(slug)` entry. Otherwise, the CLI rejects the configuration before any Ghost or Algolia request. The CLI does not add or repair this facet; the indexer's defaults already include it.
 
 ### Preflight and record size
 
-The CLI fetches the complete requested batch and runs the Fragmenter's deterministic preflight before connecting to Algolia. Invalid Ghost content and records over the 9,999-byte compact UTF-8 ceiling fail with `INVALID_GHOST_CONTENT` or `RECORD_TOO_LARGE`; no Algolia request is made and no partial record set is returned. Whole extraction fragments can be packed into continuation records, but they are never truncated. An indivisible fragment that cannot fit reports the affected object ID and byte excess.
+The CLI builds and validates every record before connecting to Algolia. Invalid content and oversized records fail with `INVALID_GHOST_CONTENT` or `RECORD_TOO_LARGE`, without making an Algolia request. Records are limited to 9,999 compact UTF-8 bytes. The Fragmenter may move whole extracted fragments into continuation records, but it never truncates them. If one fragment cannot fit, the error reports its object ID and byte excess.
 
 Resolve an affected ID to a slug and exclude it from the batch:
 
@@ -92,9 +92,9 @@ If a long `--skip` filter causes a `414 Request-URI Too Large` response, put the
 
 ### Migration, replacement, and rollback
 
-After preflight succeeds, the CLI runs its existing index-settings setup, with the effective `filterOnly(slug)` facet documented above. It then uses the legacy slug filter to delete all indexed records matching each unique fetched, non-ignored slug before saving the complete new record set. These deletions are deliberately awaited in first-seen order because Algolia's [`deleteBy` operation cannot run in parallel and is rate-limited](https://www.algolia.com/doc/libraries/sdk/v1/methods/delete-by). This replacement step removes stale heading or continuation records when content shrinks and makes repeated runs converge on the same records. Posts excluded by `--skip` are not fetched; posts excluded by `ignore_slugs` are fetched but are neither deleted nor saved.
+After validation, the CLI applies the configured index settings. It then deletes old records for each unique fetched, non-ignored slug before saving the new batch. Deletes run one at a time, in source order, because Algolia's [`deleteBy` operation cannot run in parallel and is rate-limited](https://www.algolia.com/doc/libraries/sdk/v1/methods/delete-by). This removes stale fragments when content shrinks. Posts excluded by `--skip` are not fetched. Posts in `ignore_slugs` are fetched but are neither deleted nor saved.
 
-Algolia replacement is not transactional. A network failure after one or more slug deletions can leave a partial external update, and the CLI does not promise automatic rollback. Before migrating a production index, retain the prior configuration and a recoverable index backup or replica. To roll back indexed state, restore or switch to that retained index. Switching back to an earlier compatible CLI/configuration stops new projection behavior, but an older CLI cannot recreate records already deleted by a failed replacement; do not treat rerunning it as an index restore, and never unpublish or reuse a released version.
+Replacement is not transactional. If a request fails after deletion starts, the index may contain a partial update. Keep the previous configuration and an index backup or replica before migrating. Restoring or switching the index is the rollback path; rerunning an older CLI will not restore deleted records. Never unpublish or reuse a released version.
 
 ## Development
 
