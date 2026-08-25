@@ -154,6 +154,32 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
         expect(run.algoliaRequests).toEqual([]);
     });
 
+    it('rejects an explicit facet replacement without the slug facet before any network request', async () => {
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()]),
+            config: replayOrigin =>
+                createConfig(replayOrigin, {
+                    contentProjection: {fields: []},
+                    algolia: {
+                        appId: 'acceptance-app',
+                        apiKey: 'acceptance-admin-key',
+                        index: 'ghost-content',
+                        indexSettings: {
+                            distinct: false,
+                            attributesForFaceting: ['filterOnly(category)']
+                        }
+                    }
+                })
+        });
+
+        expect(run.result.status).not.toBe(0);
+        expect(cliOutput(run.result)).toContain(
+            'Algolia indexSettings.attributesForFaceting must include filterOnly(slug) for record replacement.'
+        );
+        expect(run.ghostRequests).toEqual([]);
+        expect(run.algoliaRequests).toEqual([]);
+    });
+
     it('uses the default projection without sending a fields parameter', async () => {
         const run = await harness.run({
             replayPlan: createReplayPlan([createGhostContent()], 'tags,authors')
@@ -334,7 +360,9 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
             .map(({index}) => index);
         expect(requestPaths.filter(request => request.endsWith('/batch'))).toHaveLength(1);
         expect(deleteIndexes.every(index => index < saveIndex)).toBe(true);
-        expect(requestBody(requestAt(run.algoliaRequests, 0))).toEqual(customSettings);
+        const appliedSettings = requestBody(requestAt(run.algoliaRequests, 0));
+        expect(appliedSettings).toEqual(customSettings);
+        expect(appliedSettings).not.toHaveProperty('attributesForFaceting');
         expect(run.algoliaRequests.slice(2, -1).map(request => requestBody(request))).toEqual([
             {filters: 'slug:projected-post'},
             {filters: 'slug:second-post'}

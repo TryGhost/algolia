@@ -19,6 +19,8 @@ const allowedPort = Number(parsedAllowedOrigin.port);
 const settingsPath = '/1/indexes/ghost-content/settings';
 const batchPath = '/1/indexes/ghost-content/batch';
 const deleteByQueryPath = '/1/indexes/ghost-content/deleteByQuery';
+const requiredSlugFacet = 'filterOnly(slug)';
+let currentSettings = {...expectedSettings};
 let taskId = 0;
 
 const updateState = update => {
@@ -161,16 +163,34 @@ const responseFor = request => {
     }
 
     if (request.method === 'GET') {
-        return {status: 200, content: JSON.stringify(expectedSettings), isTimedOut: false};
+        return {status: 200, content: JSON.stringify(currentSettings), isTimedOut: false};
     }
 
     taskId += 1;
+    if (url.pathname === settingsPath) {
+        currentSettings = {...currentSettings, ...JSON.parse(request.data)};
+        return {
+            status: 200,
+            content: JSON.stringify({
+                taskID: taskId,
+                updatedAt: '2026-01-01T00:00:00.000Z'
+            }),
+            isTimedOut: false
+        };
+    }
     if (url.pathname === deleteByQueryPath) {
+        if (!currentSettings.attributesForFaceting?.includes(requiredSlugFacet)) {
+            return {
+                status: 400,
+                content: JSON.stringify({
+                    message: 'Attribute slug is not configured for faceting.'
+                }),
+                isTimedOut: false
+            };
+        }
         const {filters} = JSON.parse(request.data);
         const slug = filters.startsWith('slug:') ? filters.slice('slug:'.length) : null;
         updateState(records => records.filter(record => slug === null || record.slug !== slug));
-    }
-    if (url.pathname === settingsPath || url.pathname === deleteByQueryPath) {
         return {
             status: 200,
             content: JSON.stringify({
