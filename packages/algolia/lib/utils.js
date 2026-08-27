@@ -1,5 +1,7 @@
 const errors = require('@tryghost/errors');
 
+const REQUIRED_SLUG_FACET = 'filterOnly(slug)';
+
 module.exports.verifyConfig = ({ghost, algolia}) => {
     if (!ghost || !algolia) {
         throw new errors.BadRequestError({
@@ -19,9 +21,21 @@ module.exports.verifyConfig = ({ghost, algolia}) => {
         });
     }
 
-    if (algolia.indexSettings && Object.keys(algolia.indexSettings) < 1) {
+    if (algolia.indexSettings && Object.keys(algolia.indexSettings).length < 1) {
         throw new errors.BadRequestError({
             message: 'Algolia indexSettings are empty. Please remove or provide own settings.'
+        });
+    }
+
+    if (
+        algolia.indexSettings &&
+        Object.hasOwn(algolia.indexSettings, 'attributesForFaceting') &&
+        (!Array.isArray(algolia.indexSettings.attributesForFaceting) ||
+            !algolia.indexSettings.attributesForFaceting.includes(REQUIRED_SLUG_FACET))
+    ) {
+        throw new errors.BadRequestError({
+            message:
+                'Algolia indexSettings.attributesForFaceting must include filterOnly(slug) for record replacement.'
         });
     }
 

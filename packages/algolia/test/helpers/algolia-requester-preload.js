@@ -5,6 +5,7 @@ const Module = require('node:module');
 const net = require('node:net');
 
 const requestLogPath = process.env.ALGOLIA_ACCEPTANCE_REQUEST_LOG;
+const statePath = process.env.ALGOLIA_ACCEPTANCE_STATE_PATH;
 const allowedOrigin = process.env.GHOST_REPLAY_ORIGIN;
 const expectedSettings = require('../fixtures/ghost-v6/expected-index-settings.json');
 
@@ -15,12 +16,21 @@ if (!requestLogPath || !allowedOrigin) {
 const originalLoad = Module._load;
 const parsedAllowedOrigin = new URL(allowedOrigin);
 const allowedPort = Number(parsedAllowedOrigin.port);
-const expectedRequests = [
-    {method: 'PUT', pathname: '/1/indexes/ghost-content/settings'},
-    {method: 'GET', pathname: '/1/indexes/ghost-content/settings'},
-    {method: 'POST', pathname: '/1/indexes/ghost-content/batch'}
-];
-let requestIndex = 0;
+const settingsPath = '/1/indexes/ghost-content/settings';
+const batchPath = '/1/indexes/ghost-content/batch';
+const deleteByQueryPath = '/1/indexes/ghost-content/deleteByQuery';
+const requiredSlugFacet = 'filterOnly(slug)';
+let currentSettings = {...expectedSettings};
+let taskId = 0;
+
+const updateState = update => {
+    if (!statePath) {
+        return;
+    }
+
+    const records = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    fs.writeFileSync(statePath, JSON.stringify(update(records)), {encoding: 'utf8'});
+};
 
 const networkTarget = (defaultProtocol, input) => {
     if (typeof input === 'string' || input instanceof URL) {
@@ -122,7 +132,6 @@ if (typeof global.fetch === 'function') {
 
 const responseFor = request => {
     const url = new URL(request.url);
-    const expected = expectedRequests[requestIndex];
     const hasExpectedHost =
         url.hostname ===
         (request.method === 'GET'
@@ -135,9 +144,12 @@ const responseFor = request => {
         request.headers['content-type'] === 'text/plain';
 
     if (
-        !expected ||
-        expected.method !== request.method ||
-        expected.pathname !== url.pathname ||
+        ![
+            `PUT ${settingsPath}`,
+            `GET ${settingsPath}`,
+            `POST ${batchPath}`,
+            `POST ${deleteByQueryPath}`
+        ].includes(`${request.method} ${url.pathname}`) ||
         !hasExpectedHost ||
         !hasExpectedHeaders
     ) {
@@ -150,23 +162,68 @@ const responseFor = request => {
         };
     }
 
-    requestIndex += 1;
-    if (requestIndex === 1) {
+    if (request.method === 'GET') {
+        return {status: 200, content: JSON.stringify(currentSettings), isTimedOut: false};
+    }
+
+    taskId += 1;
+    if (url.pathname === settingsPath) {
+        currentSettings = {...currentSettings, ...JSON.parse(request.data)};
         return {
             status: 200,
-            content: JSON.stringify({taskID: 1, updatedAt: '2026-01-01T00:00:00.000Z'}),
+            content: JSON.stringify({
+                taskID: taskId,
+                updatedAt: '2026-01-01T00:00:00.000Z'
+            }),
             isTimedOut: false
         };
     }
-    if (requestIndex === 2) {
-        return {status: 200, content: JSON.stringify(expectedSettings), isTimedOut: false};
+    if (url.pathname === deleteByQueryPath) {
+        if (!currentSettings.attributesForFaceting?.includes(requiredSlugFacet)) {
+            return {
+                status: 400,
+                content: JSON.stringify({
+                    message: 'Attribute slug is not configured for faceting.'
+                }),
+                isTimedOut: false
+            };
+        }
+        const {filters} = JSON.parse(request.data);
+        if (
+            typeof filters !== 'string' ||
+            !filters.startsWith('slug:') ||
+            filters.length === 'slug:'.length
+        ) {
+            return {
+                status: 400,
+                content: JSON.stringify({message: `Unsupported delete filter: ${filters}.`}),
+                isTimedOut: false
+            };
+        }
+        const slug = filters.slice('slug:'.length);
+        updateState(records => records.filter(record => record.slug !== slug));
+        return {
+            status: 200,
+            content: JSON.stringify({
+                taskID: taskId,
+                updatedAt: '2026-01-01T00:00:00.000Z'
+            }),
+            isTimedOut: false
+        };
     }
 
     const body = JSON.parse(request.data);
+    updateState(records => {
+        const recordsById = new Map(records.map(record => [record.objectID, record]));
+        for (const entry of body.requests) {
+            recordsById.set(entry.body.objectID, entry.body);
+        }
+        return [...recordsById.values()];
+    });
     return {
         status: 200,
         content: JSON.stringify({
-            taskID: 2,
+            taskID: taskId,
             objectIDs: body.requests.map(entry => entry.body.objectID)
         }),
         isTimedOut: false

@@ -7,6 +7,36 @@ const {fetchPosts} = require('../lib/fetch-posts');
 const GhostContentAPI = require('@tryghost/content-api');
 const IndexFactory = require('@tryghost/algolia-indexer');
 
+const GHOST_RELATIONS = ['tags', 'authors'];
+
+const reportFailure = (message, errors) => {
+    process.exitCode = 1;
+    return ui.log.error(message, errors);
+};
+
+const createRecordOptions = context => ({
+    ignoreSlugs: context.ignore_slugs,
+    contentProjection: context.contentProjection
+});
+
+const getProjectionSource = field => (typeof field === 'string' ? field : field.source);
+
+const getGhostInclude = contentProjection => {
+    if (contentProjection === undefined) {
+        return GHOST_RELATIONS.join(',');
+    }
+
+    const projectionSources = new Set(contentProjection.fields.map(getProjectionSource));
+    const enabledRelations = GHOST_RELATIONS.filter(relation => projectionSources.has(relation));
+
+    return enabledRelations.length === 0 ? undefined : enabledRelations.join(',');
+};
+
+const getAffectedSlugs = (posts, ignoreSlugs = []) => {
+    const ignoredSlugs = new Set(ignoreSlugs);
+    return [...new Set(posts.map(post => post.slug).filter(slug => !ignoredSlugs.has(slug)))];
+};
+
 prettyCLI.preface('Command line utilities to batch index content from Ghost to Algolia');
 
 prettyCLI.command({
@@ -54,6 +84,7 @@ prettyCLI.command({
         const mainTimer = Date.now();
         const transforms = await import('@tryghost/algolia-fragmenter');
         let context = {errors: [], posts: []};
+        let recordOptions;
 
         if (argv.verbose) {
             ui.log.info(`Received config file ${argv.pathToConfig}`);
@@ -65,15 +96,17 @@ prettyCLI.command({
             context = Object.assign(context, config);
 
             utils.verifyConfig(context);
+            recordOptions = createRecordOptions(context);
+            transforms.createAlgoliaRecords([], recordOptions);
         } catch (error) {
             context.errors.push(error);
-            return ui.log.error('Failed loading JSON config file:', context.errors);
+            return reportFailure('Failed loading JSON config file:', context.errors);
         }
 
         // 2. Fetch all posts from the Ghost instance
         try {
             const timer = Date.now();
-            const fetchOptions = {};
+            const fetchOptions = {include: getGhostInclude(context.contentProjection)};
             const ghost = new GhostContentAPI({
                 url: context.ghost.apiUrl,
                 key: context.ghost.apiKey,
@@ -104,7 +137,7 @@ prettyCLI.command({
             ui.log.info(`Done fetching posts in ${Date.now() - timer}ms.`);
         } catch (error) {
             context.errors.push(error);
-            return ui.log.error('Could not fetch posts from Ghost', context.errors);
+            return reportFailure('Could not fetch posts from Ghost', context.errors);
         }
 
         // 3. Transform into Algolia objects and create fragments
@@ -119,12 +152,8 @@ prettyCLI.command({
                 ui.log.info(`Skipping the ${ignoreSlugsCount} slugs in ${argv.pathToConfig}`);
             }
 
-            context.posts = transforms.transformToAlgoliaObject(
-                context.posts,
-                context.ignore_slugs
-            );
-
-            context.fragments = context.posts.reduce(transforms.fragmentTransformer, []);
+            context.fragments = transforms.createAlgoliaRecords(context.posts, recordOptions);
+            context.affectedSlugs = getAffectedSlugs(context.posts, context.ignore_slugs);
 
             // we don't need the posts anymore
             delete context.posts;
@@ -132,7 +161,7 @@ prettyCLI.command({
             ui.log.info(`Done transforming and fragmenting posts in ${Date.now() - timer}ms.`);
         } catch (error) {
             context.errors.push(error);
-            return ui.log.error('Error fragmenting posts', context.errors);
+            return reportFailure('Error fragmenting posts', context.errors);
         }
 
         // 4. Save to Algolia
@@ -152,6 +181,9 @@ prettyCLI.command({
 
             ui.log.info('Saving fragments to Algolia...');
 
+            for (const slug of context.affectedSlugs) {
+                await index.delete(slug);
+            }
             await index.save(context.fragments);
 
             ui.log.ok(
@@ -159,7 +191,7 @@ prettyCLI.command({
             );
         } catch (error) {
             context.errors.push(error);
-            return ui.log.error('Error saving fragments', context.errors);
+            return reportFailure('Error saving fragments', context.errors);
         }
 
         // Report success

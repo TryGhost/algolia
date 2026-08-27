@@ -1,4 +1,5 @@
 const DEFAULT_PAGE_SIZE = 100;
+const DEFAULT_RELATIONS = 'tags,authors';
 const PAGE_DELAY_MS = 100;
 
 const waitBetweenPages = () => {
@@ -29,7 +30,12 @@ const validatePosts = posts => {
 
 module.exports.fetchPosts = async (browsePosts, options = {}) => {
     const hasExplicitLimit = options.limit !== undefined;
-    const params = {include: 'tags,authors'};
+    const params = {};
+    const include = Object.hasOwn(options, 'include') ? options.include : DEFAULT_RELATIONS;
+
+    if (include !== undefined) {
+        params.include = include;
+    }
 
     if (hasExplicitLimit) {
         params.limit = options.limit;

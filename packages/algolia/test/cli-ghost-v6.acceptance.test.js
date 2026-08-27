@@ -1,111 +1,41 @@
 import {afterEach, describe, expect, it} from 'vitest';
 
-import {fork, spawnSync} from 'node:child_process';
-import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import {readFile, writeFile} from 'node:fs/promises';
 import http from 'node:http';
-import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-import {stopOwnedServer} from './helpers/replay-server-lifecycle.js';
+import {
+    CliAcceptanceHarness,
+    defaultContentApiKey,
+    networkDenialProbePath,
+    readJsonLines,
+    requesterPreloadPath
+} from './helpers/cli-acceptance-harness.ts';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
-const cliPath = path.join(testDirectory, '..', 'bin', 'cli.js');
-const replayServerPath = path.join(testDirectory, 'helpers', 'ghost-v6-replay-server.js');
-const requesterPreloadPath = path.join(testDirectory, 'helpers', 'algolia-requester-preload.js');
-const networkDenialProbePath = path.join(testDirectory, 'helpers', 'network-denial-probe.js');
 const fixtureDirectory = path.join(testDirectory, 'fixtures', 'ghost-v6');
 const fixtureVerifierPath = path.join(fixtureDirectory, 'verify-fixture.mjs');
-const contentApiKey = '00000000000000000000000000';
+const contentApiKey = defaultContentApiKey;
 const expectedRecords = JSON.parse(
     await readFile(path.join(fixtureDirectory, 'expected-algolia-records.json'), 'utf8')
 );
 const expectedSettings = JSON.parse(
     await readFile(path.join(fixtureDirectory, 'expected-index-settings.json'), 'utf8')
 );
-const ownedDirectories = new Set();
-const ownedServers = new Set();
+const harness = new CliAcceptanceHarness({
+    fixtureDirectory,
+    temporaryDirectoryPrefix: 'algolia-ghost-v6-'
+});
 
-const createTemporaryDirectory = async () => {
-    const directory = await mkdtemp(path.join(os.tmpdir(), 'algolia-ghost-v6-'));
-    ownedDirectories.add(directory);
-    return directory;
-};
-
-const stopServer = server => stopOwnedServer(server, ownedServers);
-
-const startReplayServer = (requestLogPath, replayMode) => {
-    const server = fork(replayServerPath, [], {
-        env: {
-            PATH: process.env.PATH,
-            GHOST_REPLAY_FIXTURE_DIRECTORY: fixtureDirectory,
-            GHOST_REPLAY_REQUEST_LOG: requestLogPath,
-            GHOST_REPLAY_CONTENT_API_KEY: contentApiKey,
-            GHOST_REPLAY_MODE: replayMode
-        },
-        silent: true
-    });
-    ownedServers.add(server);
-
-    return new Promise((resolve, reject) => {
-        const stderr = [];
-        let ready = false;
-        const timeout = setTimeout(() => {
-            reject(new Error('Ghost replay server did not become ready within 5 seconds.'));
-        }, 5000);
-        server.stderr.on('data', chunk => stderr.push(chunk));
-        server.once('error', error => {
-            clearTimeout(timeout);
-            reject(error);
-        });
-        server.once('exit', (code, signal) => {
-            if (!ready) {
-                clearTimeout(timeout);
-                reject(
-                    new Error(
-                        `Ghost replay server exited before readiness (${code ?? signal}).\n${Buffer.concat(stderr).toString('utf8')}`
-                    )
-                );
-            }
-        });
-        server.on('message', message => {
-            if (message.type === 'ready') {
-                ready = true;
-                clearTimeout(timeout);
-                resolve({server, port: message.port});
-            } else if (message.type === 'error') {
-                clearTimeout(timeout);
-                reject(new Error(`${message.message}\n${Buffer.concat(stderr).toString('utf8')}`));
-            }
-        });
-    });
-};
-
-const readJsonLines = async logPath => {
-    const contents = await readFile(logPath, 'utf8');
-    return contents
-        .trim()
-        .split('\n')
-        .filter(Boolean)
-        .map(line => JSON.parse(line));
-};
-
-const runCliAgainstReplay = async ({args = [], replayMode = 'automatic'} = {}) => {
-    const temporaryDirectory = await createTemporaryDirectory();
-    const ghostRequestLog = path.join(temporaryDirectory, 'ghost-requests.jsonl');
-    const algoliaRequestLog = path.join(temporaryDirectory, 'algolia-requests.jsonl');
-    const configPath = path.join(temporaryDirectory, 'config.json');
-    await Promise.all([
-        writeFile(ghostRequestLog, '', {mode: 0o600}),
-        writeFile(algoliaRequestLog, '', {mode: 0o600})
-    ]);
-
-    const {server, port} = await startReplayServer(ghostRequestLog, replayMode);
-    await writeFile(
-        configPath,
-        JSON.stringify({
+const runCliAgainstReplay = ({args = [], replayMode = 'automatic'} = {}) =>
+    harness.run({
+        args,
+        replayMode,
+        config: replayOrigin => ({
             ghost: {
-                apiUrl: `http://127.0.0.1:${port}`,
+                apiUrl: replayOrigin,
                 apiKey: contentApiKey
             },
             algolia: {
@@ -113,48 +43,16 @@ const runCliAgainstReplay = async ({args = [], replayMode = 'automatic'} = {}) =
                 apiKey: 'acceptance-admin-key',
                 index: 'ghost-content'
             },
+            contentProjection: {
+                fields: ['image', 'tags', 'authors']
+            },
             ignore_slugs: ['ignored-by-config']
-        }),
-        {mode: 0o600}
-    );
-
-    const env = {
-        PATH: process.env.PATH,
-        NODE_ENV: 'testing',
-        NODE_OPTIONS: `--require=${requesterPreloadPath}`,
-        ALGOLIA_ACCEPTANCE_REQUEST_LOG: algoliaRequestLog,
-        GHOST_REPLAY_ORIGIN: `http://127.0.0.1:${port}`
-    };
-    for (const name of ['NODE_V8_COVERAGE', 'VITEST_SUBPROCESS_COVERAGE_DIR']) {
-        if (process.env[name]) {
-            env[name] = process.env[name];
-        }
-    }
-
-    const result = spawnSync(process.execPath, [cliPath, 'index', configPath, ...args], {
-        encoding: 'utf8',
-        env,
-        timeout: 15000,
-        maxBuffer: 10 * 1024 * 1024
+        })
     });
-    await stopServer(server);
-
-    return {
-        result,
-        ghostRequests: await readJsonLines(ghostRequestLog),
-        algoliaRequests: await readJsonLines(algoliaRequestLog)
-    };
-};
 
 describe('Ghost 6 CLI acceptance', function () {
     afterEach(async () => {
-        await Promise.all([...ownedServers].map(stopServer));
-        await Promise.all(
-            [...ownedDirectories].map(async directory => {
-                ownedDirectories.delete(directory);
-                await rm(directory, {recursive: true});
-            })
-        );
+        await harness.cleanup();
     });
 
     it('keeps captured Ghost responses and reviewed goldens byte-exact', function () {
@@ -175,14 +73,17 @@ describe('Ghost 6 CLI acceptance', function () {
         {timeout: 10000},
         async function () {
             const parentHttpRequest = http.request;
-            const temporaryDirectory = await createTemporaryDirectory();
+            const temporaryDirectory = await harness.createTemporaryDirectory();
             const ghostRequestLog = path.join(temporaryDirectory, 'ghost-requests.jsonl');
             const algoliaRequestLog = path.join(temporaryDirectory, 'algolia-requests.jsonl');
             await Promise.all([
                 writeFile(ghostRequestLog, '', {mode: 0o600}),
                 writeFile(algoliaRequestLog, '', {mode: 0o600})
             ]);
-            const {server, port} = await startReplayServer(ghostRequestLog, 'network-probe');
+            const {server, port} = await harness.startReplayServer(
+                ghostRequestLog,
+                'network-probe'
+            );
             const replayOrigin = `http://127.0.0.1:${port}`;
 
             const result = spawnSync(process.execPath, [networkDenialProbePath], {
@@ -197,7 +98,7 @@ describe('Ghost 6 CLI acceptance', function () {
                 timeout: 5000,
                 maxBuffer: 1024 * 1024
             });
-            await stopServer(server);
+            await harness.stopServer(server);
 
             expect(result.error).toBeUndefined();
             expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
@@ -268,7 +169,9 @@ describe('Ghost 6 CLI acceptance', function () {
                 }
             ]);
 
-            const [settingsPut, settingsGet, recordsBatch] = algoliaRequests;
+            const [settingsPut, settingsGet] = algoliaRequests;
+            const recordsBatch = algoliaRequests.at(-1);
+            const deleteRequests = algoliaRequests.slice(2, -1);
             const expectedAlgoliaHeaders = {
                 accept: 'application/json',
                 'x-algolia-api-key': 'acceptance-admin-key',
@@ -290,7 +193,13 @@ describe('Ghost 6 CLI acceptance', function () {
                 };
             };
 
-            expect(algoliaRequests).toHaveLength(3);
+            expect(algoliaRequests).toHaveLength(103);
+            expect(deleteRequests).toHaveLength(100);
+            expect(
+                deleteRequests.every(request =>
+                    new URL(request.url).pathname.endsWith('/deleteByQuery')
+                )
+            ).toBe(true);
             const algoliaAgent = normalizeRequest(settingsPut).query['x-algolia-agent'];
             expect(algoliaAgent).toMatch(
                 /^Algolia for JavaScript \(5\.\d+\.\d+\); Search \(5\.\d+\.\d+\); Node\.js \(.+\)$/
@@ -402,8 +311,8 @@ describe('Ghost 6 CLI acceptance', function () {
                     userAgent: 'GhostContentSDK/1.12.10'
                 }
             ]);
-            expect(algoliaRequests).toHaveLength(3);
-            expect(JSON.parse(algoliaRequests[2].data).requests).toHaveLength(2);
+            expect(algoliaRequests).toHaveLength(4);
+            expect(JSON.parse(algoliaRequests.at(-1).data).requests).toHaveLength(2);
             expect(`${result.stdout}${result.stderr}`).toMatch(/2 Fragments successfully saved/);
         }
     );
@@ -430,8 +339,8 @@ describe('Ghost 6 CLI acceptance', function () {
                 userAgent: 'GhostContentSDK/1.12.10'
             }
         ]);
-        expect(algoliaRequests).toHaveLength(3);
-        const requests = JSON.parse(algoliaRequests[2].data).requests;
+        expect(algoliaRequests).toHaveLength(4);
+        const requests = JSON.parse(algoliaRequests.at(-1).data).requests;
         expect(requests).toHaveLength(1);
         expect(requests[0].body).toEqual(expectedRecords.at(-1));
         expect(`${result.stdout}${result.stderr}`).toMatch(/1 Fragments successfully saved/);

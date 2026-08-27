@@ -6,6 +6,14 @@
   "ignore_slugs": [
     "the-slug-of-a-post-with-a-huge-amount-of-content-that-will-cause-errors"
   ],
+  "contentProjection": {
+    "fields": [
+      "image",
+      "tags",
+      "authors",
+      "excerpt"
+    ]
+  },
   "algolia": {
     "index": "",
     "apiKey": "",

@@ -6,6 +6,7 @@ const fixtureDirectory = process.env.GHOST_REPLAY_FIXTURE_DIRECTORY;
 const requestLogPath = process.env.GHOST_REPLAY_REQUEST_LOG;
 const contentApiKey = process.env.GHOST_REPLAY_CONTENT_API_KEY;
 const replayMode = process.env.GHOST_REPLAY_MODE;
+const replayPlanPath = process.env.GHOST_REPLAY_PLAN_PATH;
 
 if (!process.send || !fixtureDirectory || !requestLogPath || !contentApiKey || !replayMode) {
     throw new Error('Ghost replay server requires IPC and its fixture environment.');
@@ -55,7 +56,12 @@ const replayPlans = {
         {query: {key: contentApiKey, include: 'tags,authors', limit: '1'}, body: firstPost}
     ]
 };
-const replayPlan = replayPlans[replayMode];
+const replayPlan = replayPlanPath
+    ? JSON.parse(fs.readFileSync(replayPlanPath, 'utf8')).map(entry => ({
+          query: entry.query,
+          body: Buffer.from(JSON.stringify(entry.body))
+      }))
+    : replayPlans[replayMode];
 let requestIndex = 0;
 
 if (!replayPlan) {
