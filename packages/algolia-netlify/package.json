@@ -49,7 +49,7 @@
   "devDependencies": {
     "@types/node": "24.13.3",
     "esbuild": "0.28.2",
-    "netlify-cli": "27.3.0",
+    "netlify-cli": "27.4.0",
     "typescript": "7.0.2"
   },
   "dependencies": {
