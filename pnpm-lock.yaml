@@ -48,11 +48,11 @@ importers:
         specifier: 1.12.10
         version: 1.12.10(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
       '@tryghost/errors':
-        specifier: 3.3.13
-        version: 3.3.13
+        specifier: 3.3.14
+        version: 3.3.14
       '@tryghost/pretty-cli':
-        specifier: 3.3.13
-        version: 3.3.13
+        specifier: 3.3.14
+        version: 3.3.14
       fs-extra:
         specifier: 11.4.0
         version: 11.4.0
@@ -2194,11 +2194,11 @@ packages:
   '@tryghost/content-api@1.12.10':
     resolution: {integrity: sha512-lESZtuKKiEUsagsfUb/oxjasLKjh3gHCmUgyfdvwgcoO58GGb8UFOakZuB0ih0dpIS1IQ+hDS2KJujdgFetPog==}
 
-  '@tryghost/errors@3.3.13':
-    resolution: {integrity: sha512-ZJelL4irZpH+37ZATowbyA3PrSZHc9EsN2ThOXGS1ESThLnq/ETIJdrnXh38I5p/dFB9ZDH7GJfcjmRZvSM69Q==}
+  '@tryghost/errors@3.3.14':
+    resolution: {integrity: sha512-Z49f+Wy6benC35x+x30FAjBWDMllJN7mMg5mWrOtxK67ipAflKlcQgubT03ZTYbbPPc9J8Kx2In7fOcvyp6a5g==}
 
-  '@tryghost/pretty-cli@3.3.13':
-    resolution: {integrity: sha512-5IPhpQ1d2vXTC8Zb0I9FLOQ6LgE9ebSTAYYQERnR9bHgDvPEUPAUf7mZxPi/Cxi1OVsKKecrd0VJumqZw/EbKg==}
+  '@tryghost/pretty-cli@3.3.14':
+    resolution: {integrity: sha512-zL+CX9BmciOx0mb1mG5lUSQQg+Dg57ntj6m0TAkaaSQon3lovrIbHznwpWkHLyggm9f+BltK5JTOdFqT/5oTpw==}
 
   '@tsconfig/node10@1.0.13':
     resolution: {integrity: sha512-gcLdvR9HO1ZJBypsOGqaP6TFEzb6vIta0KSTLt9NAQ6pXQO3cRgSVyCN6pzYqI9DlJgY71XKO0dpDhCf08b3pg==}
@@ -8365,9 +8365,9 @@ snapshots:
       - debug
       - supports-color
 
-  '@tryghost/errors@3.3.13': {}
+  '@tryghost/errors@3.3.14': {}
 
-  '@tryghost/pretty-cli@3.3.13':
+  '@tryghost/pretty-cli@3.3.14':
     dependencies:
       chalk: 6.0.0
       sywac: 1.3.0
