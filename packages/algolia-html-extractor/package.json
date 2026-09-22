@@ -42,7 +42,7 @@
     "parse5": "8.0.1"
   },
   "devDependencies": {
-    "@types/node": "24.13.5",
+    "@types/node": "24.13.6",
     "typescript": "7.0.2"
   }
 }
