@@ -37,7 +37,7 @@
     "@tryghost/content-api": "1.12.10",
     "@tryghost/errors": "3.3.13",
     "@tryghost/pretty-cli": "3.3.13",
-    "fs-extra": "11.4.0"
+    "fs-extra": "11.4.1"
   },
   "devDependencies": {
     "@types/node": "24.13.6",
