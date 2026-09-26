@@ -28,12 +28,12 @@
   "devDependencies": {
     "@bcoe/v8-coverage": "1.0.2",
     "@nx/js": "23.2.1",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "5.0.1",
     "nx": "23.2.1",
     "oxfmt": "0.70.0",
     "oxlint": "1.85.0",
     "vite": "8.3.0",
-    "vitest": "4.1.11"
+    "vitest": "5.0.1"
   },
   "packageManager": "pnpm@11.27.1+sha512.a81d4c21b9b09a4b0aebf90ef5e527d4262bdda322d26082978cb549023ac6d9cafc98b19fffaa5c71db438a65f70224edb78d7311187861ff96480d1cdca23c"
 }
