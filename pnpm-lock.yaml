@@ -45,14 +45,14 @@ importers:
         specifier: workspace:^
         version: link:../algolia-indexer
       '@tryghost/content-api':
-        specifier: 1.12.10
-        version: 1.12.10(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
+        specifier: 1.12.12
+        version: 1.12.12(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
       '@tryghost/errors':
-        specifier: 3.3.13
-        version: 3.3.13
+        specifier: 3.3.14
+        version: 3.3.14
       '@tryghost/pretty-cli':
-        specifier: 3.3.13
-        version: 3.3.13
+        specifier: 3.3.14
+        version: 3.3.14
       fs-extra:
         specifier: 11.4.1
         version: 11.4.1
@@ -2193,14 +2193,14 @@ packages:
     peerDependencies:
       acorn: ^8.9.0
 
-  '@tryghost/content-api@1.12.10':
-    resolution: {integrity: sha512-lESZtuKKiEUsagsfUb/oxjasLKjh3gHCmUgyfdvwgcoO58GGb8UFOakZuB0ih0dpIS1IQ+hDS2KJujdgFetPog==}
+  '@tryghost/content-api@1.12.12':
+    resolution: {integrity: sha512-fcyHcVIBDaXdpmR5fteYygqavJGDHuOK0SZv6Z7Uymp8K8XdndQMqShbJ5MptQjwiBBQMHvk/l3VtNNLosd+Ng==}
 
-  '@tryghost/errors@3.3.13':
-    resolution: {integrity: sha512-ZJelL4irZpH+37ZATowbyA3PrSZHc9EsN2ThOXGS1ESThLnq/ETIJdrnXh38I5p/dFB9ZDH7GJfcjmRZvSM69Q==}
+  '@tryghost/errors@3.3.14':
+    resolution: {integrity: sha512-Z49f+Wy6benC35x+x30FAjBWDMllJN7mMg5mWrOtxK67ipAflKlcQgubT03ZTYbbPPc9J8Kx2In7fOcvyp6a5g==}
 
-  '@tryghost/pretty-cli@3.3.13':
-    resolution: {integrity: sha512-5IPhpQ1d2vXTC8Zb0I9FLOQ6LgE9ebSTAYYQERnR9bHgDvPEUPAUf7mZxPi/Cxi1OVsKKecrd0VJumqZw/EbKg==}
+  '@tryghost/pretty-cli@3.3.14':
+    resolution: {integrity: sha512-zL+CX9BmciOx0mb1mG5lUSQQg+Dg57ntj6m0TAkaaSQon3lovrIbHznwpWkHLyggm9f+BltK5JTOdFqT/5oTpw==}
 
   '@tsconfig/node10@1.0.13':
     resolution: {integrity: sha512-gcLdvR9HO1ZJBypsOGqaP6TFEzb6vIta0KSTLt9NAQ6pXQO3cRgSVyCN6pzYqI9DlJgY71XKO0dpDhCf08b3pg==}
@@ -2652,6 +2652,9 @@ packages:
 
   axios@1.18.1:
     resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+
+  axios@1.20.0:
+    resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
   b4a@1.9.0:
     resolution: {integrity: sha512-dpfcF9fDNR6++cthXR67iyhgqWy9CBouAvIWhIntzBG6cvK/cnIPiZQjBwi/ZqjjBEDGfoNDtmB0kTjroOJ3pQ==}
@@ -8382,16 +8385,16 @@ snapshots:
     dependencies:
       acorn: 8.18.0
 
-  '@tryghost/content-api@1.12.10(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)':
+  '@tryghost/content-api@1.12.12(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)':
     dependencies:
-      axios: 1.18.1(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
+      axios: 1.20.0(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@tryghost/errors@3.3.13': {}
+  '@tryghost/errors@3.3.14': {}
 
-  '@tryghost/pretty-cli@3.3.13':
+  '@tryghost/pretty-cli@3.3.14':
     dependencies:
       chalk: 6.0.0
       sywac: 1.3.0
@@ -8857,21 +8860,21 @@ snapshots:
       '@fastify/error': 4.2.0
       fastq: 1.20.3
 
-  axios@1.18.1(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0):
-    dependencies:
-      follow-redirects: 1.16.0(debug@4.4.3(supports-color@11.0.0))
-      form-data: 4.0.6
-      https-proxy-agent: 5.0.1(supports-color@11.0.0)
-      proxy-from-env: 2.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   axios@1.18.1(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3(supports-color@7.2.0))
       form-data: 4.0.6
       https-proxy-agent: 5.0.1(supports-color@7.2.0)
+      proxy-from-env: 2.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  axios@1.20.0(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0):
+    dependencies:
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@11.0.0))
+      form-data: 4.0.6
+      https-proxy-agent: 5.0.1(supports-color@11.0.0)
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
