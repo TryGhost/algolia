@@ -47,7 +47,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "24.13.6",
+    "@types/node": "24.19.0",
     "esbuild": "0.28.2",
     "netlify-cli": "27.10.0",
     "typescript": "7.0.2"
