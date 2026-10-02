@@ -115,8 +115,8 @@ importers:
         specifier: 0.28.2
         version: 0.28.2
       netlify-cli:
-        specifier: 27.10.1
-        version: 27.10.1(@types/node@24.19.0)(picomatch@4.0.7)(supports-color@11.0.0)
+        specifier: 27.10.2
+        version: 27.10.2(@types/node@24.19.0)(picomatch@4.0.7)(supports-color@11.0.0)
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -4615,8 +4615,8 @@ packages:
     resolution: {integrity: sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg==}
     engines: {node: '>=18'}
 
-  netlify-cli@27.10.1:
-    resolution: {integrity: sha512-vzzxl3YUjby4DrRvcxVvMWax47or74smIPKFI7OqY4P+alVDJGtQ7encFnKIsspzEVJykYiyEd31txIhmwKL5A==}
+  netlify-cli@27.10.2:
+    resolution: {integrity: sha512-2qQRJf3OufakXPIgKn/U1cqqWydwA6X7OBAVxRldM/D6H7uAmk7awXsJ5EypV4w1ElCdW9GtDFVkeY3N7I5M9w==}
     engines: {node: '>=22.13.0'}
     hasBin: true
 
@@ -11016,7 +11016,7 @@ snapshots:
     dependencies:
       content-type: 2.1.0
 
-  netlify-cli@27.10.1(@types/node@24.19.0)(picomatch@4.0.7)(supports-color@11.0.0):
+  netlify-cli@27.10.2(@types/node@24.19.0)(picomatch@4.0.7)(supports-color@11.0.0):
     dependencies:
       '@fastify/static': 10.1.4
       '@netlify/ai': 1.0.1
@@ -11024,7 +11024,7 @@ snapshots:
       '@netlify/blobs': 11.1.0(supports-color@11.0.0)
       '@netlify/build': 37.3.3(@opentelemetry/api@1.9.1)(@types/node@24.19.0)(picomatch@4.0.7)
       '@netlify/build-info': 11.3.0
-      '@netlify/config': 25.2.5
+      '@netlify/config': 25.2.6
       '@netlify/dev': 5.1.2(@types/node@24.19.0)(supports-color@11.0.0)
       '@netlify/dev-utils': 6.0.1
       '@netlify/edge-bundler': 16.1.1
