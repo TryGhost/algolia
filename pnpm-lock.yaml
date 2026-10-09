@@ -115,8 +115,8 @@ importers:
         specifier: 0.28.2
         version: 0.28.2
       netlify-cli:
-        specifier: 27.11.1
-        version: 27.11.1(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0)
+        specifier: 27.11.2
+        version: 27.11.2(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0)
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -4659,8 +4659,8 @@ packages:
     resolution: {integrity: sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg==}
     engines: {node: '>=18'}
 
-  netlify-cli@27.11.1:
-    resolution: {integrity: sha512-cCJkNeM/HeYv3SYPaCagCR+fKD65XsY31Dm4x7mEriPz/RJHOnRulwmsnYs3W7qtaR34enpwi3ktmPok3W1haw==}
+  netlify-cli@27.11.2:
+    resolution: {integrity: sha512-CsBWfbsyVI2TBaq5Yfaeg/zuID+44f8YUZZCaGUg1yK8vHAE5kPzT29DqN/JUX2e2SRK7/Zyvi8G18If/lVn6g==}
     engines: {node: '>=22.13.0'}
     hasBin: true
 
@@ -11000,7 +11000,7 @@ snapshots:
     dependencies:
       content-type: 2.1.0
 
-  netlify-cli@27.11.1(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0):
+  netlify-cli@27.11.2(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0):
     dependencies:
       '@fastify/static': 10.1.5
       '@inquirer/prompts': 8.7.3(@types/node@24.19.1)
