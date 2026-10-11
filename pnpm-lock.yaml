@@ -115,8 +115,8 @@ importers:
         specifier: 0.28.2
         version: 0.28.2
       netlify-cli:
-        specifier: 27.11.2
-        version: 27.11.2(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0)
+        specifier: 27.12.0
+        version: 27.12.0(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0)
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -3080,6 +3080,10 @@ packages:
     resolution: {integrity: sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag==}
     engines: {node: '>=18'}
 
+  content-type@3.1.1:
+    resolution: {integrity: sha512-GW4qUsfFo59d0HbUibDlWv5wPz+vAAcaTWbKIuKCf0JkC7wWkSyf8f13IpXn5JkeMlB2P8iTSSIjwXljorg2vA==}
+    engines: {node: '>=22'}
+
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
@@ -4655,8 +4659,8 @@ packages:
     resolution: {integrity: sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg==}
     engines: {node: '>=18'}
 
-  netlify-cli@27.11.2:
-    resolution: {integrity: sha512-CsBWfbsyVI2TBaq5Yfaeg/zuID+44f8YUZZCaGUg1yK8vHAE5kPzT29DqN/JUX2e2SRK7/Zyvi8G18If/lVn6g==}
+  netlify-cli@27.12.0:
+    resolution: {integrity: sha512-FvfVyxmRpMUhU1zbvaZrhNaGefipHb2liUTc0yWb/znPKhChiKoxGF0lsUCgZuWvFV8TeNaB27iIkE0vOU0ADA==}
     engines: {node: '>=22.13.0'}
     hasBin: true
 
@@ -9321,6 +9325,8 @@ snapshots:
 
   content-type@2.1.0: {}
 
+  content-type@3.1.1: {}
+
   convert-source-map@2.0.0: {}
 
   cookie-es@1.2.3: {}
@@ -10960,7 +10966,7 @@ snapshots:
     dependencies:
       content-type: 2.1.0
 
-  netlify-cli@27.11.2(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0):
+  netlify-cli@27.12.0(@types/node@24.19.1)(picomatch@4.0.7)(supports-color@11.0.0):
     dependencies:
       '@fastify/static': 10.1.5
       '@inquirer/prompts': 8.7.3(@types/node@24.19.1)
@@ -10995,7 +11001,7 @@ snapshots:
       clean-deep: 3.4.0
       commander: 12.1.0
       comment-json: 5.0.0
-      content-type: 1.0.5
+      content-type: 3.1.1
       cookie: 2.0.1
       cron-parser: 5.10.1
       debug: 4.4.3(supports-color@11.0.0)
