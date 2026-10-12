@@ -7,6 +7,8 @@ import {fileURLToPath} from 'node:url';
 
 import {afterEach, describe, expect, it} from 'vitest';
 
+import {parserDependencyOverrides} from '../../algolia-html-extractor/test/helpers/parser-dependency-overrides.js';
+
 const execFileAsync = promisify(execFile);
 const packageDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workspaceDirectory = path.resolve(packageDirectory, '../..');
@@ -56,7 +58,14 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
         );
         await writeFile(
             path.join(temporaryDirectory, 'pnpm-workspace.yaml'),
-            `packages: []\noverrides:\n  '@tryghost/algolia-html-extractor': 'file:./${path.basename(packedExtractor.filename)}'\n`
+            JSON.stringify({
+                packages: [],
+                cacheDir: path.join(temporaryDirectory, 'cache'),
+                overrides: {
+                    ...(await parserDependencyOverrides()),
+                    '@tryghost/algolia-html-extractor': `file:./${path.basename(packedExtractor.filename)}`
+                }
+            })
         );
         await execFileAsync('pnpm', [
             '--dir',
