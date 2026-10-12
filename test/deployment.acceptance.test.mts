@@ -397,3 +397,24 @@ it.each([null, 'npm@12.11.0'])(
         expect(await readdir(directory)).not.toContain('functions');
     }
 );
+
+it('builds a bundled exact candidate without requiring the shared catalog', async () => {
+    const {repository, commit} = await createReleaseRepository();
+    const revision = await commit('candidate runtime');
+    const directory = await temporaryDirectory();
+    await writeFile(path.join(directory, 'releases.json'), JSON.stringify({'1.2.0': revision}));
+    await buildDeployment({
+        directory,
+        repository,
+        version: '1.2.0',
+        context: 'production',
+        offline: true,
+        catalogUrl: 'http://127.0.0.1:1'
+    });
+    expect(await invoke(directory)).toEqual({status: 200, body: 'candidate runtime'});
+    expect(JSON.parse(await readFile(path.join(directory, 'release.json'), 'utf8'))).toEqual({
+        selection: '1.2.0',
+        version: '1.2.0',
+        commit: revision
+    });
+});
