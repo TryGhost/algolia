@@ -13,3 +13,10 @@
   ALGOLIA_API_KEY = "Algolia API key restricted to your index"
   ALGOLIA_INDEX = "Name of the Algolia index"
   NETLIFY_KEY = "Required secret; use the same value in Ghost webhook URLs"
+
+# Previews exercise the bundled baseline before the shared catalog is published.
+[context.deploy-preview.environment]
+  ALGOLIA_INTEGRATION_VERSION = "1.0.0"
+
+[context.branch-deploy.environment]
+  ALGOLIA_INTEGRATION_VERSION = "1.0.0"
