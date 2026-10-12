@@ -8,7 +8,7 @@ import {
     parseWebhookBody,
     textResponse
 } from './utils/webhook.ts';
-import {IndexFactory} from './utils/algolia.mts';
+import {IndexFactory, transforms, recordOptions} from './utils/algolia.mts';
 
 export default async function postUnpublished(request: Request): Promise<Response> {
     const authorizationResponse = authorizeRequest(request);
@@ -39,6 +39,7 @@ export default async function postUnpublished(request: Request): Promise<Respons
     }
 
     try {
+        transforms.createAlgoliaRecords([], recordOptions());
         const index = new IndexFactory(algoliaSettings());
         await index.initIndex();
         await index.delete(slug);

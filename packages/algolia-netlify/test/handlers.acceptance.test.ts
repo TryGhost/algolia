@@ -54,6 +54,7 @@ const environmentKeys = [
     'ALGOLIA_APP_ID',
     'ALGOLIA_API_KEY',
     'ALGOLIA_INDEX',
+    'ALGOLIA_CONTENT_PROJECTION',
     'NETLIFY_KEY'
 ] as const;
 const savedEnvironment = Object.fromEntries(environmentKeys.map(key => [key, process.env[key]]));
@@ -131,6 +132,7 @@ describe('modern Netlify webhook handlers', () => {
 
     beforeEach(() => {
         requesterMock.reset();
+        delete process.env.ALGOLIA_CONTENT_PROJECTION;
     });
 
     afterEach(() => {
@@ -174,8 +176,191 @@ describe('modern Netlify webhook handlers', () => {
             requests: Array<{action: string; body: Record<string, unknown>}>;
         };
         expect(batch.requests).toEqual(
-            expectedRecords.slice(0, 2).map(record => ({action: 'addObject', body: record}))
+            expectedRecords.slice(0, 2).map(record => ({
+                action: 'addObject',
+                body: {...record, excerpt: richPost?.excerpt}
+            }))
         );
+    });
+
+    it('saves default records without new permissions or settings', async () => {
+        const {response, requests} = await invoke('post-published', {
+            body: {post: {current: {...richPost, excerpt: 'A display summary'}, previous: {}}}
+        });
+        expect(response.status).toBe(200);
+        expect(requests.map(request => [request.method, new URL(request.url).pathname])).toEqual([
+            ['POST', '/1/indexes/ghost-content/batch']
+        ]);
+        expect(JSON.parse(requests[0].data ?? '')).toEqual({
+            requests: expectedRecords.slice(0, 2).map(record => ({
+                action: 'addObject',
+                body: {...record, excerpt: 'A display summary'}
+            }))
+        });
+    });
+
+    it('attempts only upserts when saving fails with unchanged configuration', async () => {
+        const {response, requests} = await invoke('post-published', {failureAt: 1});
+        expect(response.status).toBe(500);
+        expect(JSON.parse(response.body ?? '')).toEqual({msg: 'Algolia transport failed'});
+        expect(requests.map(request => [request.method, new URL(request.url).pathname])).toEqual([
+            ['POST', '/1/indexes/ghost-content/batch']
+        ]);
+        expect(JSON.parse(requests[0].data ?? '')).toEqual({
+            requests: expectedRecords.slice(0, 2).map(record => ({
+                action: 'addObject',
+                body: {...record, excerpt: richPost?.excerpt}
+            }))
+        });
+    });
+
+    it('projects aliases and ranking siblings from the current resource', async () => {
+        process.env.ALGOLIA_CONTENT_PROJECTION = JSON.stringify({
+            fields: [{source: 'excerpt', as: 'summary'}, 'featured', 'reading_time'],
+            customRanking: [{source: 'featured', as: 'promoted'}]
+        });
+        const {response, requests} = await invoke('post-published', {
+            body: {post: {current: {...richPost, excerpt: '', featured: false, reading_time: 0}}}
+        });
+        expect(response.status).toBe(200);
+        expect(JSON.parse(requests.at(-1)?.data ?? '')).toEqual({
+            requests: expectedRecords
+                .slice(0, 2)
+                .map(({image: _image, tags: _tags, authors: _authors, ...record}) => ({
+                    action: 'addObject',
+                    body: {
+                        ...record,
+                        summary: '',
+                        featured: false,
+                        reading_time: 0,
+                        customRanking: {
+                            ...(record.customRanking as Record<string, unknown>),
+                            promoted: false
+                        }
+                    }
+                }))
+        });
+    });
+
+    it.each(['post-published', 'post-unpublished'] as const)(
+        'rejects invalid projection before mutation in %s',
+        async name => {
+            process.env.ALGOLIA_CONTENT_PROJECTION = JSON.stringify({fields: ['slug']});
+            const {response, requests} = await invoke(name);
+            expect(response.status).toBe(500);
+            expect(response.headers).toEqual({'content-type': 'application/json'});
+            expect(JSON.parse(response.body ?? '').msg).toMatch(/^INVALID_POLICY:/);
+            expect(requests).toEqual([]);
+        }
+    );
+
+    it.each(['post-published', 'post-unpublished'] as const)(
+        'rejects malformed projection JSON without exposing it in %s',
+        async name => {
+            process.env.ALGOLIA_CONTENT_PROJECTION = 'private-configuration-value';
+            const {response, requests} = await invoke(name);
+            expect(response).toEqual({
+                status: 500,
+                headers: {'content-type': 'application/json'},
+                body: JSON.stringify({msg: 'ALGOLIA_CONTENT_PROJECTION must contain valid JSON.'})
+            });
+            expect(requests).toEqual([]);
+        }
+    );
+
+    it('saves a complete default fallback record when the current resource has no fragments', async () => {
+        const {response, requests} = await invoke('post-published', {
+            body: {
+                post: {
+                    current: {
+                        id: 'empty',
+                        slug: 'empty',
+                        title: 'Empty',
+                        url: 'https://example.com/empty/',
+                        html: ''
+                    }
+                }
+            }
+        });
+        expect(response.status).toBe(200);
+        expect(JSON.parse(requests[0].data ?? '')).toEqual({
+            requests: [
+                {
+                    action: 'addObject',
+                    body: {
+                        objectID: 'empty_0',
+                        slug: 'empty',
+                        title: 'Empty',
+                        url: 'https://example.com/empty/',
+                        html: '',
+                        headings: [],
+                        anchor: null,
+                        image: null,
+                        tags: [],
+                        authors: [],
+                        excerpt: null,
+                        customRanking: {position: 0, heading: 100}
+                    }
+                }
+            ]
+        });
+    });
+
+    it.each([
+        ['indivisible fragment', {html: `<p>${'é'.repeat(6000)}</p>`}],
+        ['repeated metadata', {title: 'x'.repeat(10000)}],
+        ['invalid required content', {html: null}]
+    ])('preflights %s before writing any records', async (_case, overrides) => {
+        const {response, requests} = await invoke('post-published', {
+            body: {post: {current: {...richPost, ...overrides}}}
+        });
+        expect(response.status).toBe(500);
+        expect(JSON.parse(response.body ?? '').msg).toMatch(
+            /^(RECORD_TOO_LARGE|INVALID_GHOST_CONTENT):/
+        );
+        expect(requests).toEqual([]);
+    });
+
+    it('upserts shrinking content without deleting earlier continuations', async () => {
+        const longParagraph = `<p>${'a'.repeat(6000)}</p>`;
+        const large = {...richPost, html: `${longParagraph}${longParagraph}`, excerpt: 'Summary'};
+        const first = await invoke('post-published', {body: {post: {current: large}}});
+        expect(first.response.status).toBe(200);
+        const initial = JSON.parse(first.requests[0].data ?? '').requests as Array<{
+            body: Record<string, unknown>;
+        }>;
+        expect(initial.map(({body}) => ({id: body.objectID, html: body.html}))).toEqual([
+            {id: '6a7d75c8b25e8a000197c521_0', html: longParagraph},
+            {id: '6a7d75c8b25e8a000197c521_0_1', html: longParagraph}
+        ]);
+        for (const {body} of initial) {
+            expect(Buffer.byteLength(JSON.stringify(body), 'utf8')).toBeLessThanOrEqual(9999);
+        }
+        const shrunk = await invoke('post-published', {
+            body: {post: {current: {...large, html: '<p>Short</p>'}}}
+        });
+        expect(shrunk.response.status).toBe(200);
+        expect(
+            shrunk.requests.map(request => [
+                new URL(request.url).pathname,
+                JSON.parse(request.data ?? '')
+            ])
+        ).toEqual([
+            [
+                '/1/indexes/ghost-content/batch',
+                {
+                    requests: [
+                        {
+                            action: 'addObject',
+                            body: {
+                                ...initial[0].body,
+                                html: '<p>Short</p>'
+                            }
+                        }
+                    ]
+                }
+            ]
+        ]);
     });
 
     it.each([
@@ -191,9 +376,6 @@ describe('modern Netlify webhook handlers', () => {
         expect(requests).toHaveLength(1);
         expect(requests[0].method).toBe('POST');
         expect(new URL(requests[0].url).pathname).toBe('/1/indexes/ghost-content/deleteByQuery');
-        expect(JSON.parse(requests[0].data ?? '')).toEqual({
-            filters: 'slug:ghost-6-rendered-content-contract'
-        });
     });
 
     it.each([
@@ -289,7 +471,7 @@ describe('modern Netlify webhook handlers', () => {
         expect(response).toEqual({
             status: 500,
             headers: {'content-type': 'application/json'},
-            body: JSON.stringify({msg: 'post.tags.forEach is not a function'})
+            body: expect.stringContaining('INVALID_GHOST_CONTENT:')
         });
         expect(requests).toEqual([]);
     });
@@ -300,7 +482,12 @@ describe('modern Netlify webhook handlers', () => {
     ] as const)(
         'returns JSON when Algolia request fails for %s at request %i',
         async (name, failureAt) => {
-            const {response} = await invoke(name, {failureAt});
+            const {response, requests} = await invoke(name, {failureAt});
+            expect(requests.map(request => new URL(request.url).pathname)).toEqual(
+                name === 'post-published'
+                    ? ['/1/indexes/ghost-content/batch']
+                    : ['/1/indexes/ghost-content/deleteByQuery']
+            );
             expect(response.status).toBe(500);
             expect(response.headers).toEqual({'content-type': 'application/json'});
             expect(JSON.parse(response.body ?? '')).toEqual({msg: 'Algolia transport failed'});

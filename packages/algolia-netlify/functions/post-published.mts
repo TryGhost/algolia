@@ -8,7 +8,7 @@ import {
     parseWebhookBody,
     textResponse
 } from './utils/webhook.ts';
-import {IndexFactory, transforms} from './utils/algolia.mts';
+import {IndexFactory, transforms, recordOptions} from './utils/algolia.mts';
 
 export default async function postPublished(request: Request): Promise<Response> {
     const authorizationResponse = authorizeRequest(request);
@@ -35,11 +35,10 @@ export default async function postPublished(request: Request): Promise<Response>
     }
 
     try {
-        const algoliaObjects = transforms.transformToAlgoliaObject([post]);
-        const fragments = algoliaObjects.reduce(transforms.fragmentTransformer, []);
+        const fragments = transforms.createAlgoliaRecords([post], recordOptions());
         const index = new IndexFactory(algoliaSettings());
         await index.initIndex();
-        await index.save(fragments);
+        await index.save([...fragments]);
         console.log('Fragments successfully saved to Algolia index');
         return textResponse(`Post "${String(post.title)}" has been added to the index.`);
     } catch (error) {

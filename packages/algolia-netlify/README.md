@@ -37,10 +37,13 @@ Algolia requires `deleteIndex` for filtered deletions. The name is a bit mislead
 Deploy manually, and do not expose the deployed functions publicly until mandatory authentication is implemented or access is restricted outside the handlers:
 
 1. Create a Netlify site and connect this repository manually.
-2. Configure the site and set the environment variables described in [`.env.example`](.env.example):
+2. In **Project configuration → Environment variables**, set the values from [`.env.example`](.env.example). Make them available to Functions in the production context:
    - Set `ALGOLIA_ACTIVE` to `TRUE` to enable indexing.
    - Set the Algolia Application ID, API key, and index name.
    - Choose a `NETLIFY_KEY` for the webhook query parameter. Setting it does not protect current handlers when the parameter is omitted.
+3. Deploy the site. Redeploy after changing environment variables.
+
+Hosted deployments use Netlify environment variables; do not commit a `.env` file or put secrets in `netlify.toml`. Keep preview deployments disabled for indexing, or give them a separate test index and credentials.
 
 The repository's [`netlify.toml`](../../netlify.toml) builds and deploys these functions from `packages/algolia-netlify`. The explicit `public` publish directory contains only a static landing page so package files, function sources, and function build artifacts are not exposed as site files.
 
@@ -62,6 +65,27 @@ https://YOUR-SITE-ID.netlify.app/.netlify/functions/post-published?key=NETLIFY_K
 ```
 
 Once configured, these webhooks keep post changes in sync without touching the index settings.
+
+## Ghost content projection
+
+Existing installations need no new environment variables, API permissions, or index settings for publishing. Leaving `ALGOLIA_CONTENT_PROJECTION` unset includes `image`, `tags`, `authors`, and `excerpt` in each record.
+
+To choose fields, set `ALGOLIA_CONTENT_PROJECTION` in Netlify to a JSON object:
+
+```json
+{
+  "fields": ["image", "tags", "authors", "excerpt", {"source": "custom_excerpt", "as": "summary"}],
+  "customRanking": [{"source": "featured", "as": "isFeatured"}]
+}
+```
+
+Explicit fields replace the defaults. Remove the variable to restore defaults; an empty string is invalid. Use the same projection in the CLI and webhooks. See the [fragmenter options](../algolia-fragmenter/README.md#options) for allowed fields and aliases. This requires fragmenter 0.4.0 or later; CLI 0.3.6 or later supports the same configuration shape.
+
+`excerpt` is available for your search UI to display. The handlers do not change Algolia settings.
+
+Publish validates all records before saving, including the 9,999-byte record limit. It adds or updates records without deleting existing ones. A failed save returns an error and triggers no cleanup, though some updates may have succeeded. Old fragments can remain searchable when a post shrinks; automatic cleanup is deferred until it can safely identify stale records. Unpublishing still deletes the post's records by slug.
+
+Invalid configuration or content returns JSON with a `msg` property and status `500`, without contacting Algolia. Check the function logs for the validation error.
 
 ## Development
 
