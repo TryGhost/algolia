@@ -28,8 +28,13 @@ export const invalidBodyResponse = (): Response => textResponse('Invalid request
 export const noValidBodyResponse = (): Response => textResponse('No valid request body detected');
 
 export const authorizeRequest = (request: Request): Response | undefined => {
+    const configuredKey = process.env.NETLIFY_KEY;
+    if (!configuredKey?.trim()) {
+        return textResponse('Webhook authentication is not configured', 503);
+    }
+
     const keys = new URL(request.url).searchParams.getAll('key');
-    if (keys.length > 1 || (keys[0] && keys[0] !== process.env.NETLIFY_KEY)) {
+    if (keys.length !== 1 || !keys[0] || keys[0] !== configuredKey) {
         return textResponse('Unauthorized', 401);
     }
     return undefined;

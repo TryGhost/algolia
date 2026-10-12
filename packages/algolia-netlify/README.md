@@ -10,14 +10,7 @@ import publishedHandler from '@tryghost/algolia-netlify/post-published';
 import unpublishedHandler from '@tryghost/algolia-netlify/post-unpublished';
 ```
 
-The named and subpath exports reference the same handlers. Consumers can wrap either subpath in a basename-preserving Netlify Function entry; this repository deploys the canonical `post-published` and `post-unpublished` entries directly.
-
-## Security
-
-> [!WARNING]
-> The current handlers do not enforce authentication when the `key` query parameter is omitted; they reject only a supplied key that does not match `NETLIFY_KEY`. Netlify Function URLs are public endpoints, not secrets, and the user-agent check can be spoofed. Pause or restrict exposure outside the handlers until mandatory authentication is implemented before public use.
-
-Use a restricted Algolia API key to limit the impact of unauthorized requests.
+The named and subpath exports reference the same handlers. The repository's deployment loader preserves the `post-published` and `post-unpublished` function URLs.
 
 ## Usage
 
@@ -34,18 +27,29 @@ Algolia requires `deleteIndex` for filtered deletions. The name is a bit mislead
 
 ### Deploy the Netlify Functions
 
-Deploy manually, and do not expose the deployed functions publicly until mandatory authentication is implemented or access is restricted outside the handlers:
+1. Connect this repository or your fork to a Netlify site. Use the root [`netlify.toml`](../../netlify.toml): base `deployment`, build command `node build.mts`, functions `functions`, publish `public`. Node is pinned there; pnpm is pinned in [`deployment/package.json`](../../deployment/package.json).
+2. In **Project configuration → Environment variables**, add the values from [`.env.example`](.env.example) in the **production** context, available to Functions. Set `ALGOLIA_ACTIVE=TRUE`, your Algolia credentials and index, and a non-empty `NETLIFY_KEY`.
+3. Deploy, then configure the Ghost webhooks below. Redeploy after changing environment variables.
 
-1. Create a Netlify site and connect this repository manually.
-2. In **Project configuration → Environment variables**, set the values from [`.env.example`](.env.example). Make them available to Functions in the production context:
-   - Set `ALGOLIA_ACTIVE` to `TRUE` to enable indexing.
-   - Set the Algolia Application ID, API key, and index name.
-   - Choose a `NETLIFY_KEY` for the webhook query parameter. Setting it does not protect current handlers when the parameter is omitted.
-3. Deploy the site. Redeploy after changing environment variables.
+For local development, `.env` belongs in `packages/algolia-netlify/`. Hosted functions use Netlify environment variables. Never commit credentials or put them in `netlify.toml`.
 
-Hosted deployments use Netlify environment variables; do not commit a `.env` file or put secrets in `netlify.toml`. Keep preview deployments disabled for indexing, or give them a separate test index and credentials.
+#### Existing installations
 
-The repository's [`netlify.toml`](../../netlify.toml) builds and deploys these functions from `packages/algolia-netlify`. The explicit `public` publish directory contains only a static landing page so package files, function sources, and function build artifacts are not exposed as site files.
+Before upgrading, set `NETLIFY_KEY` and add the same `?key=...` value to every Ghost webhook URL. Missing or incorrect request keys now return `401`; an unset or empty `NETLIFY_KEY` returns `503`.
+
+Clear old base, package-directory, and build-command overrides in Netlify so the root configuration applies. In particular, deploying directly from `packages/algolia-netlify` bypasses release selection. Existing webhook paths stay unchanged.
+
+#### Releases and rollback
+
+With `ALGOLIA_INTEGRATION_VERSION` unset, the loader always selects `2026-10-12.1`, based on commit `631381e` from #330. It fetches that source revision and builds with its pinned pnpm version and frozen dependency lockfile. Later source changes and npm releases do not change the selected indexing code.
+
+To upgrade, choose a release from [`deployment/releases.mts`](../../deployment/releases.mts), set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, and redeploy. Unknown values fail the build. Review the release's migration instructions first.
+
+To roll back, restore the previous release setting and redeploy. Code rollback does not undo accepted Algolia writes. Before an index migration, retain the old index, verify the replacement separately, and coordinate the webhook and search-UI switch.
+
+The loader disables indexing in non-production deploy contexts. Test upgrades on a separate Netlify site's production deployment with a separate Algolia index and restricted credentials. Keep production credentials scoped to production; builds do not need them.
+
+A mutable upstream loader or modified fork can still change deployment behavior. See the [deployment policy](../../docs/netlify-deployment.md) for release maintenance and validation status.
 
 ### Set up Ghost webhooks
 
@@ -110,7 +114,7 @@ pnpm --filter @tryghost/algolia-netlify build
 
 Run the full monorepo suite with `pnpm test`.
 
-The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Existing valid webhook behavior, endpoint URLs, and optional `key` handling are unchanged.
+The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Valid Ghost envelopes and endpoint URLs remain supported. Every request requires the configured `key`.
 
 From this package directory, `pnpm pack` builds an ESM-only package with generated TypeScript declarations. The supported Node range is declared in [`package.json`](package.json). The package intentionally exposes only the two handlers; webhook utilities remain internal.
 

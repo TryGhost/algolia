@@ -16,7 +16,9 @@
     "packages/*/build/**",
     "packages/algolia-netlify/.netlify/**",
     "packages/algolia-netlify/build/**",
-    "packages/algolia-netlify/dist/**"
+    "packages/algolia-netlify/dist/**",
+    "deployment/runtime/**",
+    "deployment/functions/**"
   ],
   "rules": {
     "array-callback-return": "error",
