@@ -7,6 +7,8 @@ import {promisify} from 'node:util';
 
 import {afterEach, describe, expect, it} from 'vitest';
 
+import {parserDependencyOverrides} from './helpers/parser-dependency-overrides.js';
+
 const execFileAsync = promisify(execFile);
 const packageDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workspaceDirectory = path.resolve(packageDirectory, '../..');
@@ -55,7 +57,14 @@ describe('@tryghost/algolia-html-extractor packed package', () => {
                 }
             })
         );
-        await writeFile(path.join(temporaryDirectory, 'pnpm-workspace.yaml'), 'packages: []\n');
+        await writeFile(
+            path.join(temporaryDirectory, 'pnpm-workspace.yaml'),
+            JSON.stringify({
+                packages: [],
+                cacheDir: path.join(temporaryDirectory, 'cache'),
+                overrides: await parserDependencyOverrides()
+            })
+        );
         await execFileAsync(
             'pnpm',
             ['--dir', temporaryDirectory, 'install', '--offline', '--ignore-scripts'],
