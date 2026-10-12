@@ -1,3 +1,5 @@
+import {createServer} from 'node:http';
+import {once} from 'node:events';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {pathToFileURL} from 'node:url';
@@ -117,13 +119,13 @@ afterEach(async () => {
     );
 });
 
-it.each(['latest', '', 'main', '__proto__', '../runtime'])(
+it.each(['latest', '', 'main', '__proto__', '../runtime', '^1', '1.0', '1.0.0-rc.1', '01'])(
     'rejects unsupported selection %j before creating output',
     async version => {
         const directory = await mkdtemp(path.join(os.tmpdir(), 'algolia-deployment-'));
         directories.push(directory);
         await expect(buildDeployment({directory, version})).rejects.toThrow(
-            'Unknown integration release'
+            'Choose an integration major or exact stable version.'
         );
         expect(await readdir(directory)).toEqual([]);
     }
@@ -134,18 +136,18 @@ it('pins source across upstream changes and supports explicit upgrade and rollba
     const first = await commit('first release');
     const second = await commit('second release');
     const directory = await temporaryDirectory();
-    const releases = {first: first, second: second};
+    const releases = {'1.0.0': first, '1.1.0': second};
     const options = {directory, repository, releases, offline: true, context: 'production'};
-    await buildDeployment({...options, version: 'first'});
+    await buildDeployment({...options, version: '1.0.0'});
     expect(await invoke(directory)).toEqual({status: 200, body: 'first release'});
     expect(await invoke(directory, '?key=test-key', 'test-key', 'post-unpublished')).toEqual({
         status: 200,
         body: 'first release'
     });
     expect(await readFile(path.join(directory, 'release.json'), 'utf8')).toContain(first);
-    await buildDeployment({...options, version: 'second'});
+    await buildDeployment({...options, version: '1.1.0'});
     expect(await invoke(directory)).toEqual({status: 200, body: 'second release'});
-    await buildDeployment({...options, version: 'first'});
+    await buildDeployment({...options, version: '1.0.0'});
     expect(await invoke(directory)).toEqual({status: 200, body: 'first release'});
     expect(await invoke(directory, '?key=test-key', 'test-key', 'post-unpublished')).toEqual({
         status: 200,
@@ -160,8 +162,8 @@ it('enforces authentication around a historical release that accepts unauthentic
     await buildDeployment({
         directory,
         repository,
-        releases: {test: revision},
-        version: 'test',
+        releases: {'1.0.0': revision},
+        version: '1.0.0',
         context: 'production',
         offline: true
     });
@@ -186,8 +188,8 @@ it.each(['deploy-preview', 'branch-deploy', undefined, 'unknown'])(
         await buildDeployment({
             directory,
             repository,
-            releases: {test: revision},
-            version: 'test',
+            releases: {'1.0.0': revision},
+            version: '1.0.0',
             context,
             offline: true
         });
@@ -204,7 +206,7 @@ it.each(['deploy-preview', 'branch-deploy', undefined, 'unknown'])(
     30000
 );
 
-it('uses the fixed compatibility release when the version is unset', async () => {
+it('updates within the default major while leaving major upgrades explicit', async () => {
     const {repository, commit} = await createReleaseRepository();
     const first = await commit('compatibility release');
     const second = await commit('new release');
@@ -212,18 +214,22 @@ it('uses the fixed compatibility release when the version is unset', async () =>
     await buildDeployment({
         directory,
         repository,
-        releases: {'2026-10-12.1': first, newer: second},
-        context: 'production',
-        offline: true
+        releases: {'1.0.0': first, '1.0.2': first, '1.0.10': second, '2.0.0': first},
+        context: 'production'
     });
-    expect(await invoke(directory)).toEqual({status: 200, body: 'compatibility release'});
+    expect(await invoke(directory)).toEqual({status: 200, body: 'new release'});
+    expect(JSON.parse(await readFile(path.join(directory, 'release.json'), 'utf8'))).toEqual({
+        selection: '1',
+        version: '1.0.10',
+        commit: second
+    });
 }, 30000);
 
 it('rejects a release mapped to a mutable source ref', async () => {
     const directory = await temporaryDirectory();
     await expect(
-        buildDeployment({directory, version: 'bad', releases: {bad: 'main'}})
-    ).rejects.toThrow('full commit ID');
+        buildDeployment({directory, version: '1.0.0', releases: {'1.0.0': 'main'}})
+    ).rejects.toThrow('full commit IDs');
     expect(await readdir(directory)).toEqual([]);
 });
 
@@ -234,8 +240,8 @@ it('stops on a changed dependency manifest instead of resolving new dependencies
     await buildDeployment({
         directory,
         repository,
-        releases: {test: first},
-        version: 'test',
+        releases: {'1.0.0': first},
+        version: '1.0.0',
         context: 'production',
         offline: true
     });
@@ -249,8 +255,8 @@ it('stops on a changed dependency manifest instead of resolving new dependencies
         buildDeployment({
             directory,
             repository,
-            releases: {test: broken},
-            version: 'test',
+            releases: {'1.0.0': broken},
+            version: '1.0.0',
             context: 'production',
             offline: true
         })
@@ -266,6 +272,128 @@ it('reports an invalid CLI selection without echoing configuration', async () =>
         })
     ).rejects.toMatchObject({
         code: 1,
-        stderr: 'Unknown integration release. Choose a release listed in deployment/releases.mts.\n'
+        stderr: 'Choose an integration major or exact stable version.\n'
     });
 });
+
+it('discovers compatible releases from the shared catalog on every rebuild', async () => {
+    const {repository, commit} = await createReleaseRepository();
+    const first = await commit('first runtime');
+    const patch = await commit('patched runtime');
+    const minor = await commit('minor runtime');
+    const major = await commit('major runtime');
+    let catalog: Record<string, string> = {'1.0.0': first};
+    const server = createServer((_request, response) => {
+        response.setHeader('content-type', 'application/json');
+        response.end(JSON.stringify(catalog));
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+        throw new Error('Missing catalog address');
+    }
+    const directory = await temporaryDirectory();
+    const options = {
+        directory,
+        repository,
+        offline: true,
+        context: 'production',
+        catalogUrl: `http://127.0.0.1:${address.port}`
+    };
+    try {
+        await buildDeployment({...options, version: '1'});
+        expect(await invoke(directory)).toEqual({status: 200, body: 'first runtime'});
+        catalog = {...catalog, '1.0.1': patch};
+        await buildDeployment({...options, version: '1'});
+        expect(await invoke(directory)).toEqual({status: 200, body: 'patched runtime'});
+        catalog = {...catalog, '1.1.0': minor, '2.0.0': major};
+        await buildDeployment({...options, version: '1'});
+        expect(await invoke(directory)).toEqual({status: 200, body: 'minor runtime'});
+        await buildDeployment({...options, version: '2'});
+        expect(await invoke(directory)).toEqual({status: 200, body: 'major runtime'});
+        await buildDeployment({...options, version: '1.0.1'});
+        expect(await invoke(directory)).toEqual({status: 200, body: 'patched runtime'});
+    } finally {
+        server.closeAllConnections();
+        await new Promise<void>((resolve, reject) => {
+            server.close(closeError => {
+                if (closeError) {
+                    reject(closeError);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+}, 60000);
+
+it.each([
+    {status: 503, body: '{}', error: 'Could not load'},
+    {status: 200, body: 'invalid json', error: 'Could not load'},
+    {status: 200, body: '[]', error: 'Invalid integration release catalog'},
+    {status: 200, body: 'null', error: 'Invalid integration release catalog'},
+    {status: 200, body: '{"1.0.0-rc.1":"main"}', error: 'stable versions'},
+    {status: 200, body: '{"1.0.0":42}', error: 'full commit IDs'},
+    {status: 200, body: '{"1.0.0":"main"}', error: 'full commit IDs'},
+    {status: 200, body: '{}', error: 'Unknown integration release'}
+])(
+    'stops before building when the shared catalog is unusable: $body / $status',
+    async ({status, body, error}) => {
+        const server = createServer((_request, response) => {
+            response.writeHead(status).end(body);
+        });
+        server.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+        const address = server.address();
+        if (!address || typeof address === 'string') {
+            throw new Error('Missing catalog address');
+        }
+        const directory = await temporaryDirectory();
+        try {
+            await expect(
+                buildDeployment({
+                    directory,
+                    version: '1',
+                    catalogUrl: `http://127.0.0.1:${address.port}`
+                })
+            ).rejects.toThrow(error);
+            expect(await readdir(directory)).toEqual([]);
+        } finally {
+            server.closeAllConnections();
+            await new Promise<void>((resolve, reject) => {
+                server.close(closeError => {
+                    if (closeError) {
+                        reject(closeError);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        }
+    }
+);
+
+it.each([null, 'npm@12.11.0'])(
+    'rejects a runtime without a supported package manager pin: %j',
+    async packageManager => {
+        const {repository, commit} = await createReleaseRepository();
+        const manifest = JSON.parse(
+            await readFile(path.join(repository, 'package.json'), 'utf8')
+        ) as Record<string, unknown>;
+        manifest.packageManager = packageManager;
+        await writeFile(path.join(repository, 'package.json'), JSON.stringify(manifest));
+        const revision = await commit('unsupported toolchain');
+        const directory = await temporaryDirectory();
+        await expect(
+            buildDeployment({
+                directory,
+                repository,
+                releases: {'1.0.0': revision},
+                version: '1.0.0',
+                offline: true
+            })
+        ).rejects.toThrow('Use the exact pnpm version');
+        expect(await readdir(directory)).not.toContain('functions');
+    }
+);

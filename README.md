@@ -19,7 +19,7 @@ This pnpm monorepo contains five packages:
 
 ### Netlify Functions
 
-Connect this repository or a fork using the [Netlify setup guide](packages/algolia-netlify/README.md#deploy-the-netlify-functions). Deployments use a fixed integration release; upgrading requires an explicit release selection. Existing installations must follow the guide's authentication and build-settings transition before deploying.
+Connect this repository or a fork using the [Netlify setup guide](packages/algolia-netlify/README.md#deploy-the-netlify-functions). Rebuilds pick up patch and minor releases within the selected major version. Major upgrades require an explicit selection. Existing installations must follow the guide's authentication and build-settings transition before deploying.
 
 ### CLI
 

@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {promisify} from 'node:util';
 
-import {DEFAULT_RELEASE, RELEASES} from './releases.mts';
+import {CATALOG_URL, DEFAULT_RELEASE, selectRelease, validateSelection} from './releases.mts';
 
 const exec = promisify(execFile);
 const HANDLERS = ['post-published', 'post-unpublished'] as const;
@@ -17,6 +17,7 @@ export type DeploymentOptions = {
     repository?: string;
     releases?: Readonly<Record<string, string>>;
     offline?: boolean;
+    catalogUrl?: string;
 };
 
 const buildEnvironment = (): NodeJS.ProcessEnv => {
@@ -31,17 +32,33 @@ const buildEnvironment = (): NodeJS.ProcessEnv => {
 
 /** Build an isolated, selected integration snapshot without contacting Algolia. */
 export const buildDeployment = async (options: DeploymentOptions): Promise<void> => {
-    const version = options.version ?? DEFAULT_RELEASE;
-    const releases = options.releases ?? RELEASES;
-    if (!Object.hasOwn(releases, version)) {
-        throw new Error(
-            'Unknown integration release. Choose a release listed in deployment/releases.mts.'
-        );
+    const selection = options.version ?? DEFAULT_RELEASE;
+    validateSelection(selection);
+    let releases: unknown = options.releases;
+    if (releases === undefined && selection.includes('.')) {
+        const bundled = JSON.parse(
+            await readFile(new URL('./releases.json', import.meta.url), 'utf8')
+        ) as Record<string, unknown>;
+        if (Object.hasOwn(bundled, selection)) {
+            releases = {[selection]: bundled[selection]};
+        }
     }
-    const commit = releases[version];
-    if (!/^[a-f0-9]{40}$/.test(commit)) {
-        throw new Error('Integration release must select a full commit ID.');
+    if (releases === undefined) {
+        try {
+            const response = await fetch(options.catalogUrl ?? CATALOG_URL, {
+                signal: AbortSignal.timeout(15000),
+                cache: 'no-store',
+                redirect: 'error'
+            });
+            if (!response.ok) {
+                throw new Error('Catalog request failed');
+            }
+            releases = await response.json();
+        } catch {
+            throw new Error('Could not load the integration release catalog. Retry the build.');
+        }
     }
+    const {version, commit} = selectRelease(selection, releases);
 
     const runtime = path.join(options.directory, 'runtime');
     const functions = path.join(options.directory, 'functions');
@@ -109,7 +126,7 @@ export default async function handler(request: Request): Promise<Response> {
     }
     await writeFile(
         path.join(options.directory, 'release.json'),
-        JSON.stringify({version, commit}, null, 2) + '\n'
+        JSON.stringify({selection, version, commit}, null, 2) + '\n'
     );
 };
 
@@ -120,8 +137,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
             version: process.env.ALGOLIA_INTEGRATION_VERSION,
             context: process.env.CONTEXT
         });
+        const release = JSON.parse(
+            await readFile(new URL('./release.json', import.meta.url), 'utf8')
+        ) as {version: string; commit: string};
         process.stdout.write(
-            `Prepared Algolia integration ${process.env.ALGOLIA_INTEGRATION_VERSION ?? DEFAULT_RELEASE}.\n`
+            `Prepared Algolia integration ${release.version} (${release.commit}).\n`
         );
     } catch (error) {
         process.stderr.write(

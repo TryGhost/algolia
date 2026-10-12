@@ -41,11 +41,13 @@ Clear old base, package-directory, and build-command overrides in Netlify so the
 
 #### Releases and rollback
 
-With `ALGOLIA_INTEGRATION_VERSION` unset, the loader always selects `2026-10-12.1`, based on commit `631381e` from #330. It fetches that source revision and builds with its pinned pnpm version and frozen dependency lockfile. Later source changes and npm releases do not change the selected indexing code.
+Leave `ALGOLIA_INTEGRATION_VERSION` unset, or set it to `1`, to receive the latest stable `1.x` release on each rebuild. Major upgrades require an explicit change, such as `2`. Running deployments stay unchanged until rebuilt. Patch and minor releases preserve your configuration and index contracts.
 
-To upgrade, choose a release from [`deployment/releases.mts`](../../deployment/releases.mts), set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, and redeploy. Unknown values fail the build. Review the release's migration instructions first.
+To select a major or pin an exact release such as `1.0.0`, set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, then redeploy. Major selections read the [upstream release catalog](https://raw.githubusercontent.com/TryGhost/algolia/main/deployment/releases.json), so forks receive runtime updates without syncing. Exact versions use the checkout’s catalog when it contains that version, otherwise the upstream catalog. Invalid selections or an unavailable required catalog fail the build.
 
-To roll back, restore the previous release setting and redeploy. Code rollback does not undo accepted Algolia writes. Before an index migration, retain the old index, verify the replacement separately, and coordinate the webhook and search-UI switch.
+To roll back, pin the previous exact version and redeploy. The build records the selection, resolved version, and commit in `deployment/release.json`. Each release uses its pinned source commit, pnpm version, and frozen dependency lockfile.
+
+Code rollback does not undo accepted Algolia writes. Follow migration instructions before a major upgrade: retain the old index, verify any replacement separately, and coordinate the webhook and search-UI switch.
 
 The loader disables indexing in non-production deploy contexts. Test upgrades on a separate Netlify site's production deployment with a separate Algolia index and restricted credentials. Keep production credentials scoped to production; builds do not need them.
 
