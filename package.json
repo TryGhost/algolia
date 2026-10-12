@@ -26,14 +26,13 @@
     "ship:major": "pnpm ship major"
   },
   "devDependencies": {
-    "@bcoe/v8-coverage": "1.0.2",
     "@nx/js": "23.3.0",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "5.0.3",
     "nx": "23.3.0",
     "oxfmt": "0.72.0",
     "oxlint": "1.87.0",
     "vite": "8.3.4",
-    "vitest": "4.1.11"
+    "vitest": "5.0.3"
   },
   "packageManager": "pnpm@12.11.0+sha512.29ccb4d41fadc1b389060ca7e05bb30012ca04b1d1502c75bc0930421ea26d8cfb94a674e18c00dc4e81cc0661ab10d30d0259bebd122bcc04cff6a12f682cfb"
 }

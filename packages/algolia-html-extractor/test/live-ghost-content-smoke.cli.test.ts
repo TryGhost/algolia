@@ -49,8 +49,7 @@ const createChildEnvironment = (
         MAIN_GHOST_CONTENT_API_KEY: fakeContentApiKey,
         LIVE_GHOST_SMOKE_REQUEST_LOG: requestLogPath,
         // Vitest's V8 converter cannot parse raw Node coverage for .mts subprocesses.
-        NODE_V8_COVERAGE: '',
-        VITEST_SUBPROCESS_COVERAGE_DIR: ''
+        NODE_V8_COVERAGE: ''
     };
     if (summaryPath !== undefined) {
         environment.GITHUB_STEP_SUMMARY = summaryPath;
