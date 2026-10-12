@@ -10,6 +10,7 @@ import {afterEach, expect, it} from 'vitest';
 import {buildDeployment} from '../deployment/build.mts';
 
 const exec = promisify(execFile);
+const pnpmVersion = (await exec('pnpm', ['--version'])).stdout.trim();
 const directories: string[] = [];
 const temporaryDirectory = async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'algolia-deployment-'));
@@ -23,7 +24,7 @@ const createReleaseRepository = async () => {
         JSON.stringify({
             name: '@tryghost/algolia-netlify',
             private: true,
-            packageManager: 'pnpm@12.11.0',
+            packageManager: `pnpm@${pnpmVersion}`,
             scripts: {
                 build: 'node build.mts',
                 'build:package': 'node build.mts',
@@ -31,23 +32,33 @@ const createReleaseRepository = async () => {
             }
         })
     );
-    await writeFile(path.join(repository, 'pnpm-workspace.yaml'), 'packages: []\n');
+    await writeFile(
+        path.join(repository, 'pnpm-workspace.yaml'),
+        'packages: []\npmOnFail: ignore\n'
+    );
     await exec('pnpm', ['install', '--lockfile-only', '--offline', '--ignore-scripts'], {
-        cwd: repository
+        cwd: repository,
+        env: {...process.env, PNPM_CONFIG_CACHE_DIR: await temporaryDirectory()}
     });
     await exec('git', ['init', '--quiet'], {cwd: repository});
     const commit = async (value: string) => {
-        const handler = `export default async () => new Response(${JSON.stringify(value)});`;
+        await writeFile(path.join(repository, 'response.json'), JSON.stringify(value));
+        await writeFile(
+            path.join(repository, 'handler.mjs'),
+            `import {readFile} from 'node:fs/promises';
+export default async () => new Response(JSON.parse(await readFile(new URL('./response.json', import.meta.url), 'utf8')));`
+        );
         await writeFile(
             path.join(repository, 'build.mts'),
             `
-            import {mkdir, writeFile} from 'node:fs/promises';
+            import {mkdir, copyFile} from 'node:fs/promises';
             if (process.env.ALGOLIA_API_KEY || process.env.NETLIFY_KEY) throw new Error('Credentials reached build');
             const directory = 'packages/algolia-netlify/dist/functions';
             await mkdir(directory, {recursive: true});
             for (const name of ['post-published', 'post-unpublished']) {
-                await writeFile(directory + '/' + name + '.mjs', ${JSON.stringify(handler)});
+                await copyFile('handler.mjs', directory + '/' + name + '.mjs');
             }
+            await copyFile('response.json', directory + '/response.json');
         `
         );
         await exec('git', ['add', '.'], {cwd: repository});
@@ -89,10 +100,12 @@ const invoke = async (
             '--input-type=module',
             '-e',
             `
-        const {default: handler} = await import(${JSON.stringify(entry)});
-        const response = await handler(new Request('https://example.invalid/.netlify/functions/${name}${key}'));
+        const {default: handler} = await import(process.argv[1]);
+        const response = await handler(new Request(process.argv[2]));
         console.log(JSON.stringify({status: response.status, body: await response.text()}));
-    `
+    `,
+            entry,
+            `https://example.invalid/.netlify/functions/${name}${key}`
         ],
         {env: environment}
     );

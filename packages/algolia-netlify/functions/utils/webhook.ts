@@ -1,3 +1,5 @@
+import {createHash, timingSafeEqual} from 'node:crypto';
+
 const TEXT_HEADERS = {'content-type': 'text/plain; charset=utf-8'};
 const GHOST_SOURCE = String.raw`https://github\.com/TryGhost/Ghost`;
 const SEMVER = String.raw`(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?`;
@@ -34,7 +36,14 @@ export const authorizeRequest = (request: Request): Response | undefined => {
     }
 
     const keys = new URL(request.url).searchParams.getAll('key');
-    if (keys.length !== 1 || !keys[0] || keys[0] !== configuredKey) {
+    if (
+        keys.length !== 1 ||
+        !keys[0] ||
+        !timingSafeEqual(
+            createHash('sha256').update(keys[0]).digest(),
+            createHash('sha256').update(configuredKey).digest()
+        )
+    ) {
         return textResponse('Unauthorized', 401);
     }
     return undefined;

@@ -4,11 +4,18 @@ import path from 'node:path';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 
-import {describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 
 const execFileAsync = promisify(execFile);
 const packageDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workspaceDirectory = path.resolve(packageDirectory, '../..');
+// Netlify's local monorepo builder appends the selected package path to the build base
+// when choosing its archive output directory, even when the base is already that package.
+const functionsDistDirectory = path.join(
+    packageDirectory,
+    path.relative(workspaceDirectory, packageDirectory),
+    '.netlify/functions'
+);
 const extractorDistDirectory = path.resolve(
     workspaceDirectory,
     'packages/algolia-html-extractor/dist'
@@ -18,6 +25,10 @@ const extractorDistDirectory = path.resolve(
 const netlifyBinary = path.join(packageDirectory, 'node_modules/.bin/netlify');
 
 describe('Netlify function dependency tracing', () => {
+    beforeEach(async () => {
+        await rm(functionsDistDirectory, {recursive: true, force: true});
+    });
+
     it('packages the compatibility extractor through the ESM fragmenter', async () => {
         await execFileAsync('pnpm', ['--filter', '@tryghost/algolia-netlify', 'build'], {
             cwd: workspaceDirectory
@@ -25,7 +36,7 @@ describe('Netlify function dependency tracing', () => {
 
         for (const functionName of ['post-published', 'post-unpublished']) {
             const archive = await readFile(
-                path.join(packageDirectory, `.netlify/functions/${functionName}.zip`)
+                path.join(functionsDistDirectory, `${functionName}.zip`)
             );
             const archiveIndex = archive.toString('latin1');
 
@@ -58,7 +69,7 @@ describe('Netlify function dependency tracing', () => {
 
             for (const functionName of ['post-published', 'post-unpublished']) {
                 const archive = await readFile(
-                    path.join(packageDirectory, `.netlify/functions/${functionName}.zip`)
+                    path.join(functionsDistDirectory, `${functionName}.zip`)
                 );
                 const archiveIndex = archive.toString('latin1');
 
