@@ -170,10 +170,9 @@ describe('modern Netlify webhook handlers', () => {
             'Post "Ghost 6 rendered content contract" has been added to the index.'
         );
         expect(requests.map(request => [request.method, new URL(request.url).pathname])).toEqual([
-            ['POST', '/1/indexes/ghost-content/deleteByQuery'],
             ['POST', '/1/indexes/ghost-content/batch']
         ]);
-        const batch = JSON.parse(requests[1].data ?? '') as {
+        const batch = JSON.parse(requests[0].data ?? '') as {
             requests: Array<{action: string; body: Record<string, unknown>}>;
         };
         expect(batch.requests).toEqual(
@@ -184,22 +183,33 @@ describe('modern Netlify webhook handlers', () => {
         );
     });
 
-    it('preflights default records and replaces the slug before saving display excerpts', async () => {
+    it('saves default records without new permissions or settings', async () => {
         const {response, requests} = await invoke('post-published', {
             body: {post: {current: {...richPost, excerpt: 'A display summary'}, previous: {}}}
         });
         expect(response.status).toBe(200);
         expect(requests.map(request => [request.method, new URL(request.url).pathname])).toEqual([
-            ['POST', '/1/indexes/ghost-content/deleteByQuery'],
             ['POST', '/1/indexes/ghost-content/batch']
         ]);
         expect(JSON.parse(requests[0].data ?? '')).toEqual({
-            filters: 'slug:ghost-6-rendered-content-contract'
-        });
-        expect(JSON.parse(requests[1].data ?? '')).toEqual({
             requests: expectedRecords.slice(0, 2).map(record => ({
                 action: 'addObject',
                 body: {...record, excerpt: 'A display summary'}
+            }))
+        });
+    });
+
+    it('attempts only upserts when saving fails with unchanged configuration', async () => {
+        const {response, requests} = await invoke('post-published', {failureAt: 1});
+        expect(response.status).toBe(500);
+        expect(JSON.parse(response.body ?? '')).toEqual({msg: 'Algolia transport failed'});
+        expect(requests.map(request => [request.method, new URL(request.url).pathname])).toEqual([
+            ['POST', '/1/indexes/ghost-content/batch']
+        ]);
+        expect(JSON.parse(requests[0].data ?? '')).toEqual({
+            requests: expectedRecords.slice(0, 2).map(record => ({
+                action: 'addObject',
+                body: {...record, excerpt: richPost?.excerpt}
             }))
         });
     });
@@ -273,7 +283,7 @@ describe('modern Netlify webhook handlers', () => {
             }
         });
         expect(response.status).toBe(200);
-        expect(JSON.parse(requests[1].data ?? '')).toEqual({
+        expect(JSON.parse(requests[0].data ?? '')).toEqual({
             requests: [
                 {
                     action: 'addObject',
@@ -300,7 +310,7 @@ describe('modern Netlify webhook handlers', () => {
         ['indivisible fragment', {html: `<p>${'é'.repeat(6000)}</p>`}],
         ['repeated metadata', {title: 'x'.repeat(10000)}],
         ['invalid required content', {html: null}]
-    ])('preflights %s before deleting any existing records', async (_case, overrides) => {
+    ])('preflights %s before writing any records', async (_case, overrides) => {
         const {response, requests} = await invoke('post-published', {
             body: {post: {current: {...richPost, ...overrides}}}
         });
@@ -311,12 +321,12 @@ describe('modern Netlify webhook handlers', () => {
         expect(requests).toEqual([]);
     });
 
-    it('replaces all old slug records when size continuations shrink', async () => {
+    it('upserts shrinking content without deleting earlier continuations', async () => {
         const longParagraph = `<p>${'a'.repeat(6000)}</p>`;
         const large = {...richPost, html: `${longParagraph}${longParagraph}`, excerpt: 'Summary'};
         const first = await invoke('post-published', {body: {post: {current: large}}});
         expect(first.response.status).toBe(200);
-        const initial = JSON.parse(first.requests[1].data ?? '').requests as Array<{
+        const initial = JSON.parse(first.requests[0].data ?? '').requests as Array<{
             body: Record<string, unknown>;
         }>;
         expect(initial.map(({body}) => ({id: body.objectID, html: body.html}))).toEqual([
@@ -336,10 +346,6 @@ describe('modern Netlify webhook handlers', () => {
                 JSON.parse(request.data ?? '')
             ])
         ).toEqual([
-            [
-                '/1/indexes/ghost-content/deleteByQuery',
-                {filters: 'slug:ghost-6-rendered-content-contract'}
-            ],
             [
                 '/1/indexes/ghost-content/batch',
                 {
@@ -370,9 +376,6 @@ describe('modern Netlify webhook handlers', () => {
         expect(requests).toHaveLength(1);
         expect(requests[0].method).toBe('POST');
         expect(new URL(requests[0].url).pathname).toBe('/1/indexes/ghost-content/deleteByQuery');
-        expect(JSON.parse(requests[0].data ?? '')).toEqual({
-            filters: 'slug:ghost-6-rendered-content-contract'
-        });
     });
 
     it.each([
@@ -475,16 +478,15 @@ describe('modern Netlify webhook handlers', () => {
 
     it.each([
         ['post-published', 1],
-        ['post-published', 2],
         ['post-unpublished', 1]
     ] as const)(
         'returns JSON when Algolia request fails for %s at request %i',
         async (name, failureAt) => {
             const {response, requests} = await invoke(name, {failureAt});
             expect(requests.map(request => new URL(request.url).pathname)).toEqual(
-                failureAt === 1
-                    ? ['/1/indexes/ghost-content/deleteByQuery']
-                    : ['/1/indexes/ghost-content/deleteByQuery', '/1/indexes/ghost-content/batch']
+                name === 'post-published'
+                    ? ['/1/indexes/ghost-content/batch']
+                    : ['/1/indexes/ghost-content/deleteByQuery']
             );
             expect(response.status).toBe(500);
             expect(response.headers).toEqual({'content-type': 'application/json'});
