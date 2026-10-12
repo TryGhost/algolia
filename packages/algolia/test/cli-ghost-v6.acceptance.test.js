@@ -3,6 +3,7 @@ import {afterEach, describe, expect, it} from 'vitest';
 import {spawnSync} from 'node:child_process';
 import {readFile, writeFile} from 'node:fs/promises';
 import http from 'node:http';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -13,6 +14,10 @@ import {
     readJsonLines,
     requesterPreloadPath
 } from './helpers/cli-acceptance-harness.ts';
+
+const {version: contentApiVersion} = createRequire(import.meta.url)(
+    '@tryghost/content-api/package.json'
+);
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDirectory = path.join(testDirectory, 'fixtures', 'ghost-v6');
@@ -153,7 +158,7 @@ describe('Ghost 6 CLI acceptance', function () {
                         page: '1'
                     },
                     acceptVersion: 'v6.0',
-                    userAgent: 'GhostContentSDK/1.12.10'
+                    userAgent: `GhostContentSDK/${contentApiVersion}`
                 },
                 {
                     method: 'GET',
@@ -165,7 +170,7 @@ describe('Ghost 6 CLI acceptance', function () {
                         page: '2'
                     },
                     acceptVersion: 'v6.0',
-                    userAgent: 'GhostContentSDK/1.12.10'
+                    userAgent: `GhostContentSDK/${contentApiVersion}`
                 }
             ]);
 
@@ -308,7 +313,7 @@ describe('Ghost 6 CLI acceptance', function () {
                         limit: '1'
                     },
                     acceptVersion: 'v6.0',
-                    userAgent: 'GhostContentSDK/1.12.10'
+                    userAgent: `GhostContentSDK/${contentApiVersion}`
                 }
             ]);
             expect(algoliaRequests).toHaveLength(4);
@@ -336,7 +341,7 @@ describe('Ghost 6 CLI acceptance', function () {
                     page: '2'
                 },
                 acceptVersion: 'v6.0',
-                userAgent: 'GhostContentSDK/1.12.10'
+                userAgent: `GhostContentSDK/${contentApiVersion}`
             }
         ]);
         expect(algoliaRequests).toHaveLength(4);

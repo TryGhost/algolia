@@ -1,3 +1,4 @@
+const {version: contentApiVersion} = require('@tryghost/content-api/package.json');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -93,7 +94,7 @@ const server = http.createServer((request, response) => {
         Object.keys(query).sort().join(',') === Object.keys(expected.query).sort().join(',') &&
         Object.entries(expected.query).every(([name, value]) => query[name] === value) &&
         request.headers['accept-version'] === 'v6.0' &&
-        request.headers['user-agent'] === 'GhostContentSDK/1.12.10';
+        request.headers['user-agent'] === `GhostContentSDK/${contentApiVersion}`;
 
     if (!valid) {
         response.writeHead(400, {'content-type': 'application/json'});

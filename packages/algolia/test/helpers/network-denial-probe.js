@@ -1,3 +1,4 @@
+const {version: contentApiVersion} = require('@tryghost/content-api/package.json');
 const http = require('node:http');
 const https = require('node:https');
 const net = require('node:net');
@@ -13,7 +14,7 @@ if (!replayOrigin || !contentApiKey) {
 const ghostUrl = `${replayOrigin}/ghost/api/content/posts/?key=${contentApiKey}&include=tags,authors&limit=1`;
 const headers = {
     'accept-version': 'v6.0',
-    'user-agent': 'GhostContentSDK/1.12.10'
+    'user-agent': `GhostContentSDK/${contentApiVersion}`
 };
 
 const readWithHttp = () =>
@@ -42,7 +43,7 @@ const readWithNet = () =>
                     `GET /ghost/api/content/posts/?key=${contentApiKey}&include=tags,authors&limit=1 HTTP/1.1`,
                     `Host: ${target.host}`,
                     'Accept-Version: v6.0',
-                    'User-Agent: GhostContentSDK/1.12.10',
+                    `User-Agent: GhostContentSDK/${contentApiVersion}`,
                     'Connection: close',
                     '',
                     ''
