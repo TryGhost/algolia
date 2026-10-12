@@ -116,7 +116,7 @@ const createDefaultConfig = (replayOrigin: string, contentApiKey: string): CliCo
 
 const forwardedCoverageEnvironment = (): NodeJS.ProcessEnv => {
     const environment: NodeJS.ProcessEnv = {};
-    for (const name of ['NODE_V8_COVERAGE', 'VITEST_SUBPROCESS_COVERAGE_DIR']) {
+    for (const name of ['NODE_V8_COVERAGE']) {
         const value = process.env[name];
         if (value !== undefined) {
             environment[name] = value;

@@ -7,8 +7,8 @@ export default defineConfig({
             'test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}'
         ],
         coverage: {
-            provider: 'custom',
-            customProviderModule: './test/coverage-provider.mjs',
+            provider: 'v8',
+            autoAttachSubprocess: true,
             reporter: ['text', 'json-summary', 'lcov'],
             thresholds: {
                 statements: 93,

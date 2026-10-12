@@ -169,9 +169,6 @@ importers:
 
   .:
     devDependencies:
-      '@bcoe/v8-coverage':
-        specifier: 1.0.2
-        version: 1.0.2
       '@nx/js':
         specifier: 23.3.0
         version: 23.3.0(@babel/traverse@7.29.10(supports-color@11.0.0))(nx@23.3.0)(supports-color@11.0.0)
