@@ -23,7 +23,7 @@ Use a restricted Algolia API key to limit the impact of unauthorized requests.
 
 ### Set up Algolia
 
-Run the [`@tryghost/algolia` CLI](../algolia/README.md) once before enabling the webhooks. It creates the index and adds `filterOnly(slug)`, which the unpublish webhook uses to delete all records for a post. If you use custom index settings, add `filterOnly(slug)` to `attributesForFaceting` yourself.
+Run the [`@tryghost/algolia` CLI](../algolia/README.md) once before enabling the webhooks. It creates the index and adds `filterOnly(slug)`, which both webhooks use to delete all records for a post. If you use custom index settings, add `filterOnly(slug)` to `attributesForFaceting` yourself.
 
 The functions need your Algolia Application ID and an API key restricted to the target index. Give this key these permissions:
 
@@ -62,6 +62,41 @@ https://YOUR-SITE-ID.netlify.app/.netlify/functions/post-published?key=NETLIFY_K
 ```
 
 Once configured, these webhooks keep post changes in sync without touching the index settings.
+
+## Ghost content projection
+
+The handlers use the same projection contract as `@tryghost/algolia` 0.3.6 or later and `@tryghost/algolia-fragmenter` 0.4.0 or later. Set `ALGOLIA_CONTENT_PROJECTION` to the projection object as JSON, without a surrounding `contentProjection` property:
+
+```json
+{
+  "fields": [
+    "image",
+    {"source": "tags", "as": "topics"},
+    "excerpt",
+    {"source": "custom_excerpt", "as": "summary"}
+  ],
+  "customRanking": [
+    {"source": "featured", "as": "isFeatured"},
+    {"source": "reading_time", "as": "readingMinutes"}
+  ]
+}
+```
+
+Omitting the environment variable selects `image`, `tags`, `authors`, and `excerpt`. An explicit `fields` array replaces those defaults; `{"fields":[]}` selects no optional fields. An empty string is invalid JSON, so remove the variable to use defaults.
+
+Available fields are `image`, `tags`, `authors`, `excerpt`, `custom_excerpt`, `feature_image_alt`, `feature_image_caption`, `canonical_url`, `featured`, `visibility`, `created_at`, `updated_at`, `published_at`, and `reading_time`. Aliases use `{source, as}` and must match `^[A-Za-z][A-Za-z0-9_]*$`; protected, reserved, duplicate, and conflicting names are rejected. Ranking siblings support only `featured` and `reading_time` and require aliases. See the [Fragmenter projection contract](../algolia-fragmenter/README.md#options) for normalization and validation details.
+
+Projection changes record data only. `excerpt` is Ghost's display text; consumers must choose it in their search UI and own the associated searchable, retrieval, snippet, and ranking settings. Neither handler reads or changes Algolia settings.
+
+### Validation and replacement
+
+The publish handler transforms the webhook's current post directly, without fetching it again from the Content API. It validates the entire new record set before any Algolia request. Empty searchable content produces a fallback record. Complete records are limited to 9,999 compact UTF-8 bytes; whole extraction fragments can move into deterministic continuation records, but content is never truncated.
+
+Both handlers reject malformed projection JSON or invalid policy before any Algolia request. Publish also rejects invalid Ghost content and indivisible oversized records before any request. Failures use the existing JSON `500` response with a `msg` property; fragmenter validation messages identify `INVALID_POLICY`, `INVALID_GHOST_CONTENT`, or `RECORD_TOO_LARGE`. Existing activation, optional-key authentication, user-agent checks, envelope handling, and valid text responses are preserved.
+
+After preflight, publish deletes all existing records for the current post's slug, then saves the complete new set. This removes stale continuations when content shrinks. Unpublish deletes by the current resource's slug, falling back to the previous resource when current is absent or empty. This release retains legacy slug identity; it does not introduce stable content-ID reconciliation.
+
+Replacement is not transactional. A failed delete prevents saving; a failed save after deletion may leave records missing or partially updated. External failures return the same JSON `500` envelope and do not promise rollback. Keep an index backup or replica and the previous package/configuration before rollout. Disable webhooks with `ALGOLIA_ACTIVE=FALSE` while restoring or switching the index and reverting to a compatible package/configuration. Reverting the package alone cannot restore deleted records. Never unpublish or reuse a released version.
 
 ## Development
 

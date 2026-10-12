@@ -188,6 +188,7 @@ overrides:
                 }
             ],
             requests: [
+                ['POST', '/1/indexes/ghost-content/deleteByQuery'],
                 ['POST', '/1/indexes/ghost-content/batch'],
                 ['POST', '/1/indexes/ghost-content/deleteByQuery']
             ]
