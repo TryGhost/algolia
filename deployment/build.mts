@@ -1,3 +1,4 @@
+import {existsSync} from 'node:fs';
 import {execFile} from 'node:child_process';
 import {access, copyFile, mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -35,10 +36,12 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
     const selection = options.version ?? DEFAULT_RELEASE;
     validateSelection(selection);
     let releases: unknown = options.releases;
-    if (releases === undefined && selection.includes('.')) {
-        const bundled = JSON.parse(
-            await readFile(new URL('./releases.json', import.meta.url), 'utf8')
-        ) as Record<string, unknown>;
+    const bundledCatalog = path.join(options.directory, 'releases.json');
+    if (releases === undefined && selection.includes('.') && existsSync(bundledCatalog)) {
+        const bundled = JSON.parse(await readFile(bundledCatalog, 'utf8')) as Record<
+            string,
+            unknown
+        >;
         if (Object.hasOwn(bundled, selection)) {
             releases = {[selection]: bundled[selection]};
         }
