@@ -1,17 +1,15 @@
 [build]
-  # Deploys run only this command; package "prebuild" scripts never run on Netlify. The
-  # extractor's gitignored dist/ must exist before functions bundling, or the bundler silently
-  # drops the package from the function archives and the functions crash at runtime.
-  command = "pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck"
-  functions = "packages/algolia-netlify/functions"
-  publish = "packages/algolia-netlify/public"
+  base = "deployment"
+  command = "node build.mts"
+  functions = "functions"
+  publish = "public"
 
 [build.environment]
-  NODE_VERSION = "24"
+  NODE_VERSION = "24.21.0"
 
 [template.environment]
-  ALGOLIA_ACTIVE = "TRUE or FALSE. Set to TRUE to trigger indexing."
+  ALGOLIA_ACTIVE = "Set TRUE to enable indexing."
   ALGOLIA_APP_ID = "Algolia Application ID"
-  ALGOLIA_API_KEY = "An Algolia Admin API Key or a generated one"
+  ALGOLIA_API_KEY = "Algolia API key restricted to your index"
   ALGOLIA_INDEX = "Name of the Algolia index"
-  NETLIFY_KEY = "User-defined key to authorize post requests to the Netlify function"
+  NETLIFY_KEY = "Required secret; use the same value in Ghost webhook URLs"

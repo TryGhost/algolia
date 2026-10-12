@@ -24,6 +24,8 @@
     "**/*.toml",
     "**/*.yml",
     "**/*.yaml",
-    "**/*.md"
+    "**/*.md",
+    "deployment/runtime/**",
+    "deployment/functions/**"
   ]
 }

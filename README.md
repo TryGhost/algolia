@@ -19,12 +19,7 @@ This pnpm monorepo contains five packages:
 
 ### Netlify Functions
 
-> [!WARNING]
-> The current handlers do not enforce authentication when the `key` query parameter is omitted. A public function URL is not a secret; do not expose these functions publicly until authentication is enforced or access is restricted outside the handlers.
-
-Deployment, Algolia configuration, and Ghost webhook setup are described in the [`@tryghost/algolia-netlify` guide](packages/algolia-netlify/README.md).
-
-The Netlify deployment publishes only a static landing page alongside the functions; repository package and function files are not site assets.
+Connect this repository or a fork using the [Netlify setup guide](packages/algolia-netlify/README.md#deploy-the-netlify-functions). Deployments use a fixed integration release; upgrading requires an explicit release selection. Existing installations must follow the guide's authentication and build-settings transition before deploying.
 
 ### CLI
 
