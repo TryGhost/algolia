@@ -2,6 +2,7 @@ import {existsSync} from 'node:fs';
 import {execFile} from 'node:child_process';
 import {access, copyFile, mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import path from 'node:path';
+import {stripTypeScriptTypes} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {promisify} from 'node:util';
 
@@ -106,6 +107,13 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
     ]);
     await run('pnpm', ['run', 'build']);
     await run('pnpm', ['--filter', '@tryghost/algolia-netlify', 'build:package']);
+
+    const publicDirectory = path.join(options.directory, 'public');
+    await mkdir(publicDirectory, {recursive: true});
+    await writeFile(
+        path.join(publicDirectory, 'setup.js'),
+        stripTypeScriptTypes(await readFile(new URL('./setup.mts', import.meta.url), 'utf8'))
+    );
 
     await copyFile(
         new URL('./guard.mts', import.meta.url),

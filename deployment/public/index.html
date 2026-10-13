@@ -3,9 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ghost Algolia webhooks</title>
+  <meta name="referrer" content="no-referrer">
+  <title>Connect Ghost to Algolia</title>
+  <link rel="stylesheet" href="/setup.css">
+  <script type="module" src="/setup.js"></script>
 </head>
 <body>
-  <p>This site only serves Ghost Algolia webhook functions.</p>
+  <header class="site-header">
+    <a class="wordmark" href="https://github.com/TryGhost/algolia">Ghost <span>+ Algolia</span></a>
+    <label class="theme-label" for="theme">Appearance
+      <select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
+    </label>
+  </header>
+  <main>
+    <div class="eyebrow">Finish setup</div>
+    <h1>Connect your publication.</h1>
+    <p class="intro">Your webhook site is deployed. Add it to Ghost to keep your Algolia index up to date.</p>
+    <ol class="steps">
+      <li class="step">
+        <h2>Create your webhook URLs</h2>
+        <p>Enter the webhook secret you chose during deployment. This is your <code>NETLIFY_KEY</code>, not your Algolia API key.</p>
+        <label for="webhook-key">Webhook secret</label>
+        <input id="webhook-key" type="password" autocomplete="off" spellcheck="false" aria-describedby="secret-help" placeholder="Paste your webhook secret">
+        <p class="hint" id="secret-help">Your secret stays in this page. It is included in the URLs you copy to Ghost.</p>
+        <noscript><p>Enable JavaScript to create your webhook URLs on this page.</p></noscript>
+        <div id="webhook-urls" hidden>
+          <div class="url-field">
+            <label for="published-url">Publish and update URL</label>
+            <div class="copy-row"><input id="published-url" type="text" readonly spellcheck="false"><button type="button" data-copy="published-url">Copy<span class="sr-only"> publish and update URL</span></button></div>
+          </div>
+          <div class="url-field">
+            <label for="unpublished-url">Unpublish and delete URL</label>
+            <div class="copy-row"><input id="unpublished-url" type="text" readonly spellcheck="false"><button type="button" data-copy="unpublished-url">Copy<span class="sr-only"> unpublish and delete URL</span></button></div>
+          </div>
+          <p id="copy-status" class="hint" role="status" aria-live="polite"></p>
+          <button type="button" id="clear-secret" class="text-button">Clear secret and URLs</button>
+        </div>
+      </li>
+      <li class="step">
+        <h2>Add four webhooks in Ghost</h2>
+        <p>Open <strong>Settings → Integrations</strong> in Ghost Admin. Create a custom integration called “Algolia search”, then add these webhooks.</p>
+        <table>
+          <thead><tr><th scope="col">Event</th><th scope="col">URL to use</th></tr></thead>
+          <tbody>
+            <tr><td>Post published</td><td>Publish and update</td></tr>
+            <tr><td>Published post edited</td><td>Publish and update</td></tr>
+            <tr><td>Post unpublished</td><td>Unpublish and delete</td></tr>
+            <tr><td>Post deleted</td><td>Unpublish and delete</td></tr>
+          </tbody>
+        </table>
+      </li>
+      <li class="step">
+        <h2>Check your index</h2>
+        <p>Publish a test post with a distinctive phrase and find it in your Algolia index. Edit the post to check updates, then unpublish it to check removal.</p>
+        <aside><strong>Starting with an empty index?</strong> <a href="https://github.com/TryGhost/algolia/tree/main/packages/algolia">Import your existing posts with the CLI</a> first. This requires a terminal. If your index already works, keep it; you do not need to reimport.</aside>
+      </li>
+    </ol>
+    <footer><h2>Future updates</h2><p>Rebuild this site in Netlify to receive compatible fixes and features, including if you use a fork. Major upgrades require your choice. <a href="https://github.com/TryGhost/algolia/tree/main/packages/algolia-netlify#releases-and-rollback">Manage updates</a></p></footer>
+  </main>
 </body>
 </html>

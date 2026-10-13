@@ -26,6 +26,7 @@
     "**/*.yaml",
     "**/*.md",
     "deployment/runtime/**",
-    "deployment/functions/**"
+    "deployment/functions/**",
+    "deployment/public/setup.js"
   ]
 }

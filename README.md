@@ -19,7 +19,11 @@ This pnpm monorepo contains five packages:
 
 ### Netlify Functions
 
-Connect this repository or a fork using the [Netlify setup guide](packages/algolia-netlify/README.md#deploy-the-netlify-functions). Rebuilds pick up patch and minor releases within the selected major version. Major upgrades require an explicit selection. Existing installations must follow the guide's authentication and build-settings transition before deploying.
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&base=deployment&fullConfiguration=true#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=)
+
+The button creates a copy in your GitHub account and guides you through configuration. Start with an existing Algolia index, or [import your posts with the CLI](packages/algolia/README.md). After deploying, open your Netlify site to get the webhook URLs for Ghost.
+
+See the [setup guide](USAGE.md) for the required credentials and [existing-installation instructions](packages/algolia-netlify/README.md#existing-installations) if search is already running. Rebuilds receive compatible patch and minor releases, including from forks. Major upgrades require your selection.
 
 ### CLI
 

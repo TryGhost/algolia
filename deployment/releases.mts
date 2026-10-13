@@ -1,7 +1,7 @@
 // Keep the default major fixed; users must opt into breaking changes.
 export const DEFAULT_RELEASE = '1';
 export const CATALOG_URL =
-    'https://raw.githubusercontent.com/TryGhost/algolia/main/deployment/releases.json';
+    'https://raw.githubusercontent.com/TryGhost/algolia/refs/heads/aileen/integration-releases/deployment/releases.json';
 const MAJOR = /^(0|[1-9]\d*)$/;
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
