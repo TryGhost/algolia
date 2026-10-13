@@ -2,8 +2,9 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
+import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
-import {mkdtemp, readdir, rm, writeFile, readFile} from 'node:fs/promises';
+import {access, mkdtemp, readdir, rm, writeFile, readFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -14,12 +15,14 @@ import {buildDeployment} from '../deployment/build.mts';
 const exec = promisify(execFile);
 const pnpmVersion = (await exec('pnpm', ['--version'])).stdout.trim();
 const directories: string[] = [];
+const functionsDirectory = (directory: string) =>
+    path.join(directory, 'runtime/packages/algolia-netlify/deployment-functions');
 const temporaryDirectory = async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'algolia-deployment-'));
     directories.push(directory);
     return directory;
 };
-const createReleaseRepository = async () => {
+const createReleaseRepository = async (nestedDependency = false) => {
     const repository = await temporaryDirectory();
     await writeFile(
         path.join(repository, 'package.json'),
@@ -47,13 +50,15 @@ const createReleaseRepository = async () => {
         await writeFile(path.join(repository, 'response.json'), JSON.stringify(value));
         await writeFile(
             path.join(repository, 'handler.mjs'),
-            `import {readFile} from 'node:fs/promises';
+            nestedDependency
+                ? `import value from 'deployment-runtime-fixture';\nexport default async () => new Response(value);`
+                : `import {readFile} from 'node:fs/promises';
 export default async () => new Response(JSON.parse(await readFile(new URL('./response.json', import.meta.url), 'utf8')));`
         );
         await writeFile(
             path.join(repository, 'build.mts'),
             `
-            import {mkdir, copyFile} from 'node:fs/promises';
+            import {mkdir, copyFile, writeFile} from 'node:fs/promises';
             if (process.env.ALGOLIA_API_KEY || process.env.NETLIFY_KEY) throw new Error('Credentials reached build');
             const directory = 'packages/algolia-netlify/dist/functions';
             await mkdir(directory, {recursive: true});
@@ -61,6 +66,12 @@ export default async () => new Response(JSON.parse(await readFile(new URL('./res
                 await copyFile('handler.mjs', directory + '/' + name + '.mjs');
             }
             await copyFile('response.json', directory + '/response.json');
+            if (${nestedDependency}) {
+                const dependency = 'packages/algolia-netlify/node_modules/deployment-runtime-fixture';
+                await mkdir(dependency, {recursive: true});
+                await writeFile(dependency + '/package.json', JSON.stringify({name: 'deployment-runtime-fixture', type: 'module', exports: './index.mjs'}));
+                await writeFile(dependency + '/index.mjs', ${JSON.stringify(`export default ${JSON.stringify(value)};`)});
+            }
         `
         );
         await exec('git', ['add', '.'], {cwd: repository});
@@ -89,7 +100,7 @@ const invoke = async (
     configuredKey: string | null = 'test-key',
     name: 'post-published' | 'post-unpublished' = 'post-published'
 ) => {
-    const entry = pathToFileURL(path.join(directory, `functions/${name}.mts`)).href;
+    const entry = pathToFileURL(path.join(functionsDirectory(directory), `${name}.mts`)).href;
     const environment: NodeJS.ProcessEnv = {...process.env, CONTEXT: 'production'};
     if (configuredKey === null) {
         delete environment.NETLIFY_KEY;
@@ -262,7 +273,7 @@ it('stops on a changed dependency manifest instead of resolving new dependencies
             offline: true
         })
     ).rejects.toMatchObject({stderr: expect.stringContaining('ERR_PNPM_OUTDATED_LOCKFILE')});
-    expect(await readdir(directory)).not.toContain('functions');
+    await expect(access(functionsDirectory(directory))).rejects.toMatchObject({code: 'ENOENT'});
 }, 30000);
 
 it('reports an invalid CLI selection without echoing configuration', async () => {
@@ -395,7 +406,7 @@ it.each([null, 'npm@12.11.0'])(
                 offline: true
             })
         ).rejects.toThrow('Use the exact pnpm version');
-        expect(await readdir(directory)).not.toContain('functions');
+        await expect(access(functionsDirectory(directory))).rejects.toMatchObject({code: 'ENOENT'});
     }
 );
 
@@ -419,3 +430,86 @@ it('builds a bundled exact candidate without requiring the shared catalog', asyn
         commit: revision
     });
 });
+
+it.each(['deploy-preview', 'production'])(
+    'packages the selected runtime dependencies into an isolated %s archive',
+    async context => {
+        const {repository, commit} = await createReleaseRepository(true);
+        const revision = await commit('packaged runtime');
+        const directory = await temporaryDirectory();
+        await buildDeployment({
+            directory,
+            repository,
+            releases: {'1.0.0': revision},
+            version: '1.0.0',
+            context,
+            offline: true
+        });
+        const netlifyRequire = createRequire(
+            new URL(
+                '../packages/algolia-netlify/node_modules/netlify-cli/package.json',
+                import.meta.url
+            )
+        );
+        const bundler = pathToFileURL(netlifyRequire.resolve('@netlify/zip-it-and-ship-it')).href;
+        const archives = await temporaryDirectory();
+        await exec(process.execPath, [
+            '--input-type=module',
+            '-e',
+            `
+            const {zipFunctions} = await import(process.argv[1]);
+            await zipFunctions(process.argv[2], process.argv[3], {basePath: process.argv[4], repositoryRoot: process.argv[4], config: {'*': {nodeVersion: '24'}}});
+        `,
+            bundler,
+            functionsDirectory(directory),
+            archives,
+            directory
+        ]);
+        for (const name of ['post-published', 'post-unpublished']) {
+            const extracted = await temporaryDirectory();
+            await exec('unzip', ['-q', path.join(archives, name + '.zip'), '-d', extracted]);
+            const entry = (await readdir(extracted, {recursive: true})).find(
+                file => path.basename(file) === name + '.mjs'
+            );
+            if (!entry) {
+                throw new Error('Missing packaged handler');
+            }
+            const result = await exec(
+                process.execPath,
+                [
+                    '--input-type=module',
+                    '-e',
+                    `
+                const {default: handler} = await import(process.argv[1]);
+                const responses = [];
+                for (const key of [undefined, 'test-key']) {
+                    if (key === undefined) delete process.env.NETLIFY_KEY;
+                    else process.env.NETLIFY_KEY = key;
+                    for (const query of ['', '?key=test-key']) {
+                        const response = await handler(new Request('https://example.invalid/' + query));
+                        responses.push({status: response.status, body: await response.text()});
+                    }
+                }
+                console.log(JSON.stringify(responses));
+            `,
+                    pathToFileURL(path.join(extracted, entry)).href
+                ],
+                {cwd: extracted}
+            );
+            expect(JSON.parse(result.stdout)).toEqual(
+                context === 'production'
+                    ? [
+                          {status: 503, body: 'Webhook authentication is not configured'},
+                          {status: 503, body: 'Webhook authentication is not configured'},
+                          {status: 401, body: 'Unauthorized'},
+                          {status: 200, body: 'packaged runtime'}
+                      ]
+                    : Array.from({length: 4}, () => ({
+                          status: 403,
+                          body: 'Indexing is disabled outside production'
+                      }))
+            );
+        }
+    },
+    30000
+);

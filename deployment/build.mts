@@ -16,6 +16,7 @@ export type DeploymentOptions = {
     directory: string;
     version?: string;
     context?: string;
+    siteUrl?: string;
     repository?: string;
     releases?: Readonly<Record<string, string>>;
     offline?: boolean;
@@ -65,7 +66,9 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
     const {version, commit} = selectRelease(selection, releases);
 
     const runtime = path.join(options.directory, 'runtime');
-    const functions = path.join(options.directory, 'functions');
+    // Keep generated entrypoints beside the selected package's dependencies. Netlify
+    // hoists bare imports while compiling native handlers, then traces from this location.
+    const functions = path.join(runtime, 'packages/algolia-netlify/deployment-functions');
     await rm(functions, {recursive: true, force: true});
     await rm(runtime, {recursive: true, force: true});
     await mkdir(runtime, {recursive: true});
@@ -112,7 +115,8 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
     await mkdir(publicDirectory, {recursive: true});
     await writeFile(
         path.join(publicDirectory, 'setup.js'),
-        stripTypeScriptTypes(await readFile(new URL('./setup.mts', import.meta.url), 'utf8'))
+        stripTypeScriptTypes(await readFile(new URL('./setup.mts', import.meta.url), 'utf8')) +
+            `\ninitializeSetup(${JSON.stringify({production: options.context === 'production', siteUrl: options.siteUrl})});\n`
     );
 
     await copyFile(
@@ -124,12 +128,12 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
         await access(path.join(runtime, 'packages/algolia-netlify/dist/functions', `${name}.mjs`));
         await writeFile(
             path.join(functions, `${name}.mts`),
-            `import {authorizeDeployment} from '../runtime/deployment-guard.mts';
+            `import {authorizeDeployment} from '../../../deployment-guard.mts';
 export default async function handler(request: Request): Promise<Response> {
     if (${JSON.stringify(options.context !== 'production')}) return new Response('Indexing is disabled outside production', {status: 403});
     const denied = authorizeDeployment(request);
     if (denied) return denied;
-    const {default: selected} = await import('../runtime/packages/algolia-netlify/dist/functions/${name}.mjs');
+    const {default: selected} = await import('../dist/functions/${name}.mjs');
     return selected(request);
 }
 `
@@ -146,7 +150,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
         await buildDeployment({
             directory: fileURLToPath(new URL('.', import.meta.url)),
             version: process.env.ALGOLIA_INTEGRATION_VERSION,
-            context: process.env.CONTEXT
+            context: process.env.CONTEXT,
+            siteUrl: process.env.URL
         });
         const release = JSON.parse(
             await readFile(new URL('./release.json', import.meta.url), 'utf8')

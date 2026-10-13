@@ -18,7 +18,7 @@ If you already have a fork, sync it with this repository once to include the dep
 
 ## Connect Ghost
 
-1. Open the published site's main URL after deployment finishes.
+1. Open the published site's main URL after deployment finishes. Preview deployments cannot connect webhooks.
 2. Enter the same webhook secret. The page generates your webhook URLs in your browser.
 3. In Ghost Admin, open **Settings → Integrations**, create a custom integration, and add a webhook for each event:
 

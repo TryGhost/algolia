@@ -1,7 +1,7 @@
 [build]
   base = "deployment"
   command = "node build.mts"
-  functions = "functions"
+  functions = "runtime/packages/algolia-netlify/deployment-functions"
   publish = "public"
 
 [build.environment]
