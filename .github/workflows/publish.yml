@@ -48,6 +48,9 @@ jobs:
           echo "npm $npm_version"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install deployment dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        working-directory: deployment
       - name: Run release preflight
         run: |
           pnpm test:coverage
@@ -95,3 +98,24 @@ jobs:
             args+=(--dry-run)
           fi
           pnpm nx "${args[@]}"
+
+  promote-netlify:
+    name: Promote Netlify integration
+    needs: publish
+    if: github.event_name != 'workflow_dispatch' || !inputs['dry-run']
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Promote the published Netlify package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/promote-netlify-release.mts

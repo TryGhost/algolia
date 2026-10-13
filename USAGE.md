@@ -33,6 +33,6 @@ Keep these URLs private: they contain your webhook secret. Publish a test post, 
 
 ## Updates
 
-Rebuild in Netlify to receive the latest compatible `1.x` release. This works with a repository copy or fork, without syncing it for routine runtime updates. A major upgrade requires setting `ALGOLIA_INTEGRATION_VERSION` to the new major and rebuilding. Set an exact version to pin or roll back the code; rollback does not undo index changes.
+Rebuild in Netlify to receive the latest compatible `0.x` release. This works with a repository copy or fork, without syncing it for routine runtime updates. Netlify uses the same versions as `@tryghost/algolia-netlify` on npm. A major upgrade requires setting `ALGOLIA_INTEGRATION_VERSION` to the new major and rebuilding. Set an exact version to pin or roll back the code; rollback does not undo index changes.
 
 See the [Netlify guide](https://github.com/TryGhost/algolia/blob/main/packages/algolia-netlify/README.md#existing-installations) when upgrading an existing installation.

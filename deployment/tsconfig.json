@@ -16,6 +16,7 @@
   },
   "include": [
     "*.mts",
+    "../scripts/*.mts",
     "../test/deployment.acceptance.test.mts",
     "../test/setup.acceptance.test.mts"
   ]

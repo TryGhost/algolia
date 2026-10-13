@@ -21,6 +21,7 @@ export default defineConfig({
             },
             include: [
                 'deployment/*.mts',
+                'scripts/*.mts',
                 'packages/*/index.js',
                 'packages/*/lib/**/*.js',
                 'packages/algolia/bin/**/*.js',

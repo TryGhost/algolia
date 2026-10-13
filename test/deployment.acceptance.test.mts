@@ -226,13 +226,13 @@ it('updates within the default major while leaving major upgrades explicit', asy
     await buildDeployment({
         directory,
         repository,
-        releases: {'1.0.0': first, '1.0.2': first, '1.0.10': second, '2.0.0': first},
+        releases: {'0.0.0': first, '0.0.2': first, '0.0.10': second, '1.0.0': first},
         context: 'production'
     });
     expect(await invoke(directory)).toEqual({status: 200, body: 'new release'});
     expect(JSON.parse(await readFile(path.join(directory, 'release.json'), 'utf8'))).toEqual({
-        selection: '1',
-        version: '1.0.10',
+        selection: '0',
+        version: '0.0.10',
         commit: second
     });
 }, 30000);
@@ -288,103 +288,220 @@ it('reports an invalid CLI selection without echoing configuration', async () =>
     });
 });
 
-it('discovers compatible releases from the shared catalog on every rebuild', async () => {
+it('discovers stable package releases across pages and loads the selected manifest', async () => {
     const {repository, commit} = await createReleaseRepository();
-    const first = await commit('first runtime');
-    const patch = await commit('patched runtime');
-    const minor = await commit('minor runtime');
-    const major = await commit('major runtime');
-    let catalog: Record<string, string> = {'1.0.0': first};
-    const server = createServer((_request, response) => {
+    const revision = await commit('released runtime');
+    const directory = await temporaryDirectory();
+    const requests: string[] = [];
+    const tag = '@tryghost/algolia-netlify@0.5.0';
+    const assetPath = `/TryGhost/algolia/releases/download/${encodeURIComponent(tag).replaceAll('%40', '@')}/netlify-release.json`;
+    const server = createServer((request, response) => {
+        requests.push(request.url ?? '');
         response.setHeader('content-type', 'application/json');
-        response.end(JSON.stringify(catalog));
+        if (request.url === `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`) {
+            response.end(JSON.stringify({sha: revision}));
+            return;
+        }
+        if (request.url === assetPath) {
+            response.end(JSON.stringify({version: '0.5.0', commit: revision}));
+            return;
+        }
+        const page = new URL(request.url ?? '', 'http://localhost').searchParams.get('page');
+        if (page === '1') {
+            response.setHeader('link', `<${origin}/releases?per_page=100&page=2>; rel="next"`);
+            response.end(
+                JSON.stringify([{tag_name: 'unrelated', draft: false, prerelease: false}])
+            );
+        } else {
+            response.end(
+                JSON.stringify([
+                    {tag_name: '@tryghost/algolia-netlify@9.0.0', draft: true},
+                    {tag_name: '@tryghost/algolia-netlify@0.9.0-rc.1', prerelease: true},
+                    {
+                        tag_name: tag,
+                        target_commitish: 'main',
+                        draft: false,
+                        prerelease: false,
+                        assets: [
+                            {name: 'netlify-release.json', browser_download_url: origin + assetPath}
+                        ]
+                    }
+                ])
+            );
+        }
     });
     server.listen(0, '127.0.0.1');
     await once(server, 'listening');
     const address = server.address();
     if (!address || typeof address === 'string') {
-        throw new Error('Missing catalog address');
+        throw new Error('Missing server address');
     }
-    const directory = await temporaryDirectory();
-    const options = {
-        directory,
-        repository,
-        offline: true,
-        context: 'production',
-        catalogUrl: `http://127.0.0.1:${address.port}`
-    };
+    const origin = `http://127.0.0.1:${address.port}`;
     try {
-        await buildDeployment({...options, version: '1'});
-        expect(await invoke(directory)).toEqual({status: 200, body: 'first runtime'});
-        catalog = {...catalog, '1.0.1': patch};
-        await buildDeployment({...options, version: '1'});
-        expect(await invoke(directory)).toEqual({status: 200, body: 'patched runtime'});
-        catalog = {...catalog, '1.1.0': minor, '2.0.0': major};
-        await buildDeployment({...options, version: '1'});
-        expect(await invoke(directory)).toEqual({status: 200, body: 'minor runtime'});
-        await buildDeployment({...options, version: '2'});
-        expect(await invoke(directory)).toEqual({status: 200, body: 'major runtime'});
-        await buildDeployment({...options, version: '1.0.1'});
-        expect(await invoke(directory)).toEqual({status: 200, body: 'patched runtime'});
+        await buildDeployment({
+            directory,
+            repository,
+            releasesUrl: origin + '/releases',
+            offline: true,
+            context: 'production'
+        });
+        expect(await invoke(directory)).toEqual({status: 200, body: 'released runtime'});
+        expect(JSON.parse(await readFile(path.join(directory, 'release.json'), 'utf8'))).toEqual({
+            selection: '0',
+            version: '0.5.0',
+            commit: revision
+        });
+        expect(requests).toEqual([
+            '/releases?per_page=100&page=1',
+            '/releases?per_page=100&page=2',
+            `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`,
+            assetPath
+        ]);
     } finally {
         server.closeAllConnections();
-        await new Promise<void>((resolve, reject) => {
-            server.close(closeError => {
-                if (closeError) {
-                    reject(closeError);
-                } else {
-                    resolve();
-                }
-            });
+        await new Promise<void>(resolve => {
+            server.close(() => resolve());
         });
     }
-}, 60000);
+}, 30000);
 
 it.each([
     {status: 503, body: '{}', error: 'Could not load'},
     {status: 200, body: 'invalid json', error: 'Could not load'},
-    {status: 200, body: '[]', error: 'Invalid integration release catalog'},
-    {status: 200, body: 'null', error: 'Invalid integration release catalog'},
-    {status: 200, body: '{"1.0.0-rc.1":"main"}', error: 'stable versions'},
-    {status: 200, body: '{"1.0.0":42}', error: 'full commit IDs'},
-    {status: 200, body: '{"1.0.0":"main"}', error: 'full commit IDs'},
-    {status: 200, body: '{}', error: 'Unknown integration release'}
-])(
-    'stops before building when the shared catalog is unusable: $body / $status',
-    async ({status, body, error}) => {
-        const server = createServer((_request, response) => {
-            response.writeHead(status).end(body);
-        });
-        server.listen(0, '127.0.0.1');
-        await once(server, 'listening');
-        const address = server.address();
-        if (!address || typeof address === 'string') {
-            throw new Error('Missing catalog address');
-        }
-        const directory = await temporaryDirectory();
-        try {
-            await expect(
-                buildDeployment({
-                    directory,
-                    version: '1',
-                    catalogUrl: `http://127.0.0.1:${address.port}`
-                })
-            ).rejects.toThrow(error);
-            expect(await readdir(directory)).toEqual([]);
-        } finally {
-            server.closeAllConnections();
-            await new Promise<void>((resolve, reject) => {
-                server.close(closeError => {
-                    if (closeError) {
-                        reject(closeError);
-                    } else {
-                        resolve();
-                    }
-                });
-            });
-        }
+    {status: 200, body: 'null', error: 'Invalid GitHub'},
+    {status: 200, body: '{}', error: 'Invalid GitHub'},
+    {status: 200, body: '[]', error: 'Unknown integration release'}
+])('fails closed on unusable release discovery: $body / $status', async ({status, body, error}) => {
+    const server = createServer((_request, response) => response.writeHead(status).end(body));
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+        throw new Error('Missing server address');
     }
-);
+    const directory = await temporaryDirectory();
+    // An old local catalog must never bypass published release verification.
+    await writeFile(
+        path.join(directory, 'releases.json'),
+        JSON.stringify({'0.5.0': 'a'.repeat(40)})
+    );
+    try {
+        await expect(
+            buildDeployment({
+                directory,
+                version: '0.5.0',
+                releasesUrl: `http://127.0.0.1:${address.port}`
+            })
+        ).rejects.toThrow(error);
+        expect(await readdir(directory)).toEqual(['releases.json']);
+    } finally {
+        server.closeAllConnections();
+        await new Promise<void>(resolve => {
+            server.close(() => resolve());
+        });
+    }
+});
+
+it.each([
+    'missing asset',
+    'wrong origin',
+    'wrong tag path',
+    'invalid tag commit',
+    'mismatched version',
+    'mismatched commit',
+    'malformed manifest'
+])('rejects the latest selected release with %s without downgrading', async failure => {
+    const requests: string[] = [];
+    const revision = 'a'.repeat(40);
+    const tag = '@tryghost/algolia-netlify@0.5.0';
+    const assetPath = `/TryGhost/algolia/releases/download/${encodeURIComponent(tag)}/netlify-release.json`;
+    const server = createServer((request, response) => {
+        requests.push(request.url ?? '');
+        response.setHeader('content-type', 'application/json');
+        if (request.url === `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`) {
+            response.end(
+                JSON.stringify({sha: failure === 'invalid tag commit' ? 'main' : revision})
+            );
+            return;
+        }
+        if (request.url === assetPath) {
+            response.end(
+                failure === 'malformed manifest'
+                    ? '{'
+                    : JSON.stringify({
+                          version: failure === 'mismatched version' ? '0.4.0' : '0.5.0',
+                          commit: failure === 'mismatched commit' ? 'b'.repeat(40) : revision
+                      })
+            );
+            return;
+        }
+        response.end(
+            JSON.stringify([
+                {
+                    tag_name: '@tryghost/algolia-netlify@0.4.0',
+                    draft: false,
+                    prerelease: false,
+                    target_commitish: revision,
+                    assets: []
+                },
+                {
+                    tag_name: tag,
+                    draft: false,
+                    prerelease: false,
+                    target_commitish: failure === 'invalid tag commit' ? 'main' : revision,
+                    assets:
+                        failure === 'missing asset'
+                            ? []
+                            : [
+                                  {
+                                      name: 'netlify-release.json',
+                                      browser_download_url:
+                                          failure === 'wrong origin'
+                                              ? 'https://example.invalid' + assetPath
+                                              : origin +
+                                                (failure === 'wrong tag path'
+                                                    ? assetPath.replace('0.5.0', '0.4.0')
+                                                    : assetPath)
+                                  }
+                              ]
+                }
+            ])
+        );
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+        throw new Error('Missing server address');
+    }
+    const origin = `http://127.0.0.1:${address.port}`;
+    const directory = await temporaryDirectory();
+    try {
+        await expect(
+            buildDeployment({directory, releasesUrl: origin + '/releases'})
+        ).rejects.toThrow(/integration release manifest/);
+        expect(await readdir(directory)).toEqual([]);
+        expect(requests).toEqual(
+            ['mismatched version', 'mismatched commit', 'malformed manifest'].includes(failure)
+                ? [
+                      '/releases?per_page=100&page=1',
+                      `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`,
+                      assetPath
+                  ]
+                : failure === 'invalid tag commit'
+                  ? [
+                        '/releases?per_page=100&page=1',
+                        `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`
+                    ]
+                  : ['/releases?per_page=100&page=1']
+        );
+    } finally {
+        server.closeAllConnections();
+        await new Promise<void>(resolve => {
+            server.close(() => resolve());
+        });
+    }
+});
 
 it.each([null, 'npm@12.11.0'])(
     'rejects a runtime without a supported package manager pin: %j',
@@ -409,27 +526,6 @@ it.each([null, 'npm@12.11.0'])(
         await expect(access(functionsDirectory(directory))).rejects.toMatchObject({code: 'ENOENT'});
     }
 );
-
-it('builds a bundled exact candidate without requiring the shared catalog', async () => {
-    const {repository, commit} = await createReleaseRepository();
-    const revision = await commit('candidate runtime');
-    const directory = await temporaryDirectory();
-    await writeFile(path.join(directory, 'releases.json'), JSON.stringify({'1.2.0': revision}));
-    await buildDeployment({
-        directory,
-        repository,
-        version: '1.2.0',
-        context: 'production',
-        offline: true,
-        catalogUrl: 'http://127.0.0.1:1'
-    });
-    expect(await invoke(directory)).toEqual({status: 200, body: 'candidate runtime'});
-    expect(JSON.parse(await readFile(path.join(directory, 'release.json'), 'utf8'))).toEqual({
-        selection: '1.2.0',
-        version: '1.2.0',
-        commit: revision
-    });
-});
 
 it.each(['deploy-preview', 'production'])(
     'packages the selected runtime dependencies into an isolated %s archive',

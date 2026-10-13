@@ -53,8 +53,8 @@ Package-specific development and verification commands are documented in each pa
 
 ## Publishing
 
-The repository uses Nx to version packages independently. For routine releases, run one of the
-root aliases from a clean checkout of `main`:
+From a clean checkout of `main`, run `pnpm ship` and choose the version bump. Nx versions the
+packages independently. You can also choose the bump directly:
 
 ```sh
 pnpm ship:patch
@@ -71,7 +71,7 @@ pnpm ship patch --projects=@tryghost/algolia
 
 `ship` runs the test suite, updates the selected versions and their internal dependants, creates the
 release commit and tags, then pushes them upstream. The [`Publish` workflow](.github/workflows/publish.yml)
-publishes those versions through npm trusted publishing. Never run `npm publish` by hand.
+publishes those versions through npm trusted publishing, then promotes the Netlify package version as a GitHub Release for deployment updates. Netlify and npm use the same version. See the [deployment policy](docs/netlify-deployment.md) for release prerequisites and verification. Never run `npm publish` by hand.
 
 ---
 

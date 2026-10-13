@@ -74,4 +74,24 @@ describe('Release guard', () => {
         expect(publishBlock).toContain('args+=(--dry-run)');
         expect(publishBlock).toContain('pnpm nx "${args[@]}"');
     });
+    it('promotes Netlify releases only after successful non-dry-run npm publication', async () => {
+        const workflow = await readFile(
+            path.join(workspaceDirectory, '.github/workflows/publish.yml'),
+            'utf8'
+        );
+        const promotion = workflow.slice(workflow.indexOf('  promote-netlify:'));
+        expect(promotion).toContain('needs: publish');
+        expect(promotion).toContain(
+            "github.event_name != 'workflow_dispatch' || !inputs['dry-run']"
+        );
+        expect(promotion).toContain('contents: write');
+        expect(promotion).not.toContain('id-token: write');
+        expect(promotion).toContain('fetch-depth: 0');
+        expect(promotion).toContain('persist-credentials: false');
+        expect(promotion).toContain('GH_TOKEN: ${{ github.token }}');
+        expect(promotion).toContain('run: node scripts/promote-netlify-release.mts');
+        expect(workflow.slice(0, workflow.indexOf('  promote-netlify:'))).toContain(
+            'contents: read'
+        );
+    });
 });
