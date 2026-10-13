@@ -94,4 +94,29 @@ describe('Release guard', () => {
             'contents: read'
         );
     });
+    it('isolates branch prereleases and validates every queued version before publishing', async () => {
+        const workflow = await readFile(
+            path.join(workspaceDirectory, '.github/workflows/publish.yml'),
+            'utf8'
+        );
+        expect(workflow).toContain('prerelease-tag:');
+        expect(workflow).toContain(
+            "github.event_name == 'workflow_dispatch' && inputs['prerelease-tag'] != ''"
+        );
+        expect(workflow).toContain(
+            "PRERELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs['prerelease-tag'] || '' }}"
+        );
+        const channelValidation = workflow.indexOf('run: node scripts/release-channel.mts');
+        const packageValidation = workflow.indexOf('node scripts/release-channel.mts "$version"');
+        const queue = workflow.indexOf('to_publish+=("$name")');
+        const publish = workflow.indexOf('pnpm nx "${args[@]}"');
+        expect(channelValidation).toBeGreaterThan(-1);
+        expect(packageValidation).toBeGreaterThan(channelValidation);
+        expect(queue).toBeGreaterThan(packageValidation);
+        expect(workflow).toContain(
+            'elif grep -q \'E404\' "$registry_error"; then\n              node scripts/release-channel.mts "$version"'
+        );
+        expect(publish).toBeGreaterThan(queue);
+        expect(workflow).toContain('args+=("--tag=$PRERELEASE_TAG")');
+    });
 });

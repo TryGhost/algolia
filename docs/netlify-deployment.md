@@ -6,7 +6,7 @@ The root `netlify.toml` runs `pnpm build` in `deployment`: it compiles Tailwind 
 
 Netlify uses the `@tryghost/algolia-netlify` npm package version. `ALGOLIA_INTEGRATION_VERSION` accepts a major or an exact published version. Unset or `0` selects the newest stable `0.x` release; `1` explicitly opts into major 1. The default major is permanently `0`. Patch and minor releases must preserve configuration and index contracts, including within `0.x`. Incompatible changes or required migrations need a major release.
 
-The loader reads published, stable GitHub Releases tagged `@tryghost/algolia-netlify@VERSION` and their `netlify-release.json` assets. Each asset records the version and full source commit. Draft and prerelease releases are excluded. Invalid metadata, unavailable releases, and unsupported selections fail the build; branches, ranges, and `latest` are unsupported.
+The loader reads published GitHub Releases tagged `@tryghost/algolia-netlify@VERSION` and their `netlify-release.json` assets. Each asset records the version and full source commit. Drafts are excluded. Unset and major selections ignore prereleases; an exact prerelease version explicitly opts into testing it. Invalid metadata, unavailable releases, and unsupported selections fail the build; branches, ranges, and `latest` are unsupported.
 
 The loader fetches the resolved commit from TryGhost/algolia into `deployment/runtime`, verifies it, and installs with that revision's exact pnpm version and frozen lockfile. Dependency lifecycle scripts are disabled. `deployment/release.json` records the selection, resolved version, and commit. Generated wrappers retain the existing function URLs and add authentication and deployment-context guards.
 
@@ -25,7 +25,9 @@ pnpm ship patch --projects=@tryghost/algolia-netlify --dry-run
 pnpm ship patch --projects=@tryghost/algolia-netlify
 ```
 
-The current package version is `0.4.6`, but no deployable GitHub Release exists yet. After this change merges, the first successful Netlify `pnpm ship` release is required before the customer deployment button can work. Merging source changes alone does not publish a runtime update.
+The current stable package version is `0.4.6`, but no deployable stable GitHub Release exists yet. After this change merges, the first successful Netlify `pnpm ship` release is required before the main customer deployment button can work. Merging source changes alone does not publish a runtime update.
+
+To test before merging, publish an isolated prerelease through the manual Publish workflow on the candidate branch. Set `prerelease-tag` to `pr-333` (its default is empty) and disable dry-run only when ready to publish. Non-main publication requires this explicit input, and every queued version must be a prerelease. npm uses `pr-333`, leaving `latest` unchanged; the matching GitHub Release is marked as a prerelease.
 
 ## Deployment boundaries
 
@@ -45,13 +47,17 @@ References: [Netlify monorepo configuration](https://docs.netlify.com/build/conf
 
 ### Test the customer installation
 
-After the first release completes, use the [Deploy to Netlify button](../README.md#netlify-functions) with a separate Netlify site, Algolia test index, and index-restricted credentials. Keep customer accounts and production indexes out of this verification.
+The candidate `0.4.7-pr.333.1` must be published before this test button works:
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&branch=aileen%2Fsafe-netlify-deployments&base=deployment#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=&ALGOLIA_INTEGRATION_VERSION=0.4.7-pr.333.1)
+
+Use a separate test account, Netlify site, Algolia index, and index-restricted credentials. The button selects the candidate and supplies the build settings. Use the test site's production deployment so indexing can run; deploy previews remain disabled. Keep customer accounts and production indexes out of this verification.
 
 1. Follow [the setup guide](../USAGE.md), using a new webhook secret.
-2. Check the build’s resolved version and commit against the newest stable Netlify GitHub Release in major `0`. Open the setup page and copy its generated URLs into a test Ghost integration.
+2. Check that the build resolves `0.4.7-pr.333.1` and matches its GitHub Release commit. Open the setup page and copy its generated URLs into a test Ghost integration.
 3. Publish, edit, and unpublish a test post, checking the resulting Algolia records. Missing or incorrect query keys must return `401`; removing the configured secret and redeploying must return `503`.
 4. Confirm preview functions return `403` without changing the index, and the preview setup page disables URL generation. Production deploy permalinks must generate webhook URLs using Netlify’s canonical site URL.
-5. Repeat from a fork without manual build overrides and check that it selects the same release.
+5. Repeat from a fork with the same exact prerelease selection and no manual build overrides.
 
 For an injection-only check, set `ALGOLIA_ACTIVE=FALSE` in the template. Matching-key requests to both functions should return `Algolia is not activated`; missing or incorrect keys should return `401`. Restore `TRUE` and redeploy before indexing tests.
 

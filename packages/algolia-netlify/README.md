@@ -45,7 +45,7 @@ If you previously set base, package-directory, or build-command overrides in Net
 
 Leave `ALGOLIA_INTEGRATION_VERSION` unset, or set it to `0`, to receive the latest stable `0.x` release on each rebuild. Major upgrades require an explicit change, such as `1`. Running deployments stay unchanged until rebuilt. Patch and minor releases preserve your configuration and index contracts, including within `0.x`.
 
-Netlify uses the same version as the `@tryghost/algolia-netlify` npm package. To select a major or pin an exact published version, set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, then redeploy. Builds select from the upstream [GitHub Releases](https://github.com/TryGhost/algolia/releases), so forks receive runtime updates without syncing. An unavailable release or invalid selection fails the build.
+Netlify uses the same version as the `@tryghost/algolia-netlify` npm package. To select a major or pin an exact published version, set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, then redeploy. Builds select from the upstream [GitHub Releases](https://github.com/TryGhost/algolia/releases), so forks receive runtime updates without syncing. An unavailable release or invalid selection fails the build. Automatic updates exclude prereleases; testing one requires its exact version.
 
 To roll back, pin the previous exact version and redeploy. The build records the selection, resolved version, and commit in `deployment/release.json`. Each release uses its pinned source commit, pnpm version, and frozen dependency lockfile.
 

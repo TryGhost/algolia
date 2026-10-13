@@ -1,4 +1,4 @@
-import {major, rcompare, valid} from 'semver';
+import {major, prerelease, rcompare, valid} from 'semver';
 
 // Keep the default major fixed; users must opt into breaking changes.
 export const DEFAULT_RELEASE = '0';
@@ -7,21 +7,22 @@ const MAJOR = /^(0|[1-9]\d*)$/;
 const COMMIT = /^[a-f0-9]{40}$/;
 const TAG_PREFIX = '@tryghost/algolia-netlify@';
 const MANIFEST = 'netlify-release.json';
-const stableVersion = (value: string): boolean =>
-    valid(value) === value && !value.includes('-') && !value.includes('+');
+const exactVersion = (value: string): boolean => valid(value) === value && !value.includes('+');
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export const validateSelection = (selection: string): void => {
-    if (!MAJOR.test(selection) && !stableVersion(selection)) {
-        throw new Error('Choose an integration major or exact stable version.');
+    if (!MAJOR.test(selection) && !exactVersion(selection)) {
+        throw new Error('Choose an integration major or exact version.');
     }
 };
 
 const selectedVersion = (selection: string, versions: string[]): string => {
     const selected = versions
         .filter(version =>
-            MAJOR.test(selection) ? String(major(version)) === selection : version === selection
+            MAJOR.test(selection)
+                ? prerelease(version) === null && String(major(version)) === selection
+                : version === selection
         )
         .toSorted(rcompare)[0];
     if (!selected) {
@@ -38,8 +39,8 @@ export const selectRelease = (
         throw new Error('Invalid integration release catalog.');
     }
     for (const [version, commit] of Object.entries(catalog)) {
-        if (!stableVersion(version) || typeof commit !== 'string' || !COMMIT.test(commit)) {
-            throw new Error('Release catalog requires stable versions and full commit IDs.');
+        if (!exactVersion(version) || typeof commit !== 'string' || !COMMIT.test(commit)) {
+            throw new Error('Release catalog requires exact versions and full commit IDs.');
         }
     }
     const version = selectedVersion(selection, Object.keys(catalog));
@@ -83,14 +84,13 @@ const publishedReleases = async (endpoint: URL): Promise<Map<string, Record<stri
             if (
                 !isRecord(release) ||
                 release.draft !== false ||
-                release.prerelease !== false ||
                 typeof release.tag_name !== 'string' ||
                 !release.tag_name.startsWith(TAG_PREFIX)
             ) {
                 continue;
             }
             const version = release.tag_name.slice(TAG_PREFIX.length);
-            if (!stableVersion(version)) {
+            if (!exactVersion(version) || release.prerelease !== (prerelease(version) !== null)) {
                 continue;
             }
             if (candidates.has(version)) {
@@ -141,7 +141,7 @@ const manifestUrl = (release: Record<string, unknown>, tag: string, endpoint: UR
     return assetUrl;
 };
 
-/** Discover only published stable package releases; the selected release must have a valid manifest. */
+/** Discover published package releases; the selected release must have a valid manifest. */
 export const discoverRelease = async (
     selection: string,
     releasesUrl = RELEASES_URL
