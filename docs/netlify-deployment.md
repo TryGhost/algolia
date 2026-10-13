@@ -1,6 +1,6 @@
 # Netlify deployment policy
 
-Existing root and package-directory deployments keep building their connected source revision with unchanged configuration and webhook authentication. They do not use release selection or require a stable GitHub Release. Merging this change does not opt existing sites into the new setup.
+Existing root and package-directory deployments keep building their connected source revision with unchanged configuration and webhook authentication. They do not use release selection or require a stable GitHub Release.
 
 The Deploy to Netlify button explicitly selects base directory `deployment`, whose `netlify.toml` runs `pnpm build`: it compiles Tailwind CSS, then runs `build.mts`. Existing sites can [migrate voluntarily](../packages/algolia-netlify/README.md#existing-installations). Set the production Functions secret and update Ghost's webhook URLs before switching the base directory.
 
@@ -22,7 +22,7 @@ Use the existing `pnpm ship` flow. Nx versions the selected packages, creates th
 
 Nx keeps its normal pre-1.0 bump behavior. When ready for the first major, select `1.0.0` explicitly.
 
-Before the first release, verify each of the five public packages trusts GitHub repository `TryGhost/algolia`, workflow filename `publish.yml`, for `npm publish`. These npm account settings need separate verification. Never replace a published Netlify release tag or manifest; reruns verify existing metadata and reject conflicts.
+Each public package must trust GitHub repository `TryGhost/algolia`, workflow filename `publish.yml`, for `npm publish`. Never replace a published Netlify release tag or manifest; reruns verify existing metadata and reject conflicts.
 
 For a Netlify-only release, preview the scoped command, then run it from a clean `main` checkout:
 
@@ -31,7 +31,7 @@ pnpm ship patch --projects=@tryghost/algolia-netlify --dry-run
 pnpm ship patch --projects=@tryghost/algolia-netlify
 ```
 
-The current stable package version is `0.4.6`, but no deployable stable GitHub Release exists yet. The first successful stable Netlify `pnpm ship` release is required before the main customer deployment button can work. Existing source deployments can rebuild before that release without changing configuration. Merging source changes alone does not publish a runtime update.
+Release-based deployments require a published GitHub Release for the selected version or major. Existing source deployments build independently of releases. Merging source changes does not publish a runtime update.
 
 For pre-merge development, follow [Testing a Netlify prerelease](testing-prereleases.md) to version, publish, deploy, and verify an isolated candidate. Ordinary customer updates ignore prereleases.
 
@@ -47,27 +47,15 @@ Code deployment must not migrate index data or settings. A release that changes 
 
 ## Hosted validation
 
-Hosted validation is pending. Before marking #331 complete, use a controlled Netlify site to verify runtime environment loading, packaged function URLs, authenticated publish and unpublish, preview isolation, and a release rollback. Local package and build tests do not establish hosted behavior.
-
-References: [Netlify monorepo configuration](https://docs.netlify.com/build/configure-builds/monorepos/), [Functions environment variables](https://docs.netlify.com/build/functions/environment-variables/), [build context](https://docs.netlify.com/build/configure-builds/environment-variables/).
+Use a dedicated Netlify site, a test Ghost site, and a separate Algolia index to verify runtime configuration, authenticated webhooks, preview isolation, and rollback. Follow [the prerelease testing guide](testing-prereleases.md) for the steps and expected results.
 
 ### Test the customer installation
 
-Use the published candidate [`0.4.7-pr.333.1`](https://github.com/TryGhost/algolia/releases/tag/%40tryghost/algolia-netlify%400.4.7-pr.333.1) to test this PR before merging:
+Generate a Deploy to Netlify link for the branch and exact release you want to test using [the deployment instructions](testing-prereleases.md#deploy-the-customer-flow). Test the production deployment of the dedicated site; previews intentionally disable indexing. Repeat the installation from a fork.
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&branch=aileen%2Fsafe-netlify-deployments&base=deployment#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=&ALGOLIA_INTEGRATION_VERSION=0.4.7-pr.333.1)
+Record results and incomplete checks in the pull request.
 
-Use a separate test account, Netlify site, Algolia index, and index-restricted credentials. The button selects the candidate and supplies the build settings. Use the test site's production deployment so indexing can run; deploy previews remain disabled. Keep customer accounts and production indexes out of this verification.
-
-1. Follow [the setup guide](../USAGE.md), using a new webhook secret.
-2. Check that the build resolves `0.4.7-pr.333.1` and matches its GitHub Release commit. Open the setup page and copy its generated URLs into a test Ghost integration.
-3. Publish, edit, and unpublish a test post, checking the resulting Algolia records. Missing or incorrect query keys must return `401`; removing the configured secret and redeploying must return `503`.
-4. Confirm preview functions return `403` without changing the index, and the preview setup page disables URL generation. Production deploy permalinks must generate webhook URLs using Netlify’s canonical site URL.
-5. Repeat from a fork with the same exact prerelease selection and no manual build overrides.
-
-For an authentication and disabled-index check, set `ALGOLIA_ACTIVE=FALSE` in the template. Matching-key requests to both functions should return `Algolia is not activated`; missing or incorrect keys should return `401`. Restore `TRUE` and redeploy before indexing tests.
-
-Verify upgrades and rollback against a second tested release before claiming hosted cross-version validation. Code rollback does not undo Algolia writes.
+References: [Netlify monorepo configuration](https://docs.netlify.com/build/configure-builds/monorepos/), [Functions environment variables](https://docs.netlify.com/build/functions/environment-variables/), [build context](https://docs.netlify.com/build/configure-builds/environment-variables/).
 
 ## Setup page styles
 

@@ -21,14 +21,17 @@ These checks run offline after installation. They cover release selection, publi
 
 ## Publish a candidate
 
-Commit your changes on the PR branch first. Choose an unused version in the form `BASE-pr.PR_NUMBER.SEQUENCE`. For example, the next candidate after `0.4.7-pr.333.1` is `0.4.7-pr.333.2`.
+Commit your changes on the PR branch first. Choose an unused version in the form `BASE-pr.PR_NUMBER.SEQUENCE`. Start the sequence at 1 and increment it for each published candidate.
 
-From that clean branch, set the values for your PR:
+From that clean branch, replace `MAJOR.MINOR.PATCH` with the intended stable version. The command reads the PR number from GitHub:
 
 ```sh
 candidate_branch=$(git branch --show-current)
-candidate_version=0.4.7-pr.333.2
-candidate_channel=pr-333
+candidate_base=MAJOR.MINOR.PATCH
+candidate_pr=$(gh pr view --repo TryGhost/algolia --json number --jq .number)
+candidate_sequence=1
+candidate_version="$candidate_base-pr.$candidate_pr.$candidate_sequence"
+candidate_channel="pr-$candidate_pr"
 
 pnpm ship "$candidate_version" --projects=@tryghost/algolia-netlify --dry-run
 pnpm ship "$candidate_version" --projects=@tryghost/algolia-netlify
@@ -62,7 +65,30 @@ The PR channel must point to your candidate and `latest` must be unchanged. The 
 
 ## Deploy the customer flow
 
-Use the [candidate Deploy button](netlify-deployment.md#test-the-customer-installation), updating its `branch` and `ALGOLIA_INTEGRATION_VERSION` values to your branch and exact candidate. Keep `base=deployment`. The button creates a repository copy, so push or sync subsequent setup changes into that copy before rebuilding.
+Generate a Deploy to Netlify link using the branch and version variables from the publication steps:
+
+```sh
+node --input-type=module - "$candidate_branch" "$candidate_version" <<'JS'
+const [branch, version] = process.argv.slice(2);
+const url = new URL('https://app.netlify.com/start/deploy');
+url.search = new URLSearchParams({
+    repository: 'https://github.com/TryGhost/algolia',
+    branch,
+    base: 'deployment'
+});
+url.hash = new URLSearchParams({
+    ALGOLIA_ACTIVE: 'FALSE',
+    ALGOLIA_APP_ID: '',
+    ALGOLIA_API_KEY: '',
+    ALGOLIA_INDEX: '',
+    NETLIFY_KEY: '',
+    ALGOLIA_INTEGRATION_VERSION: version
+});
+console.log(url.href);
+JS
+```
+
+Open the printed link to start the guided deployment. It creates a repository copy, so push or sync subsequent setup changes into that copy before rebuilding.
 
 Follow [the customer setup guide](../USAGE.md) with test credentials. Start with `ALGOLIA_ACTIVE=FALSE` to verify configuration without indexing. For an existing dedicated test site, keep base directory `deployment` and set the exact candidate in `ALGOLIA_INTEGRATION_VERSION` for production Builds. Algolia credentials and `NETLIFY_KEY` must be available to production Functions. Redeploy after environment changes.
 
@@ -81,6 +107,6 @@ Publish a second candidate with a new sequence, select its exact version, and re
 
 Repeat the install from a fork with base `deployment` and the exact candidate version. Also keep the legacy root/package build checks passing: existing installations must remain independent of release selection.
 
-Record the tested branch commit, candidate version, runtime commit, Netlify deploy ID, and results in the PR. Leave hosted checks marked pending until they have actually run. Prereleases require an exact selection; ordinary major selections ignore them.
+Record the tested branch commit, candidate version, runtime commit, Netlify deploy ID, and results in the PR. Keep incomplete checks in the PR. Prereleases require an exact selection; ordinary major selections ignore them.
 
 Before merging the PR, restore any candidate package versions to their current stable versions on `main`. Keep published prerelease tags and assets unchanged; exact candidate deployments continue using their tagged source. Create the next stable release through `pnpm ship` after merge.

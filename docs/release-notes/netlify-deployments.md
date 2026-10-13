@@ -1,4 +1,4 @@
-# Optional Netlify deployment selection (unreleased)
+# Optional Netlify deployment selection
 
 Existing root and package-directory deployments keep their build configuration, webhook URLs, and authentication behavior. No new environment variables or published deployment release are required to keep them working.
 
@@ -10,6 +10,4 @@ The new deployment setup is an explicit opt-in through the Deploy to Netlify but
 - Only the opt-in deployment wrappers require a configured `NETLIFY_KEY` and one matching query key. Configure the secret and update Ghost's webhook URLs before switching the base directory. Missing server configuration returns `503`; invalid request keys return `401`.
 - Opt-in preview and branch-deploy handlers return `403` before loading the runtime. Production runtime credentials are excluded from build subprocesses.
 
-Publishing still upserts without deleting existing records first, and unpublishing deletes by slug. This change requires no index settings or data migration. Stale-fragment cleanup remains deferred. Code rollback does not undo accepted index writes.
-
-The first stable Netlify package release is required for the new customer button's default selection. Existing source deployments remain independent of that release; the explicit prerelease supports testing the new setup before merge. Hosted preview isolation and cross-version rollback validation remain pending.
+Publishing still upserts without deleting existing records first, and unpublishing deletes by slug. This change requires no index settings or data migration. Publishing does not remove stale fragments. Code rollback does not undo accepted index writes.
