@@ -93,7 +93,7 @@ export default async () => new Response(JSON.parse(await readFile(new URL('./res
             path.join(repository, 'build.mts'),
             `
             import {mkdir, copyFile, writeFile} from 'node:fs/promises';
-            if (process.env.ALGOLIA_API_KEY || process.env.NETLIFY_KEY) throw new Error('Credentials reached build');
+            if (process.env.ALGOLIA_API_KEY || process.env.NETLIFY_KEY || process.env.GITHUB_TOKEN) throw new Error('Credentials reached build');
             const directory = 'packages/algolia-netlify/dist/functions';
             await mkdir(directory, {recursive: true});
             for (const name of ['post-published', 'post-unpublished']) {
@@ -160,6 +160,7 @@ const invoke = async (
 };
 afterEach(async () => {
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
     await Promise.all(
         directories.splice(0).map(directory => rm(directory, {recursive: true, force: true}))
     );
@@ -906,3 +907,60 @@ it('keeps existing package-base deployments on their source functions', async ()
         functions: path.join(repositoryRoot, 'packages/algolia-netlify/functions')
     });
 });
+
+it.each([undefined, 'release-test-token'])(
+    'restricts optional GitHub authentication to API requests with token %j',
+    async token => {
+        const {repository, commit} = await createReleaseRepository();
+        const revision = await commit('authenticated release');
+        const directory = await temporaryDirectory();
+        const tag = '@tryghost/algolia-netlify@0.5.0';
+        const asset = `https://github.com/TryGhost/algolia/releases/download/${encodeURIComponent(tag)}/netlify-release.json`;
+        const requests: {url: string; authorization: string | null}[] = [];
+        vi.stubEnv('GITHUB_TOKEN', token);
+        vi.stubGlobal(
+            'fetch',
+            vi.fn<typeof fetch>(async (input, init) => {
+                const url = String(input);
+                requests.push({
+                    url,
+                    authorization: new Headers(init?.headers).get('authorization')
+                });
+                if (url === asset) {
+                    return Response.json({version: '0.5.0', commit: revision});
+                }
+                if (url.includes('/commits/')) {
+                    return Response.json({sha: revision});
+                }
+                return Response.json([
+                    {
+                        tag_name: tag,
+                        draft: false,
+                        prerelease: false,
+                        assets: [{name: 'netlify-release.json', browser_download_url: asset}]
+                    }
+                ]);
+            })
+        );
+        await buildDeployment({
+            directory,
+            repository,
+            version: '0.5.0',
+            offline: true,
+            context: 'production'
+        });
+        expect(requests).toEqual([
+            {
+                url: 'https://api.github.com/repos/TryGhost/algolia/releases?per_page=100&page=1',
+                authorization: token ? `Bearer ${token}` : null
+            },
+            {
+                url: `https://api.github.com/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`,
+                authorization: token ? `Bearer ${token}` : null
+            },
+            {url: asset, authorization: null}
+        ]);
+        expect(await invoke(directory)).toEqual({status: 200, body: 'authenticated release'});
+    },
+    30000
+);

@@ -12,6 +12,8 @@ Netlify uses the `@tryghost/algolia-netlify` npm package version. `ALGOLIA_INTEG
 
 The loader reads published GitHub Releases tagged `@tryghost/algolia-netlify@VERSION` and their `netlify-release.json` assets. Each asset records the version and full source commit. Drafts are excluded. Unset and major selections ignore prereleases; an exact prerelease version explicitly opts into testing it. Invalid metadata, unavailable releases, and unsupported selections fail the build; branches, ranges, and `latest` are unsupported.
 
+If release lookups hit GitHub API rate limits, optionally set `GITHUB_TOKEN` in Netlify’s production Builds scope and retry. Public repository access is sufficient. The loader sends it only to `https://api.github.com`; it is excluded from asset downloads and runtime build subprocesses. Existing source deployments do not need it.
+
 The loader fetches the resolved commit from TryGhost/algolia into `deployment/runtime`, verifies it, and installs with that revision's exact pnpm version and frozen lockfile. Dependency lifecycle scripts are disabled. `deployment/release.json` records the selection, resolved version, and commit. Generated wrappers retain the existing function URLs and add authentication and deployment-context guards.
 
 ## Releasing
@@ -63,7 +65,7 @@ Use a separate test account, Netlify site, Algolia index, and index-restricted c
 4. Confirm preview functions return `403` without changing the index, and the preview setup page disables URL generation. Production deploy permalinks must generate webhook URLs using Netlify’s canonical site URL.
 5. Repeat from a fork with the same exact prerelease selection and no manual build overrides.
 
-For an injection-only check, set `ALGOLIA_ACTIVE=FALSE` in the template. Matching-key requests to both functions should return `Algolia is not activated`; missing or incorrect keys should return `401`. Restore `TRUE` and redeploy before indexing tests.
+For an authentication and disabled-index check, set `ALGOLIA_ACTIVE=FALSE` in the template. Matching-key requests to both functions should return `Algolia is not activated`; missing or incorrect keys should return `401`. Restore `TRUE` and redeploy before indexing tests.
 
 Verify upgrades and rollback against a second tested release before claiming hosted cross-version validation. Code rollback does not undo Algolia writes.
 

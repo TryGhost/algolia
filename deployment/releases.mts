@@ -53,7 +53,12 @@ const requestJson = async (url: URL, redirect: RequestRedirect = 'error') => {
             signal: AbortSignal.timeout(15000),
             cache: 'no-store',
             redirect,
-            headers: {Accept: 'application/vnd.github+json'}
+            headers: {
+                Accept: 'application/vnd.github+json',
+                ...(process.env.GITHUB_TOKEN && url.origin === 'https://api.github.com'
+                    ? {Authorization: `Bearer ${process.env.GITHUB_TOKEN}`}
+                    : {})
+            }
         });
         if (!response.ok) {
             throw new Error('Request failed');

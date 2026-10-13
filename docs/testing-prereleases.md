@@ -82,3 +82,5 @@ Publish a second candidate with a new sequence, select its exact version, and re
 Repeat the install from a fork with base `deployment` and the exact candidate version. Also keep the legacy root/package build checks passing: existing installations must remain independent of release selection.
 
 Record the tested branch commit, candidate version, runtime commit, Netlify deploy ID, and results in the PR. Leave hosted checks marked pending until they have actually run. Prereleases require an exact selection; ordinary major selections ignore them.
+
+Before merging the PR, restore any candidate package versions to their current stable versions on `main`. Keep published prerelease tags and assets unchanged; exact candidate deployments continue using their tagged source. Create the next stable release through `pnpm ship` after merge.
