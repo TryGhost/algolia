@@ -45,6 +45,7 @@ const promote = async (): Promise<void> => {
             `${PACKAGE}@${version}`,
             'version',
             '--json',
+            '--prefer-online',
             '--registry=https://registry.npmjs.org'
         ])
     );

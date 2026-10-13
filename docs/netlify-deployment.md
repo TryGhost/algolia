@@ -47,7 +47,7 @@ References: [Netlify monorepo configuration](https://docs.netlify.com/build/conf
 
 ### Test the customer installation
 
-The candidate `0.4.7-pr.333.1` must be published before this test button works:
+Use the published candidate [`0.4.7-pr.333.1`](https://github.com/TryGhost/algolia/releases/tag/%40tryghost/algolia-netlify%400.4.7-pr.333.1) to test this PR before merging:
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&branch=aileen%2Fsafe-netlify-deployments&base=deployment#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=&ALGOLIA_INTEGRATION_VERSION=0.4.7-pr.333.1)
 
