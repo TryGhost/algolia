@@ -144,6 +144,16 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
         path.join(runtime, 'deployment-guard.mts')
     );
     await mkdir(functions, {recursive: true});
+    await writeFile(
+        path.join(functions, 'integration-status.mts'),
+        `export default function handler(): Response {
+    return Response.json(
+        {active: ${JSON.stringify(options.context === 'production')} && process.env.ALGOLIA_ACTIVE === 'TRUE'},
+        {headers: {'Cache-Control': 'no-store'}}
+    );
+}
+`
+    );
     for (const name of HANDLERS) {
         await access(path.join(runtime, 'packages/algolia-netlify/dist/functions', `${name}.mjs`));
         await writeFile(

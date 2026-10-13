@@ -683,6 +683,47 @@ it.each(['deploy-preview', 'production'])(
             archives,
             directory
         ]);
+        const statusDirectory = await temporaryDirectory();
+        await exec('unzip', [
+            '-q',
+            path.join(archives, 'integration-status.zip'),
+            '-d',
+            statusDirectory
+        ]);
+        const statusEntry = (await readdir(statusDirectory, {recursive: true})).find(
+            file => path.basename(file) === 'integration-status.mjs'
+        );
+        if (!statusEntry) {
+            throw new Error('Missing packaged status handler');
+        }
+        const statusResult = await exec(process.execPath, [
+            '--input-type=module',
+            '-e',
+            `
+            const {default: handler} = await import(process.argv[1]);
+            delete process.env.NETLIFY_KEY;
+            process.env.ALGOLIA_API_KEY = 'must-not-be-exposed';
+            const responses = [];
+            for (const active of [undefined, 'FALSE', 'TRUE', 'true', 'FALSE']) {
+                if (active === undefined) delete process.env.ALGOLIA_ACTIVE;
+                else process.env.ALGOLIA_ACTIVE = active;
+                const response = await handler(new Request('https://example.invalid/.netlify/functions/integration-status'));
+                responses.push({status: response.status, cache: response.headers.get('cache-control'), body: await response.json()});
+            }
+            console.log(JSON.stringify(responses));
+            `,
+            pathToFileURL(path.join(statusDirectory, statusEntry)).href
+        ]);
+        expect(JSON.parse(statusResult.stdout)).toEqual(
+            (context === 'production'
+                ? [false, false, true, false, false]
+                : [false, false, false, false, false]
+            ).map(active => ({
+                status: 200,
+                cache: 'no-store',
+                body: {active}
+            }))
+        );
         for (const name of ['post-published', 'post-unpublished']) {
             const extracted = await temporaryDirectory();
             await exec('unzip', ['-q', path.join(archives, name + '.zip'), '-d', extracted]);

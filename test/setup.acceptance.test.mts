@@ -18,6 +18,8 @@ async function openSetup(
         missingControl?: string;
         config?: {production: boolean; siteUrl?: string};
         origin?: string;
+        response?: Response | Promise<Response>;
+        fetchError?: Error;
     } = {}
 ) {
     const controls = new Map(
@@ -64,6 +66,13 @@ async function openSetup(
     vi.stubGlobal('window', browserWindow);
     vi.stubGlobal('navigator', {clipboard});
     vi.stubGlobal('localStorage', storage);
+    const fetchStatus = vi.fn<typeof fetch>(async () => {
+        if (options.fetchError) {
+            throw options.fetchError;
+        }
+        return options.response ?? Response.json({active: false});
+    });
+    vi.stubGlobal('fetch', fetchStatus);
     const {initializeSetup} = await import('../deployment/setup.mts');
     initializeSetup(options.config ?? {production: true, siteUrl: 'https://search.example.com'});
 
@@ -86,7 +95,8 @@ async function openSetup(
         clipboard,
         storage,
         browserWindow,
-        documentRoot
+        documentRoot,
+        fetchStatus
     };
 }
 
@@ -223,6 +233,7 @@ it('previews explain isolation and never offer webhook URLs', async () => {
         config: {production: false, siteUrl: 'https://search.example.com'}
     });
     page.enterSecret('secret');
+    expect(page.fetchStatus).not.toHaveBeenCalled();
     expect(page.control('setup-form').hidden).toBe(true);
     expect(page.control('setup-message').hidden).toBe(false);
     expect(page.control('setup-message').textContent).toBe(
@@ -255,3 +266,57 @@ it.each([
         expect(page.control('unpublished-url').value).toBe('');
     }
 );
+
+it('shows paused indexing and explains how to enable webhook updates without sending the secret', async () => {
+    const page = await openSetup();
+    page.enterSecret('private-key');
+    await vi.waitFor(() =>
+        expect(page.control('setup-message').textContent).toBe(
+            'Indexing is paused. Set ALGOLIA_ACTIVE to TRUE in Netlify, then redeploy to enable webhook updates.'
+        )
+    );
+    expect(page.control('setup-message').hidden).toBe(false);
+    expect(page.control('webhook-urls').hidden).toBe(false);
+    expect(page.fetchStatus).toHaveBeenCalledOnce();
+    expect(page.fetchStatus.mock.calls[0]?.[0]).toBe('/.netlify/functions/integration-status');
+    expect(JSON.stringify(page.fetchStatus.mock.calls)).not.toContain('private-key');
+});
+
+it('shows enabled indexing without claiming the webhook connection has been verified', async () => {
+    const page = await openSetup({response: Response.json({active: true})});
+    await vi.waitFor(() =>
+        expect(page.control('setup-message').textContent).toBe(
+            'Indexing is enabled. Publish a test post to check that Ghost can update your index.'
+        )
+    );
+});
+
+it.each([
+    {fetchError: new Error('Network unavailable')},
+    {response: new Response('Unavailable', {status: 503})},
+    {response: new Response('invalid JSON')},
+    {response: Response.json({active: 'TRUE'})},
+    {response: Response.json(null)}
+])('reports unknown status when the runtime check fails: %s', async options => {
+    const page = await openSetup(options);
+    await vi.waitFor(() =>
+        expect(page.control('setup-message').textContent).toBe(
+            'Could not check indexing status. Check ALGOLIA_ACTIVE in Netlify before connecting Ghost.'
+        )
+    );
+    expect(page.control('setup-message').hidden).toBe(false);
+});
+
+it('shows that status is being checked while the runtime response is pending', async () => {
+    let respond: (response: Response) => void = () => {};
+    const response = new Promise<Response>(resolve => {
+        respond = resolve;
+    });
+    const page = await openSetup({response});
+    expect(page.control('setup-message').textContent).toBe('Checking indexing status…');
+    expect(page.control('setup-message').hidden).toBe(false);
+    respond(Response.json({active: false}));
+    await vi.waitFor(() =>
+        expect(page.control('setup-message').textContent).toContain('Indexing is paused.')
+    );
+});

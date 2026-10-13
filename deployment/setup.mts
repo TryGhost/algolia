@@ -60,8 +60,9 @@ export function initializeSetup(config: {production: boolean; siteUrl?: string})
             : 'Setup is unavailable because the site URL is missing or invalid. Redeploy this site in Netlify.';
         return;
     }
-    message.hidden = true;
+    message.hidden = false;
     form.hidden = false;
+    void showIndexingStatus(message);
 
     const updateUrls = (): void => {
         const generated = createWebhookUrls(siteOrigin, key.value);
@@ -120,4 +121,35 @@ function initializeTheme(theme: HTMLSelectElement): void {
             // Theme selection remains active for this visit.
         }
     });
+}
+
+async function showIndexingStatus(message: HTMLElement): Promise<void> {
+    message.textContent = 'Checking indexing status…';
+    message.dataset.state = 'checking';
+    try {
+        const response = await fetch('/.netlify/functions/integration-status', {
+            cache: 'no-store',
+            signal: AbortSignal.timeout(10_000)
+        });
+        if (!response.ok) {
+            throw new Error('Indexing status unavailable');
+        }
+        const status: unknown = await response.json();
+        if (
+            !status ||
+            typeof status !== 'object' ||
+            !('active' in status) ||
+            typeof status.active !== 'boolean'
+        ) {
+            throw new Error('Invalid indexing status');
+        }
+        message.dataset.state = status.active ? 'enabled' : 'paused';
+        message.textContent = status.active
+            ? 'Indexing is enabled. Publish a test post to check that Ghost can update your index.'
+            : 'Indexing is paused. Set ALGOLIA_ACTIVE to TRUE in Netlify, then redeploy to enable webhook updates.';
+    } catch {
+        message.dataset.state = 'unknown';
+        message.textContent =
+            'Could not check indexing status. Check ALGOLIA_ACTIVE in Netlify before connecting Ghost.';
+    }
 }
