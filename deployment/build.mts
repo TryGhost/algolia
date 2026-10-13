@@ -59,10 +59,16 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
     await rm(runtime, {recursive: true, force: true});
     await mkdir(runtime, {recursive: true});
     const run = async (stage: string, command: string, args: string[]): Promise<string> => {
+        const environment = buildEnvironment();
+        if (command === 'git') {
+            // Fetch public release source without host credential helpers or URL rewrites.
+            environment.GIT_CONFIG_GLOBAL = '/dev/null';
+            environment.GIT_CONFIG_NOSYSTEM = '1';
+        }
         try {
             const result = await exec(command, args, {
                 cwd: runtime,
-                env: buildEnvironment(),
+                env: environment,
                 maxBuffer: 8 * 1024 * 1024
             });
             return result.stdout.trim();

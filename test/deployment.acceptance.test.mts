@@ -4,11 +4,11 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
-import {access, mkdtemp, readdir, rm, writeFile, readFile} from 'node:fs/promises';
+import {access, mkdtemp, readdir, rm, writeFile, readFile, symlink} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import {afterEach, expect, it} from 'vitest';
+import {afterEach, expect, it, vi} from 'vitest';
 
 import {buildDeployment} from '../deployment/build.mts';
 
@@ -125,6 +125,7 @@ const invoke = async (
     return JSON.parse(result.stdout) as {status: number; body: string};
 };
 afterEach(async () => {
+    vi.unstubAllEnvs();
     await Promise.all(
         directories.splice(0).map(directory => rm(directory, {recursive: true, force: true}))
     );
@@ -308,6 +309,35 @@ it('identifies source download failures without exposing subprocess arguments', 
         })
     ).rejects.toThrow(/^Integration source download failed \(exit 128\)\.$/);
 });
+
+it('fetches the selected source without inheriting host Git URL rewrites', async () => {
+    const {repository, commit} = await createReleaseRepository();
+    const revision = await commit('explicit source');
+    const directory = await temporaryDirectory();
+    const home = await temporaryDirectory();
+    const bin = await temporaryDirectory();
+    // Use the installed executable so the isolated home needs no Corepack download.
+    const executable = (
+        await exec('pnpm', ['exec', 'node', '-p', 'process.env.npm_execpath'])
+    ).stdout.trim();
+    await symlink(executable, path.join(bin, 'pnpm'));
+    const config = `[url "${path.join(home, 'missing-private-repository')}"]\n\tinsteadOf = ${repository}\n`;
+    await writeFile(path.join(home, '.gitconfig'), config);
+    vi.stubEnv('HOME', home);
+    vi.stubEnv('PATH', `${bin}${path.delimiter}${process.env.PATH}`);
+
+    await buildDeployment({
+        directory,
+        repository,
+        releases: {'1.0.0': revision},
+        version: '1.0.0',
+        context: 'production',
+        offline: true
+    });
+
+    expect(await invoke(directory)).toEqual({status: 200, body: 'explicit source'});
+    expect(await readFile(path.join(home, '.gitconfig'), 'utf8')).toBe(config);
+}, 30000);
 
 it.each([
     {selection: '0', version: '0.5.0', prerelease: false},
