@@ -10,6 +10,16 @@ import {DEFAULT_RELEASE, discoverRelease, selectRelease, validateSelection} from
 const exec = promisify(execFile);
 const HANDLERS = ['post-published', 'post-unpublished'] as const;
 const REPOSITORY = 'https://github.com/TryGhost/algolia.git';
+const PACKAGE_MANAGER_ERRORS = [
+    'ERR_PNPM_OUTDATED_LOCKFILE',
+    'ERR_PNPM_BAD_PM_VERSION',
+    'ERR_PNPM_UNSUPPORTED_ENGINE',
+    'ERR_PNPM_NO_LOCKFILE',
+    'ERR_PNPM_NO_OFFLINE_TARBALL',
+    'ERR_PNPM_FETCH_404',
+    'ERR_PNPM_FETCH_401',
+    'ERR_PNPM_FETCH_403'
+] as const;
 
 export type DeploymentOptions = {
     directory: string;
@@ -48,17 +58,42 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
     await rm(functions, {recursive: true, force: true});
     await rm(runtime, {recursive: true, force: true});
     await mkdir(runtime, {recursive: true});
-    const run = async (command: string, args: string[]): Promise<string> => {
-        const result = await exec(command, args, {
-            cwd: runtime,
-            env: buildEnvironment(),
-            maxBuffer: 8 * 1024 * 1024
-        });
-        return result.stdout.trim();
+    const run = async (stage: string, command: string, args: string[]): Promise<string> => {
+        try {
+            const result = await exec(command, args, {
+                cwd: runtime,
+                env: buildEnvironment(),
+                maxBuffer: 8 * 1024 * 1024
+            });
+            return result.stdout.trim();
+        } catch (cause) {
+            const details: string[] = [];
+            if (cause instanceof Error) {
+                if ('code' in cause && typeof cause.code === 'number') {
+                    details.push(`exit ${cause.code}`);
+                }
+                const code = PACKAGE_MANAGER_ERRORS.find(value =>
+                    new RegExp(`\\b${value}\\b`).test(cause.message)
+                );
+                if (code) {
+                    details.push(code);
+                }
+            }
+            throw new Error(
+                `Integration ${stage} failed${details.length ? ` (${details.join('; ')})` : ''}.`,
+                {cause}
+            );
+        }
     };
-    await run('git', ['init', '--quiet']);
-    await run('git', ['fetch', '--quiet', '--depth=1', options.repository ?? REPOSITORY, commit]);
-    await run('git', [
+    await run('source initialization', 'git', ['init', '--quiet']);
+    await run('source download', 'git', [
+        'fetch',
+        '--quiet',
+        '--depth=1',
+        options.repository ?? REPOSITORY,
+        commit
+    ]);
+    await run('source checkout', 'git', [
         '-c',
         'core.hooksPath=/dev/null',
         'checkout',
@@ -66,7 +101,7 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
         '--detach',
         'FETCH_HEAD'
     ]);
-    if ((await run('git', ['rev-parse', 'HEAD'])) !== commit) {
+    if ((await run('source verification', 'git', ['rev-parse', 'HEAD'])) !== commit) {
         throw new Error('Integration source commit verification failed.');
     }
     const manifest = JSON.parse(await readFile(path.join(runtime, 'package.json'), 'utf8')) as {
@@ -75,17 +110,20 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
     const manager = /^pnpm@(\d+\.\d+\.\d+)(?:\+sha512\.[a-f0-9]+)?$/.exec(
         manifest.packageManager ?? ''
     );
-    if (!manager || (await run('pnpm', ['--version'])) !== manager[1]) {
+    if (
+        !manager ||
+        (await run('package manager verification', 'pnpm', ['--version'])) !== manager[1]
+    ) {
         throw new Error('Use the exact pnpm version declared by the integration release.');
     }
-    await run('pnpm', [
+    await run('dependency installation', 'pnpm', [
         'install',
         '--frozen-lockfile',
         '--ignore-scripts',
         ...(options.offline ? ['--offline'] : [])
     ]);
-    await run('pnpm', ['run', 'build']);
-    await run('pnpm', ['--filter', '@tryghost/algolia-netlify', 'build:package']);
+    await run('workspace build', 'pnpm', ['run', 'build']);
+    await run('function build', 'pnpm', ['--filter', '@tryghost/algolia-netlify', 'build:package']);
 
     const publicDirectory = path.join(options.directory, 'public');
     await mkdir(publicDirectory, {recursive: true});

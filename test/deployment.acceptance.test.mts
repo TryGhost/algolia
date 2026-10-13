@@ -279,7 +279,9 @@ it('stops on a changed dependency manifest instead of resolving new dependencies
             context: 'production',
             offline: true
         })
-    ).rejects.toMatchObject({stderr: expect.stringContaining('ERR_PNPM_OUTDATED_LOCKFILE')});
+    ).rejects.toThrow(
+        'Integration dependency installation failed (exit 1; ERR_PNPM_OUTDATED_LOCKFILE).'
+    );
     await expect(access(functionsDirectory(directory))).rejects.toMatchObject({code: 'ENOENT'});
 }, 30000);
 
@@ -293,6 +295,18 @@ it('reports an invalid CLI selection without echoing configuration', async () =>
         code: 1,
         stderr: 'Choose an integration major or exact version.\n'
     });
+});
+
+it('identifies source download failures without exposing subprocess arguments', async () => {
+    const directory = await temporaryDirectory();
+    await expect(
+        buildDeployment({
+            directory,
+            repository: path.join(directory, 'private-repository-secret'),
+            releases: {'1.0.0': 'a'.repeat(40)},
+            version: '1.0.0'
+        })
+    ).rejects.toThrow(/^Integration source download failed \(exit 128\)\.$/);
 });
 
 it.each([
