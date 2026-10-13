@@ -27,7 +27,7 @@ Algolia requires `deleteIndex` for filtered deletions. The name is a bit mislead
 
 ### Deploy the Netlify Functions
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&base=deployment&fullConfiguration=true#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&base=deployment#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=)
 
 Follow the [guided setup](../../USAGE.md). Netlify creates a copy in your GitHub account and asks for your Algolia credentials, index name, and a webhook secret. The repository supplies the build settings. After deploying, open your site and enter the same secret to copy the webhook URLs into Ghost.
 

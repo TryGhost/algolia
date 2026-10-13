@@ -18,15 +18,16 @@
   <main>
     <div class="eyebrow">Finish setup</div>
     <h1>Connect your publication.</h1>
-    <p class="intro">Your webhook site is deployed. Add it to Ghost to keep your Algolia index up to date.</p>
-    <ol class="steps">
+    <p class="intro">Connect Ghost to keep your Algolia index up to date when posts change.</p>
+    <p id="setup-message" role="status">Loading setup…</p>
+    <noscript><p>Enable JavaScript to create your webhook URLs on this page.</p></noscript>
+    <ol class="steps" id="setup-form" hidden>
       <li class="step">
         <h2>Create your webhook URLs</h2>
         <p>Enter the webhook secret you chose during deployment. This is your <code>NETLIFY_KEY</code>, not your Algolia API key.</p>
         <label for="webhook-key">Webhook secret</label>
         <input id="webhook-key" type="password" autocomplete="off" spellcheck="false" aria-describedby="secret-help" placeholder="Paste your webhook secret">
         <p class="hint" id="secret-help">Your secret stays in this page. It is included in the URLs you copy to Ghost.</p>
-        <noscript><p>Enable JavaScript to create your webhook URLs on this page.</p></noscript>
         <div id="webhook-urls" hidden>
           <div class="url-field">
             <label for="published-url">Publish and update URL</label>

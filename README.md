@@ -19,7 +19,7 @@ This pnpm monorepo contains five packages:
 
 ### Netlify Functions
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&base=deployment&fullConfiguration=true#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&base=deployment#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=)
 
 The button creates a copy in your GitHub account and guides you through configuration. Start with an existing Algolia index, or [import your posts with the CLI](packages/algolia/README.md). After deploying, open your Netlify site to get the webhook URLs for Ghost.
 

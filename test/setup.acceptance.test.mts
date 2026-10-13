@@ -11,10 +11,14 @@ class BrowserControl extends EventTarget {
     select = vi.fn<() => void>();
 }
 
-let browserVisit = 0;
-
 async function openSetup(
-    options: {storedTheme?: string; storageBlocked?: boolean; missingControl?: string} = {}
+    options: {
+        storedTheme?: string;
+        storageBlocked?: boolean;
+        missingControl?: string;
+        config?: {production: boolean; siteUrl?: string};
+        origin?: string;
+    } = {}
 ) {
     const controls = new Map(
         [
@@ -24,7 +28,9 @@ async function openSetup(
             'webhook-urls',
             'copy-status',
             'theme',
-            'clear-secret'
+            'clear-secret',
+            'setup-form',
+            'setup-message'
         ].map(id => [id, new BrowserControl()])
     );
     const publishedCopy = new BrowserControl();
@@ -33,7 +39,7 @@ async function openSetup(
     unpublishedCopy.dataset.copy = 'unpublished-url';
     const documentRoot = {dataset: {} as Record<string, string>};
     const browserWindow = Object.assign(new EventTarget(), {
-        location: {origin: 'https://search.example.com'}
+        location: {origin: options.origin ?? 'https://search.example.com'}
     });
     const clipboard = {writeText: vi.fn<(text: string) => Promise<void>>(async () => {})};
     const storage = {
@@ -58,10 +64,8 @@ async function openSetup(
     vi.stubGlobal('window', browserWindow);
     vi.stubGlobal('navigator', {clipboard});
     vi.stubGlobal('localStorage', storage);
-    const moduleUrl = new URL('../deployment/setup.mts', import.meta.url);
-    browserVisit += 1;
-    moduleUrl.searchParams.set('visit', String(browserVisit));
-    await import(moduleUrl.href);
+    const {initializeSetup} = await import('../deployment/setup.mts');
+    initializeSetup(options.config ?? {production: true, siteUrl: 'https://search.example.com'});
 
     function control(id: string): BrowserControl {
         const element = controls.get(id);
@@ -201,3 +205,53 @@ it('leaves an incomplete page untouched rather than failing during initializatio
     expect(page.control('webhook-urls').hidden).toBe(true);
     expect(page.storage.getItem).not.toHaveBeenCalled();
 });
+
+it('uses the stable site URL when opened on a production deploy permalink', async () => {
+    const page = await openSetup({
+        origin: 'https://commit--search.netlify.app',
+        config: {production: true, siteUrl: 'https://search.example.com/nested/'}
+    });
+    page.enterSecret('secret');
+    expect(page.control('published-url').value).toBe(
+        'https://search.example.com/.netlify/functions/post-published?key=secret'
+    );
+    expect(page.control('setup-form').hidden).toBe(false);
+});
+
+it('previews explain isolation and never offer webhook URLs', async () => {
+    const page = await openSetup({
+        config: {production: false, siteUrl: 'https://search.example.com'}
+    });
+    page.enterSecret('secret');
+    expect(page.control('setup-form').hidden).toBe(true);
+    expect(page.control('setup-message').hidden).toBe(false);
+    expect(page.control('setup-message').textContent).toBe(
+        'This is a preview. Indexing is disabled.'
+    );
+    expect(page.control('published-url').value).toBe('');
+    expect(page.control('unpublished-url').value).toBe('');
+});
+
+it.each([
+    undefined,
+    '',
+    '/relative',
+    'not a URL',
+    'ftp://search.example.com',
+    'https://user:password@search.example.com',
+    'https://search.example.com?key=secret',
+    'https://search.example.com#secret'
+])(
+    'does not fall back to the current host when configured site URL is invalid: %s',
+    async siteUrl => {
+        const page = await openSetup({config: {production: true, siteUrl}});
+        page.enterSecret('secret');
+        expect(page.control('setup-form').hidden).toBe(true);
+        expect(page.control('setup-message').hidden).toBe(false);
+        expect(page.control('setup-message').textContent).toBe(
+            'Setup is unavailable because the site URL is missing or invalid. Redeploy this site in Netlify.'
+        );
+        expect(page.control('published-url').value).toBe('');
+        expect(page.control('unpublished-url').value).toBe('');
+    }
+);

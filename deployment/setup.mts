@@ -12,19 +12,59 @@ export function createWebhookUrls(
     return {published: published.href, unpublished: unpublished.href};
 }
 
-function initializeSetup(): void {
+function getSiteOrigin(siteUrl: string | undefined): string | undefined {
+    if (!siteUrl) {
+        return undefined;
+    }
+    try {
+        const url = new URL(siteUrl);
+        if (
+            !['https:', 'http:'].includes(url.protocol) ||
+            url.username ||
+            url.password ||
+            url.search ||
+            url.hash
+        ) {
+            return undefined;
+        }
+        return url.origin;
+    } catch {
+        return undefined;
+    }
+}
+
+export function initializeSetup(config: {production: boolean; siteUrl?: string}): void {
     const key = document.querySelector<HTMLInputElement>('#webhook-key');
     const published = document.querySelector<HTMLInputElement>('#published-url');
     const unpublished = document.querySelector<HTMLInputElement>('#unpublished-url');
     const urls = document.querySelector<HTMLElement>('#webhook-urls');
     const status = document.querySelector<HTMLElement>('#copy-status');
     const theme = document.querySelector<HTMLSelectElement>('#theme');
-    if (!key || !published || !unpublished || !urls || !status || !theme) {
+    const form = document.querySelector<HTMLElement>('#setup-form');
+    const message = document.querySelector<HTMLElement>('#setup-message');
+    if (!key || !published || !unpublished || !urls || !status || !theme || !form || !message) {
         return;
     }
 
+    initializeTheme(theme);
+    key.value = '';
+    published.value = '';
+    unpublished.value = '';
+    urls.hidden = true;
+    form.hidden = true;
+    const siteOrigin = getSiteOrigin(config.siteUrl);
+    if (!config.production || !siteOrigin) {
+        message.hidden = false;
+        message.textContent = !config.production
+            ? 'This is a preview. Indexing is disabled.'
+            : 'Setup is unavailable because the site URL is missing or invalid. Redeploy this site in Netlify.';
+        return;
+    }
+    message.hidden = true;
+    form.hidden = false;
+
     const updateUrls = (): void => {
-        const generated = createWebhookUrls(window.location.origin, key.value);
+        const generated = createWebhookUrls(siteOrigin, key.value);
         published.value = generated?.published ?? '';
         unpublished.value = generated?.unpublished ?? '';
         urls.hidden = !generated;
@@ -55,11 +95,14 @@ function initializeSetup(): void {
             }
         });
     }
+}
 
-    function applyTheme(value: string): void {
-        document.documentElement.dataset.theme =
-            value === 'light' || value === 'dark' ? value : 'system';
-    }
+function applyTheme(value: string): void {
+    document.documentElement.dataset.theme =
+        value === 'light' || value === 'dark' ? value : 'system';
+}
+
+function initializeTheme(theme: HTMLSelectElement): void {
     try {
         const saved = localStorage.getItem('ghost-algolia-theme');
         if (saved === 'light' || saved === 'dark') {
@@ -77,8 +120,4 @@ function initializeSetup(): void {
             // Theme selection remains active for this visit.
         }
     });
-}
-
-if (typeof document !== 'undefined') {
-    initializeSetup();
 }
