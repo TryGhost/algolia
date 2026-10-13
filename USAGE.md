@@ -19,7 +19,7 @@ If you already have a fork, sync it with this repository once to include the dep
 ## Connect Ghost
 
 1. Open the published site's main URL after deployment finishes. Preview deployments cannot connect webhooks.
-2. Enter the same webhook secret. The page generates your webhook URLs in your browser.
+2. Enter your existing `NETLIFY_KEY` and click **Verify secret**. The page checks it with your Netlify site before showing the webhook URLs. This does not change the saved secret.
 3. In Ghost Admin, open **Settings → Integrations**, create a custom integration, and add a webhook for each event:
 
 | Event | URL to copy from the setup page |
@@ -29,7 +29,7 @@ If you already have a fork, sync it with this repository once to include the dep
 | Post unpublished (`post.unpublished`) | Unpublish and delete |
 | Post deleted (`post.deleted`) | Unpublish and delete |
 
-Keep these URLs private: they contain your webhook secret. Publish a test post, confirm it appears in Algolia, then unpublish it and confirm its records disappear.
+Keep these URLs private: they contain your webhook secret. With indexing enabled, publish a test post, check its updates in Algolia, then unpublish it and confirm its records disappear. Setup is then complete. You can close the page; the webhooks keep running.
 
 ## Updates
 

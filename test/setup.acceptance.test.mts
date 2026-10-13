@@ -5,6 +5,7 @@ import {createWebhookUrls} from '../deployment/setup.mts';
 class BrowserControl extends EventTarget {
     value = '';
     hidden = true;
+    disabled = false;
     textContent = '';
     dataset: Record<string, string> = {};
     focus = vi.fn<() => void>();
@@ -20,11 +21,15 @@ async function openSetup(
         origin?: string;
         response?: Response | Promise<Response>;
         fetchError?: Error;
+        verification?: Response | Promise<Response>;
+        verificationError?: Error;
     } = {}
 ) {
     const controls = new Map(
         [
             'webhook-key',
+            'verify-secret',
+            'verification-status',
             'published-url',
             'unpublished-url',
             'webhook-urls',
@@ -66,7 +71,13 @@ async function openSetup(
     vi.stubGlobal('window', browserWindow);
     vi.stubGlobal('navigator', {clipboard});
     vi.stubGlobal('localStorage', storage);
-    const fetchStatus = vi.fn<typeof fetch>(async () => {
+    const fetchStatus = vi.fn<typeof fetch>(async input => {
+        if (input === '/.netlify/functions/verify-secret') {
+            if (options.verificationError) {
+                throw options.verificationError;
+            }
+            return options.verification ?? new Response(null, {status: 204});
+        }
         if (options.fetchError) {
             throw options.fetchError;
         }
@@ -90,6 +101,10 @@ async function openSetup(
     return {
         control,
         enterSecret,
+        async verifySecret() {
+            control('verify-secret').dispatchEvent(new Event('click'));
+            await vi.waitFor(() => expect(control('verify-secret').disabled).toBe(false));
+        },
         publishedCopy,
         unpublishedCopy,
         clipboard,
@@ -118,10 +133,22 @@ it.each(['', '   '])('does not offer unauthenticated webhook URLs for a blank ke
     expect(createWebhookUrls('https://search.example.com', key)).toBeUndefined();
 });
 
-it('shows both usable URLs after entering a secret and hides them when it is blank', async () => {
+it('verifies the existing secret before showing URLs and hides them when it changes', async () => {
     const page = await openSetup();
     expect(page.control('webhook-urls').hidden).toBe(true);
     page.enterSecret('a key&more');
+    expect(page.control('webhook-urls').hidden).toBe(true);
+    expect(page.fetchStatus).toHaveBeenCalledTimes(1);
+    await page.verifySecret();
+    expect(page.fetchStatus).toHaveBeenLastCalledWith(
+        '/.netlify/functions/verify-secret',
+        expect.objectContaining({
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({key: 'a key&more'}),
+            cache: 'no-store'
+        })
+    );
     expect(page.control('webhook-urls').hidden).toBe(false);
     expect(page.control('published-url').value).toBe(
         'https://search.example.com/.netlify/functions/post-published?key=a+key%26more'
@@ -139,6 +166,7 @@ it('shows both usable URLs after entering a secret and hides them when it is bla
 it.each(['clear', 'leave'])('clears the secret and generated URLs on %s', async action => {
     const page = await openSetup();
     page.enterSecret('private-key');
+    await page.verifySecret();
     page.control('copy-status').textContent = 'URL copied';
     if (action === 'clear') {
         page.control('clear-secret').dispatchEvent(new Event('click'));
@@ -157,6 +185,7 @@ it.each(['clear', 'leave'])('clears the secret and generated URLs on %s', async 
 it('copies the correct URL for each button and confirms it to the customer', async () => {
     const page = await openSetup();
     page.enterSecret('private-key');
+    await page.verifySecret();
     page.publishedCopy.dispatchEvent(new Event('click'));
     await Promise.resolve();
     expect(page.clipboard.writeText).toHaveBeenLastCalledWith(page.control('published-url').value);
@@ -172,6 +201,7 @@ it('selects the URL for manual copying when clipboard access is denied', async (
     const page = await openSetup();
     page.clipboard.writeText.mockRejectedValue(new Error('Clipboard denied'));
     page.enterSecret('private-key');
+    await page.verifySecret();
     page.publishedCopy.dispatchEvent(new Event('click'));
     await Promise.resolve();
     expect(page.control('published-url').focus).toHaveBeenCalledOnce();
@@ -198,6 +228,7 @@ it.each(['light', 'dark'])(
 it('keeps setup and theme selection working when storage is blocked', async () => {
     const page = await openSetup({storageBlocked: true});
     page.enterSecret('private-key');
+    await page.verifySecret();
     expect(page.control('webhook-urls').hidden).toBe(false);
     page.control('theme').value = 'dark';
     page.control('theme').dispatchEvent(new Event('change'));
@@ -222,6 +253,7 @@ it('uses the stable site URL when opened on a production deploy permalink', asyn
         config: {production: true, siteUrl: 'https://search.example.com/nested/'}
     });
     page.enterSecret('secret');
+    await page.verifySecret();
     expect(page.control('published-url').value).toBe(
         'https://search.example.com/.netlify/functions/post-published?key=secret'
     );
@@ -276,7 +308,7 @@ it('shows paused indexing and explains how to enable webhook updates without sen
         )
     );
     expect(page.control('setup-message').hidden).toBe(false);
-    expect(page.control('webhook-urls').hidden).toBe(false);
+    expect(page.control('webhook-urls').hidden).toBe(true);
     expect(page.fetchStatus).toHaveBeenCalledOnce();
     expect(page.fetchStatus.mock.calls[0]?.[0]).toBe('/.netlify/functions/integration-status');
     expect(JSON.stringify(page.fetchStatus.mock.calls)).not.toContain('private-key');
@@ -319,4 +351,79 @@ it('shows that status is being checked while the runtime response is pending', a
     await vi.waitFor(() =>
         expect(page.control('setup-message').textContent).toContain('Indexing is paused.')
     );
+});
+
+it.each([
+    {verification: new Response(null, {status: 401}), message: 'This secret does not match.'},
+    {
+        verification: new Response(null, {status: 503}),
+        message: 'NETLIFY_KEY is missing in Netlify.'
+    },
+    {
+        verification: new Response(null, {status: 403}),
+        message: 'Verification is unavailable on previews.'
+    },
+    {verification: new Response(null, {status: 500}), message: 'Could not verify your secret.'},
+    {verificationError: new Error('Offline'), message: 'Could not verify your secret.'}
+])('keeps URLs hidden when verification fails: $message', async options => {
+    const page = await openSetup(options);
+    expect(page.control('verify-secret').disabled).toBe(true);
+    page.enterSecret('wrong-key');
+    await page.verifySecret();
+    expect(page.control('verification-status').textContent).toContain(options.message);
+    expect(page.control('webhook-urls').hidden).toBe(true);
+    expect(page.control('published-url').value).toBe('');
+    page.publishedCopy.dispatchEvent(new Event('click'));
+    expect(page.clipboard.writeText).not.toHaveBeenCalled();
+});
+
+it.each(['change', 'clear', 'leave'])('ignores pending verification after %s', async action => {
+    let respond: (response: Response) => void = () => {};
+    const verification = new Promise<Response>(resolve => {
+        respond = resolve;
+    });
+    const page = await openSetup({verification});
+    page.enterSecret('original-key');
+    page.control('verify-secret').dispatchEvent(new Event('click'));
+    expect(page.control('verify-secret').disabled).toBe(true);
+    expect(page.control('verification-status').textContent).toContain('Checking');
+    if (action === 'change') {
+        page.enterSecret('changed-key');
+        page.enterSecret('original-key');
+    } else if (action === 'clear') {
+        page.control('clear-secret').dispatchEvent(new Event('click'));
+    } else {
+        page.browserWindow.dispatchEvent(new Event('pagehide'));
+    }
+    respond(new Response(null, {status: 204}));
+    await new Promise(resolve => {
+        setTimeout(resolve, 0);
+    });
+    expect(page.control('webhook-urls').hidden).toBe(true);
+    expect(page.control('published-url').value).toBe('');
+    expect(page.control('verification-status').textContent).toBe('');
+});
+
+it('hides previously verified URLs while checking again, including a failed recheck', async () => {
+    const page = await openSetup();
+    page.enterSecret('private-key');
+    await page.verifySecret();
+    page.fetchStatus.mockResolvedValueOnce(new Response(null, {status: 401}));
+    page.control('verify-secret').dispatchEvent(new Event('click'));
+    expect(page.control('webhook-urls').hidden).toBe(true);
+    await vi.waitFor(() => expect(page.control('verify-secret').disabled).toBe(false));
+    expect(page.control('webhook-urls').hidden).toBe(true);
+});
+
+it('verifies with Enter and ignores a second attempt while verification is pending', async () => {
+    const page = await openSetup();
+    page.enterSecret('private-key');
+    const enter = Object.assign(new Event('keydown', {cancelable: true}), {key: 'Enter'});
+    page.control('webhook-key').dispatchEvent(enter);
+    page.control('verify-secret').dispatchEvent(new Event('click'));
+    expect(enter.defaultPrevented).toBe(true);
+    await vi.waitFor(() => expect(page.control('webhook-urls').hidden).toBe(false));
+    expect(
+        page.fetchStatus.mock.calls.filter(([url]) => url === '/.netlify/functions/verify-secret')
+    ).toHaveLength(1);
 });

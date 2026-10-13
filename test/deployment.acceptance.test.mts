@@ -724,6 +724,73 @@ it.each(['deploy-preview', 'production'])(
                 body: {active}
             }))
         );
+        const verificationDirectory = await temporaryDirectory();
+        await exec('unzip', [
+            '-q',
+            path.join(archives, 'verify-secret.zip'),
+            '-d',
+            verificationDirectory
+        ]);
+        const verificationEntry = (await readdir(verificationDirectory, {recursive: true})).find(
+            file => path.basename(file) === 'verify-secret.mjs'
+        );
+        if (!verificationEntry) {
+            throw new Error('Missing packaged secret verification handler');
+        }
+        const verificationResult = await exec(process.execPath, [
+            '--input-type=module',
+            '-e',
+            `
+            const {default: handler} = await import(process.argv[1]);
+            const key = 'test-key ?&=+#/é🔑';
+            const results = [];
+            const cases = [
+                {body: JSON.stringify({key})},
+                {body: JSON.stringify({key: 'wrong'})},
+                {body: JSON.stringify({key: ''})},
+                {body: JSON.stringify({key: '   '})},
+                {body: '{}'},
+                {body: JSON.stringify({key: 123})},
+                {body: 'null'},
+                {body: '['},
+                {body: JSON.stringify({key}), type: 'text/plain'},
+                {method: 'GET'},
+                {method: 'PUT', body: JSON.stringify({key})},
+                {body: JSON.stringify({key}), configured: ''},
+                {body: JSON.stringify({key}), configured: '   '},
+                {body: JSON.stringify({key}), configured: null},
+                {body: JSON.stringify({key})}
+            ];
+            for (const item of cases) {
+                const configured = item.configured === undefined ? key : item.configured;
+                if (configured === null) delete process.env.NETLIFY_KEY;
+                else process.env.NETLIFY_KEY = configured;
+                const response = await handler(new Request('https://example.invalid/.netlify/functions/verify-secret', {
+                    method: item.method || 'POST', headers: {'Content-Type': item.type || 'application/json'}, body: item.body
+                }));
+                results.push({status: response.status, cache: response.headers.get('cache-control'), body: await response.text(), unchanged: process.env.NETLIFY_KEY === (configured ?? undefined)});
+            }
+            console.log(JSON.stringify(results));
+            `,
+            pathToFileURL(path.join(verificationDirectory, verificationEntry)).href
+        ]);
+        const verificationResponses = JSON.parse(verificationResult.stdout) as {
+            status: number;
+            body: string;
+            cache: string;
+            unchanged: boolean;
+        }[];
+        expect(verificationResponses.map(response => response.status)).toEqual(
+            context === 'production'
+                ? [204, 401, 401, 401, 400, 400, 400, 400, 400, 405, 405, 503, 503, 503, 204]
+                : Array.from({length: 15}, () => 403)
+        );
+        for (const response of verificationResponses) {
+            expect(response.cache).toBe('no-store');
+            expect(response.unchanged).toBe(true);
+            expect(response.body).not.toContain('test-key');
+            expect(response.body).not.toContain('wrong');
+        }
         for (const name of ['post-published', 'post-unpublished']) {
             const extracted = await temporaryDirectory();
             await exec('unzip', ['-q', path.join(archives, name + '.zip'), '-d', extracted]);

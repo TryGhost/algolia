@@ -66,7 +66,7 @@ In Ghost Admin, create a **Custom Integration** under **Settings → Integration
 | `post.unpublished` | `post-unpublished` |
 | `post.deleted` | `post-unpublished` |
 
-Open your deployed site's main URL and enter the `NETLIFY_KEY` you configured. Copy the generated URL for each event into Ghost. The setup page keeps the secret in your browser and includes it in the URLs; treat those URLs as private.
+Open your deployed site's main URL, enter your existing `NETLIFY_KEY`, and click **Verify secret**. The page sends it to your site's verification endpoint without changing the saved value. Once verified, copy the URL for each event into Ghost. These URLs contain the secret; keep them private.
 
 Once configured, these webhooks keep post changes in sync without touching the index settings.
 

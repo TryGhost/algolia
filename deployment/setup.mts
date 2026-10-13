@@ -41,8 +41,21 @@ export function initializeSetup(config: {production: boolean; siteUrl?: string})
     const status = document.querySelector<HTMLElement>('#copy-status');
     const theme = document.querySelector<HTMLSelectElement>('#theme');
     const form = document.querySelector<HTMLElement>('#setup-form');
+    const verify = document.querySelector<HTMLButtonElement>('#verify-secret');
+    const verification = document.querySelector<HTMLElement>('#verification-status');
     const message = document.querySelector<HTMLElement>('#setup-message');
-    if (!key || !published || !unpublished || !urls || !status || !theme || !form || !message) {
+    if (
+        !key ||
+        !published ||
+        !unpublished ||
+        !urls ||
+        !status ||
+        !theme ||
+        !form ||
+        !message ||
+        !verify ||
+        !verification
+    ) {
         return;
     }
 
@@ -64,27 +77,93 @@ export function initializeSetup(config: {production: boolean; siteUrl?: string})
     form.hidden = false;
     void showIndexingStatus(message);
 
-    const updateUrls = (): void => {
-        const generated = createWebhookUrls(siteOrigin, key.value);
-        published.value = generated?.published ?? '';
-        unpublished.value = generated?.unpublished ?? '';
-        urls.hidden = !generated;
+    let verificationAttempt = 0;
+    const invalidateVerification = (): void => {
+        verificationAttempt += 1;
+        published.value = '';
+        unpublished.value = '';
+        urls.hidden = true;
         status.textContent = '';
+        verification.textContent = '';
+        verify.disabled = !key.value.trim();
+        verify.textContent = 'Verify secret';
     };
+    invalidateVerification();
 
-    key.addEventListener('input', updateUrls);
+    const verifySecret = async (): Promise<void> => {
+        if (verify.disabled) {
+            return;
+        }
+        invalidateVerification();
+        const secret = key.value;
+        const attempt = verificationAttempt;
+        verify.disabled = true;
+        verify.textContent = 'Verifying…';
+        verification.textContent = 'Checking your existing webhook secret…';
+        try {
+            const response = await fetch('/.netlify/functions/verify-secret', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({key: secret}),
+                cache: 'no-store',
+                redirect: 'error',
+                signal: AbortSignal.timeout(10_000)
+            });
+            if (attempt !== verificationAttempt || key.value !== secret) {
+                return;
+            }
+            if (response.status !== 204) {
+                verification.textContent =
+                    response.status === 401
+                        ? 'This secret does not match. Enter the NETLIFY_KEY saved in Netlify.'
+                        : response.status === 503
+                          ? 'NETLIFY_KEY is missing in Netlify. Add it and redeploy, then try again.'
+                          : response.status === 403
+                            ? 'Verification is unavailable on previews. Open your production site.'
+                            : 'Could not verify your secret. Try again.';
+                return;
+            }
+            const generated = createWebhookUrls(siteOrigin, secret);
+            published.value = generated?.published ?? '';
+            unpublished.value = generated?.unpublished ?? '';
+            urls.hidden = !generated;
+            verification.textContent = 'Secret verified. Copy these URLs into Ghost.';
+        } catch {
+            if (attempt === verificationAttempt) {
+                verification.textContent = 'Could not verify your secret. Try again.';
+            }
+        } finally {
+            if (attempt === verificationAttempt) {
+                verify.disabled = !key.value.trim();
+                verify.textContent = 'Verify secret';
+            }
+        }
+    };
+    verify.addEventListener('click', () => {
+        void verifySecret();
+    });
+    key.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            void verifySecret();
+        }
+    });
+    key.addEventListener('input', invalidateVerification);
     document.querySelector('#clear-secret')?.addEventListener('click', () => {
         key.value = '';
-        updateUrls();
+        invalidateVerification();
         key.focus();
     });
     window.addEventListener('pagehide', () => {
         key.value = '';
-        updateUrls();
+        invalidateVerification();
     });
 
     for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
         button.addEventListener('click', async () => {
+            if (urls.hidden) {
+                return;
+            }
             const field = button.dataset.copy === 'published-url' ? published : unpublished;
             try {
                 await navigator.clipboard.writeText(field.value);

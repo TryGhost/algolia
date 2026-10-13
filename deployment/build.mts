@@ -154,6 +154,15 @@ export const buildDeployment = async (options: DeploymentOptions): Promise<void>
 }
 `
     );
+    await writeFile(
+        path.join(functions, 'verify-secret.mts'),
+        `import {verifySecret} from '../../../deployment-guard.mts';
+export default async function handler(request: Request): Promise<Response> {
+    if (${JSON.stringify(options.context !== 'production')}) return new Response('Secret verification is disabled outside production', {status: 403, headers: {'Cache-Control': 'no-store'}});
+    return verifySecret(request);
+}
+`
+    );
     for (const name of HANDLERS) {
         await access(path.join(runtime, 'packages/algolia-netlify/dist/functions', `${name}.mjs`));
         await writeFile(

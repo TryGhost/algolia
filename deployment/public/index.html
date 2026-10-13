@@ -24,11 +24,14 @@
     <ol class="m-0 list-none space-y-4 p-0" id="setup-form" hidden>
       <li class="relative rounded-lg border border-gray-300 bg-white p-6 sm:p-8 sm:pl-18 dark:border-gray-700 dark:bg-gray-900">
         <span aria-hidden="true" class="mb-3 grid size-7 place-items-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 sm:absolute sm:top-8 sm:left-6 dark:bg-gray-800 dark:text-gray-400">1</span>
-        <h2 class="mb-3 text-lg leading-snug font-semibold tracking-tight">Create your webhook URLs</h2>
-        <p class="mb-4">Enter the webhook secret you chose during deployment. This is your <code class="text-sm">NETLIFY_KEY</code>, not your Algolia API key.</p>
-        <label class="mb-2 block text-sm font-semibold" for="webhook-key">Webhook secret</label>
-        <input class="min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 read-only:bg-gray-100 read-only:font-mono read-only:text-xs dark:border-gray-700 dark:bg-gray-900 dark:read-only:bg-gray-800" id="webhook-key" type="password" autocomplete="off" spellcheck="false" aria-describedby="secret-help" placeholder="Paste your webhook secret">
-        <p class="mt-2 mb-4 text-xs text-gray-600 dark:text-gray-400" id="secret-help">Your secret stays in this page. It is included in the URLs you copy to Ghost.</p>
+        <h2 class="mb-3 text-lg leading-snug font-semibold tracking-tight">Verify your existing webhook secret</h2>
+        <p class="mb-4">Enter the <code class="text-sm">NETLIFY_KEY</code> already saved in Netlify. This page cannot change it.</p>
+        <label class="mb-2 block text-sm font-semibold" for="webhook-key">Existing webhook secret</label>
+        <input class="min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 read-only:bg-gray-100 read-only:font-mono read-only:text-xs dark:border-gray-700 dark:bg-gray-900 dark:read-only:bg-gray-800" id="webhook-key" type="password" autocomplete="off" spellcheck="false" aria-describedby="secret-help" placeholder="Paste your existing webhook secret">
+        <p class="mt-2 mb-4 text-xs text-gray-600 dark:text-gray-400" id="secret-help">Your secret is sent to this site to verify it, then included in the URLs you copy to Ghost. It is not saved by this page.</p>
+        <button type="button" id="verify-secret" disabled class="min-h-11 cursor-pointer rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700">Verify secret</button>
+        <p id="verification-status" class="mt-2 text-sm" role="status" aria-live="polite"></p>
+        <button type="button" id="clear-secret" class="min-h-11 cursor-pointer border-0 bg-transparent px-0 py-2 text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300">Clear secret and URLs</button>
         <div id="webhook-urls" hidden>
           <div class="mt-6">
             <label class="mb-2 block text-sm font-semibold" for="published-url">Publish and update URL</label>
@@ -39,7 +42,6 @@
             <div class="flex gap-2"><input class="min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 read-only:bg-gray-100 read-only:font-mono read-only:text-xs dark:border-gray-700 dark:bg-gray-900 dark:read-only:bg-gray-800" id="unpublished-url" type="text" readonly spellcheck="false"><button class="min-h-11 cursor-pointer rounded-lg border border-gray-300 px-4 py-2 font-semibold hover:bg-gray-100 active:translate-y-px dark:border-gray-700 dark:hover:bg-gray-800" type="button" data-copy="unpublished-url">Copy<span class="sr-only"> unpublish and delete URL</span></button></div>
           </div>
           <p id="copy-status" class="mt-2 mb-4 text-xs text-gray-600 dark:text-gray-400" role="status" aria-live="polite"></p>
-          <button type="button" id="clear-secret" class="min-h-11 cursor-pointer border-0 bg-transparent px-0 py-2 text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300">Clear secret and URLs</button>
         </div>
       </li>
       <li class="relative rounded-lg border border-gray-300 bg-white p-6 sm:p-8 sm:pl-18 dark:border-gray-700 dark:bg-gray-900">
@@ -61,6 +63,11 @@
         <h2 class="mb-3 text-lg leading-snug font-semibold tracking-tight">Check your index</h2>
         <p class="mb-4">Publish a test post with a distinctive phrase and find it in your Algolia index. Edit the post to check updates, then unpublish it to check removal.</p>
         <aside class="rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-800"><strong>Starting with an empty index?</strong> <a class="text-blue-700 underline underline-offset-4 dark:text-blue-300" href="https://github.com/TryGhost/algolia/tree/main/packages/algolia">Import your existing posts with the CLI</a> first. This requires a terminal. If your index already works, keep it; you do not need to reimport.</aside>
+      </li>
+      <li class="relative rounded-lg border border-gray-300 bg-white p-6 sm:p-8 sm:pl-18 dark:border-gray-700 dark:bg-gray-900">
+        <span aria-hidden="true" class="mb-3 grid size-7 place-items-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 sm:absolute sm:top-8 sm:left-6 dark:bg-gray-800 dark:text-gray-400">4</span>
+        <h2 class="mb-3 text-lg leading-snug font-semibold tracking-tight">Finish setup</h2>
+        <p>Once your test post appears, updates, and disappears from Algolia as expected, setup is complete. You can close this page. Your webhooks will keep running.</p>
       </li>
     </ol>
     <footer class="py-6 text-sm text-gray-600 dark:text-gray-400"><h2 class="mb-3 text-lg leading-snug font-semibold tracking-tight">Future updates</h2><p class="mb-4">Rebuild this site in Netlify to receive compatible fixes and features, including if you use a fork. Major upgrades require your choice. <a class="text-blue-700 underline underline-offset-4 dark:text-blue-300" href="https://github.com/TryGhost/algolia/tree/main/packages/algolia-netlify#releases-and-rollback">Manage updates</a></p></footer>
