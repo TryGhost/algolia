@@ -51,7 +51,7 @@ Run only the lint and formatting checks across the packages:
 pnpm lint
 ```
 
-Package-specific development and verification commands are documented in each package README.
+Package-specific development and verification commands are documented in each package README. To test Netlify changes before merging, follow [Testing a Netlify prerelease](docs/testing-prereleases.md).
 
 ## Publishing
 

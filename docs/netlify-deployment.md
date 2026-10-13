@@ -31,7 +31,7 @@ pnpm ship patch --projects=@tryghost/algolia-netlify
 
 The current stable package version is `0.4.6`, but no deployable stable GitHub Release exists yet. The first successful stable Netlify `pnpm ship` release is required before the main customer deployment button can work. Existing source deployments can rebuild before that release without changing configuration. Merging source changes alone does not publish a runtime update.
 
-To test before merging, publish an isolated prerelease through the manual Publish workflow on the candidate branch. Set `prerelease-tag` to `pr-333` (its default is empty) and disable dry-run only when ready to publish. Non-main publication requires this explicit input, and every queued version must be a prerelease. npm uses `pr-333`, leaving `latest` unchanged; the matching GitHub Release is marked as a prerelease.
+For pre-merge development, follow [Testing a Netlify prerelease](testing-prereleases.md) to version, publish, deploy, and verify an isolated candidate. Ordinary customer updates ignore prereleases.
 
 ## Deployment boundaries
 
