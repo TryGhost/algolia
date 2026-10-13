@@ -1,4 +1,3 @@
-import {existsSync} from 'node:fs';
 import {execFile} from 'node:child_process';
 import {access, copyFile, mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -6,7 +5,7 @@ import {stripTypeScriptTypes} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {promisify} from 'node:util';
 
-import {CATALOG_URL, DEFAULT_RELEASE, selectRelease, validateSelection} from './releases.mts';
+import {DEFAULT_RELEASE, discoverRelease, selectRelease, validateSelection} from './releases.mts';
 
 const exec = promisify(execFile);
 const HANDLERS = ['post-published', 'post-unpublished'] as const;
@@ -20,7 +19,7 @@ export type DeploymentOptions = {
     repository?: string;
     releases?: Readonly<Record<string, string>>;
     offline?: boolean;
-    catalogUrl?: string;
+    releasesUrl?: string;
 };
 
 const buildEnvironment = (): NodeJS.ProcessEnv => {
@@ -37,33 +36,10 @@ const buildEnvironment = (): NodeJS.ProcessEnv => {
 export const buildDeployment = async (options: DeploymentOptions): Promise<void> => {
     const selection = options.version ?? DEFAULT_RELEASE;
     validateSelection(selection);
-    let releases: unknown = options.releases;
-    const bundledCatalog = path.join(options.directory, 'releases.json');
-    if (releases === undefined && selection.includes('.') && existsSync(bundledCatalog)) {
-        const bundled = JSON.parse(await readFile(bundledCatalog, 'utf8')) as Record<
-            string,
-            unknown
-        >;
-        if (Object.hasOwn(bundled, selection)) {
-            releases = {[selection]: bundled[selection]};
-        }
-    }
-    if (releases === undefined) {
-        try {
-            const response = await fetch(options.catalogUrl ?? CATALOG_URL, {
-                signal: AbortSignal.timeout(15000),
-                cache: 'no-store',
-                redirect: 'error'
-            });
-            if (!response.ok) {
-                throw new Error('Catalog request failed');
-            }
-            releases = await response.json();
-        } catch {
-            throw new Error('Could not load the integration release catalog. Retry the build.');
-        }
-    }
-    const {version, commit} = selectRelease(selection, releases);
+    const {version, commit} =
+        options.releases === undefined
+            ? await discoverRelease(selection, options.releasesUrl)
+            : selectRelease(selection, options.releases);
 
     const runtime = path.join(options.directory, 'runtime');
     // Keep generated entrypoints beside the selected package's dependencies. Netlify
