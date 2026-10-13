@@ -27,23 +27,25 @@ Algolia requires `deleteIndex` for filtered deletions. The name is a bit mislead
 
 ### Deploy the Netlify Functions
 
-1. Connect this repository or your fork to a Netlify site. Use the root [`netlify.toml`](../../netlify.toml): base `deployment`, build command `node build.mts`, functions `functions`, publish `public`. Node is pinned there; pnpm is pinned in [`deployment/package.json`](../../deployment/package.json).
-2. In **Project configuration → Environment variables**, add the values from [`.env.example`](.env.example) in the **production** context, available to Functions. Set `ALGOLIA_ACTIVE=TRUE`, your Algolia credentials and index, and a non-empty `NETLIFY_KEY`.
-3. Deploy, then configure the Ghost webhooks below. Redeploy after changing environment variables.
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&base=deployment&fullConfiguration=true#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=)
 
-For local development, `.env` belongs in `packages/algolia-netlify/`. Hosted functions use Netlify environment variables. Never commit credentials or put them in `netlify.toml`.
+Follow the [guided setup](../../USAGE.md). Netlify creates a copy in your GitHub account and asks for your Algolia credentials, index name, and a webhook secret. The repository supplies the build settings. After deploying, open your site and enter the same secret to copy the webhook URLs into Ghost.
+
+To use an existing fork, sync it with this repository once to include the deployment setup. Then import it into Netlify and add the values from [`.env.example`](.env.example), with `ALGOLIA_ACTIVE=TRUE`. Keep the repository's build settings. The variables must be available to production Functions; redeploy after changing them.
+
+Hosted configuration belongs in Netlify. A local `.env` belongs in `packages/algolia-netlify/` and is only for development. Never commit credentials.
 
 #### Existing installations
 
-Before upgrading, set `NETLIFY_KEY` and add the same `?key=...` value to every Ghost webhook URL. Missing or incorrect request keys now return `401`; an unset or empty `NETLIFY_KEY` returns `503`.
+If you use a fork, sync it once to include this deployment setup. Before deploying the update, set `NETLIFY_KEY` and add the same `?key=...` value to every Ghost webhook URL. Missing or incorrect request keys now return `401`; an unset or empty `NETLIFY_KEY` returns `503`.
 
-Clear old base, package-directory, and build-command overrides in Netlify so the root configuration applies. In particular, deploying directly from `packages/algolia-netlify` bypasses release selection. Existing webhook paths stay unchanged.
+If you previously set base, package-directory, or build-command overrides in Netlify, clear them so the repository configuration applies. In particular, deploying directly from `packages/algolia-netlify` bypasses release selection. Existing webhook paths stay unchanged.
 
 #### Releases and rollback
 
 Leave `ALGOLIA_INTEGRATION_VERSION` unset, or set it to `1`, to receive the latest stable `1.x` release on each rebuild. Major upgrades require an explicit change, such as `2`. Running deployments stay unchanged until rebuilt. Patch and minor releases preserve your configuration and index contracts.
 
-To select a major or pin an exact release such as `1.0.0`, set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, then redeploy. Major selections read the [upstream release catalog](https://raw.githubusercontent.com/TryGhost/algolia/main/deployment/releases.json), so forks receive runtime updates without syncing. Exact versions use the checkout’s catalog when it contains that version, otherwise the upstream catalog. Invalid selections or an unavailable required catalog fail the build.
+To select a major or pin an exact release such as `1.0.0`, set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, then redeploy. Major selections read the [upstream release catalog](https://raw.githubusercontent.com/TryGhost/algolia/refs/heads/aileen/integration-releases/deployment/releases.json), so forks receive runtime updates without syncing. Exact versions use the checkout’s catalog when it contains that version, otherwise the upstream catalog. Invalid selections or an unavailable required catalog fail the build.
 
 To roll back, pin the previous exact version and redeploy. The build records the selection, resolved version, and commit in `deployment/release.json`. Each release uses its pinned source commit, pnpm version, and frozen dependency lockfile.
 
@@ -64,11 +66,7 @@ In Ghost Admin, create a **Custom Integration** under **Settings → Integration
 | `post.unpublished` | `post-unpublished` |
 | `post.deleted` | `post-unpublished` |
 
-Use the function URL shown by Netlify and pass the configured `NETLIFY_KEY` as the `key` query parameter. For example:
-
-```text
-https://YOUR-SITE-ID.netlify.app/.netlify/functions/post-published?key=NETLIFY_KEY
-```
+Open your deployed site's main URL and enter the `NETLIFY_KEY` you configured. Copy the generated URL for each event into Ghost. The setup page keeps the secret in your browser and includes it in the URLs; treat those URLs as private.
 
 Once configured, these webhooks keep post changes in sync without touching the index settings.
 

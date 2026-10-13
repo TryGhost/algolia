@@ -18,7 +18,8 @@
     "packages/algolia-netlify/build/**",
     "packages/algolia-netlify/dist/**",
     "deployment/runtime/**",
-    "deployment/functions/**"
+    "deployment/functions/**",
+    "deployment/public/setup.js"
   ],
   "rules": {
     "array-callback-return": "error",
@@ -43,6 +44,10 @@
     "vitest/valid-describe-callback": "error"
   },
   "overrides": [
+    {
+      "files": ["deployment/setup.mts"],
+      "env": {"browser": true}
+    },
     {
       "files": ["packages/algolia/index.js"],
       "rules": {

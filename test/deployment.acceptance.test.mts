@@ -139,6 +139,7 @@ it('pins source across upstream changes and supports explicit upgrade and rollba
     const releases = {'1.0.0': first, '1.1.0': second};
     const options = {directory, repository, releases, offline: true, context: 'production'};
     await buildDeployment({...options, version: '1.0.0'});
+    await exec(process.execPath, ['--check', path.join(directory, 'public/setup.js')]);
     expect(await invoke(directory)).toEqual({status: 200, body: 'first release'});
     expect(await invoke(directory, '?key=test-key', 'test-key', 'post-unpublished')).toEqual({
         status: 200,

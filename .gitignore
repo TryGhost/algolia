@@ -83,3 +83,4 @@ packages/algolia-fragmenter/lib/.tsbuildinfo
 deployment/runtime/
 deployment/functions/
 deployment/release.json
+deployment/public/setup.js

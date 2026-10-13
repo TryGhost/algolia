@@ -11,7 +11,12 @@
     "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "types": ["node"],
-    "typeRoots": ["../packages/algolia-netlify/node_modules/@types"]
+    "typeRoots": ["../packages/algolia-netlify/node_modules/@types"],
+    "lib": ["ES2023", "DOM"]
   },
-  "include": ["*.mts", "../test/deployment.acceptance.test.mts"]
+  "include": [
+    "*.mts",
+    "../test/deployment.acceptance.test.mts",
+    "../test/setup.acceptance.test.mts"
+  ]
 }
