@@ -13,6 +13,14 @@ on:
         required: false
         type: boolean
         default: true
+      prerelease-tag:
+        description: Isolated PR channel (for example pr-333); leave empty for stable main releases
+        required: false
+        type: string
+        default: ''
+
+env:
+  PRERELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs['prerelease-tag'] || '' }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,7 +28,7 @@ concurrency:
 jobs:
   publish:
     name: Publish to npm
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Published new versions'))
+    if: (github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Published new versions'))) || (github.event_name == 'workflow_dispatch' && inputs['prerelease-tag'] != '')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -41,6 +49,8 @@ jobs:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+      - name: Validate release channel
+        run: node scripts/release-channel.mts
       - name: Verify npm supports trusted publishing
         run: |
           npm_version=$(npm --version)
@@ -48,6 +58,9 @@ jobs:
           echo "npm $npm_version"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install deployment dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        working-directory: deployment
       - name: Run release preflight
         run: |
           pnpm test:coverage
@@ -75,6 +88,7 @@ jobs:
             if npm view "$name@$version" version >/dev/null 2>"$registry_error"; then
               echo "Skipping $name@$version because it is already published"
             elif grep -q 'E404' "$registry_error"; then
+              node scripts/release-channel.mts "$version"
               echo "Queuing $name@$version"
               to_publish+=("$name")
             else
@@ -91,7 +105,31 @@ jobs:
           PROJECTS: ${{ steps.packages.outputs.projects }}
         run: |
           args=(release publish "--projects=$PROJECTS")
+          if [[ -n "$PRERELEASE_TAG" ]]; then
+            args+=("--tag=$PRERELEASE_TAG")
+          fi
           if [[ "$DRY_RUN" == "true" ]]; then
             args+=(--dry-run)
           fi
           pnpm nx "${args[@]}"
+
+  promote-netlify:
+    name: Promote Netlify integration
+    needs: publish
+    if: github.event_name != 'workflow_dispatch' || !inputs['dry-run']
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Promote the published Netlify package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/promote-netlify-release.mts

@@ -24,6 +24,10 @@
     "**/*.toml",
     "**/*.yml",
     "**/*.yaml",
-    "**/*.md"
+    "**/*.md",
+    "deployment/runtime/**",
+    "deployment/functions/**",
+    "deployment/public/setup.js",
+    "deployment/public/setup.css"
   ]
 }

@@ -68,6 +68,7 @@ const invoke = async (
         userAgent?: string;
         active?: string;
         failureAt?: number;
+        netlifyKey?: string | null;
     } = {}
 ): Promise<{response: Invocation; requests: AlgoliaRequest[]}> => {
     const headers: Record<string, string> = {'content-type': 'application/json'};
@@ -81,7 +82,11 @@ const invoke = async (
     process.env.ALGOLIA_APP_ID = 'acceptance-app';
     process.env.ALGOLIA_API_KEY = 'acceptance-admin-key';
     process.env.ALGOLIA_INDEX = 'ghost-content';
-    process.env.NETLIFY_KEY = 'acceptance-webhook-key';
+    if (options.netlifyKey === null) {
+        delete process.env.NETLIFY_KEY;
+    } else {
+        process.env.NETLIFY_KEY = options.netlifyKey ?? 'acceptance-webhook-key';
+    }
     requesterMock.reset(options.failureAt);
 
     const handler = name === 'post-published' ? postPublished : postUnpublished;
@@ -151,8 +156,11 @@ describe('modern Netlify webhook handlers', () => {
         ['post-unpublished', postUnpublished]
     ] as const)('uses the native Request/Response seam for %s', async (name, handler) => {
         process.env.ALGOLIA_ACTIVE = 'FALSE';
+        process.env.NETLIFY_KEY = 'acceptance-webhook-key';
         const response = await handler(
-            new Request(`https://example.invalid/.netlify/functions/${name}`)
+            new Request(
+                `https://example.invalid/.netlify/functions/${name}?key=acceptance-webhook-key`
+            )
         );
         expect(response).toBeInstanceOf(Response);
         expect(response.status).toBe(200);
@@ -378,28 +386,42 @@ describe('modern Netlify webhook handlers', () => {
         expect(new URL(requests[0].url).pathname).toBe('/1/indexes/ghost-content/deleteByQuery');
     });
 
-    it.each([
-        ['missing', ''],
-        ['empty', '?key='],
-        ['correct', '?key=acceptance-webhook-key']
-    ])('accepts a %s key under the existing optional-key contract', async (_case, query) => {
-        const {response, requests} = await invoke('post-unpublished', {query});
-        expect(response.status).toBe(200);
-        expect(requests).toHaveLength(1);
-    });
-
-    it.each([
-        ['wrong', '?key=wrong'],
-        ['duplicate', '?key=acceptance-webhook-key&key=acceptance-webhook-key'],
-        ['duplicate empty', '?key=&key=']
-    ])('rejects a %s key before activation and body parsing', async (_case, query) => {
-        const {response, requests} = await invoke('post-published', {
-            query,
-            active: 'FALSE',
-            rawBody: '{'
+    describe.each(['post-published', 'post-unpublished'] as const)('%s authorization', name => {
+        it.each([
+            ['wrong', '?key=wrong'],
+            ['duplicate', '?key=acceptance-webhook-key&key=acceptance-webhook-key'],
+            ['duplicate empty', '?key=&key=']
+        ])('rejects a %s key before activation and body parsing', async (_case, query) => {
+            const {response, requests} = await invoke(name, {
+                query,
+                active: 'FALSE',
+                rawBody: '{'
+            });
+            expectTextResponse(response, 401, 'Unauthorized');
+            expect(requests).toEqual([]);
         });
-        expectTextResponse(response, 401, 'Unauthorized');
-        expect(requests).toEqual([]);
+
+        it.each([
+            ['missing query with configured secret', '', 'acceptance-webhook-key'],
+            ['empty query with configured secret', '?key=', 'acceptance-webhook-key'],
+            ['correct query', '?key=acceptance-webhook-key', 'acceptance-webhook-key'],
+            ['missing query without configured secret', '', null],
+            ['empty query without configured secret', '?key=', null],
+            ['missing query with empty configured secret', '', '']
+        ] as const)('preserves legacy indexing with %s', async (_case, query, netlifyKey) => {
+            const {response, requests} = await invoke(name, {query, netlifyKey});
+            expect(response.status).toBe(200);
+            expect(
+                requests.map(request => [request.method, new URL(request.url).pathname])
+            ).toEqual([
+                [
+                    'POST',
+                    name === 'post-published'
+                        ? '/1/indexes/ghost-content/batch'
+                        : '/1/indexes/ghost-content/deleteByQuery'
+                ]
+            ]);
+        });
     });
 
     it('returns before user-agent and body validation when disabled', async () => {

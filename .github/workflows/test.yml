@@ -23,8 +23,14 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            deployment/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+        working-directory: deployment
+      - run: pnpm build:css
+        working-directory: deployment
       - run: pnpm test:coverage
       - run: pnpm typecheck
       - run: pnpm lint

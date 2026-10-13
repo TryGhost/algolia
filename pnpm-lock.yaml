@@ -172,6 +172,9 @@ importers:
       '@nx/js':
         specifier: 23.3.0
         version: 23.3.0(@babel/traverse@7.29.10(supports-color@11.0.0))(nx@23.3.0)(supports-color@11.0.0)
+      '@types/semver':
+        specifier: 7.8.0
+        version: 7.8.0
       '@vitest/coverage-v8':
         specifier: 5.0.3
         version: 5.0.3(vitest@5.0.3)
@@ -184,6 +187,9 @@ importers:
       oxlint:
         specifier: 1.87.0
         version: 1.87.0
+      semver:
+        specifier: 7.8.5
+        version: 7.8.5
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
@@ -2457,6 +2463,9 @@ packages:
 
   '@types/retry@0.12.2':
     resolution: {integrity: sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==}
+
+  '@types/semver@7.8.0':
+    resolution: {integrity: sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ==}
 
   '@types/triple-beam@1.3.5':
     resolution: {integrity: sha512-6WaYesThRMCl19iryMYP7/x2OVgCtbIVflDGFpWnb9irXI3UjYE4AzmYuiUKY1AJstGijoY+MgUszMgRxIYTYw==}
@@ -8567,6 +8576,8 @@ snapshots:
   '@types/parse-json@4.0.2': {}
 
   '@types/retry@0.12.2': {}
+
+  '@types/semver@7.8.0': {}
 
   '@types/triple-beam@1.3.5': {}
 

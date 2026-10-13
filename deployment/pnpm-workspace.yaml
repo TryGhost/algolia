@@ -1,0 +1,5 @@
+packages: []
+
+# Only the one-shot CSS build is used; no native watcher build is needed.
+allowBuilds:
+  '@parcel/watcher': false

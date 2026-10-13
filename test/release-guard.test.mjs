@@ -74,4 +74,49 @@ describe('Release guard', () => {
         expect(publishBlock).toContain('args+=(--dry-run)');
         expect(publishBlock).toContain('pnpm nx "${args[@]}"');
     });
+    it('promotes Netlify releases only after successful non-dry-run npm publication', async () => {
+        const workflow = await readFile(
+            path.join(workspaceDirectory, '.github/workflows/publish.yml'),
+            'utf8'
+        );
+        const promotion = workflow.slice(workflow.indexOf('  promote-netlify:'));
+        expect(promotion).toContain('needs: publish');
+        expect(promotion).toContain(
+            "github.event_name != 'workflow_dispatch' || !inputs['dry-run']"
+        );
+        expect(promotion).toContain('contents: write');
+        expect(promotion).not.toContain('id-token: write');
+        expect(promotion).toContain('fetch-depth: 0');
+        expect(promotion).toContain('persist-credentials: false');
+        expect(promotion).toContain('GH_TOKEN: ${{ github.token }}');
+        expect(promotion).toContain('run: node scripts/promote-netlify-release.mts');
+        expect(workflow.slice(0, workflow.indexOf('  promote-netlify:'))).toContain(
+            'contents: read'
+        );
+    });
+    it('isolates branch prereleases and validates every queued version before publishing', async () => {
+        const workflow = await readFile(
+            path.join(workspaceDirectory, '.github/workflows/publish.yml'),
+            'utf8'
+        );
+        expect(workflow).toContain('prerelease-tag:');
+        expect(workflow).toContain(
+            "github.event_name == 'workflow_dispatch' && inputs['prerelease-tag'] != ''"
+        );
+        expect(workflow).toContain(
+            "PRERELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs['prerelease-tag'] || '' }}"
+        );
+        const channelValidation = workflow.indexOf('run: node scripts/release-channel.mts');
+        const packageValidation = workflow.indexOf('node scripts/release-channel.mts "$version"');
+        const queue = workflow.indexOf('to_publish+=("$name")');
+        const publish = workflow.indexOf('pnpm nx "${args[@]}"');
+        expect(channelValidation).toBeGreaterThan(-1);
+        expect(packageValidation).toBeGreaterThan(channelValidation);
+        expect(queue).toBeGreaterThan(packageValidation);
+        expect(workflow).toContain(
+            'elif grep -q \'E404\' "$registry_error"; then\n              node scripts/release-channel.mts "$version"'
+        );
+        expect(publish).toBeGreaterThan(queue);
+        expect(workflow).toContain('args+=("--tag=$PRERELEASE_TAG")');
+    });
 });

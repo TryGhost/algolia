@@ -78,3 +78,10 @@ packages/algolia-fragmenter/lib/.tsbuildinfo
 
 # Nx local cache and workspace data
 .nx/
+
+# Isolated Netlify deployment output
+deployment/runtime/
+deployment/functions/
+deployment/release.json
+deployment/public/setup.js
+deployment/public/setup.css

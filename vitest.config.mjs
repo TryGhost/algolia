@@ -2,6 +2,9 @@ import {defineConfig} from 'vitest/config';
 
 export default defineConfig({
     test: {
+        // The loader also runs in native Node subprocesses. Keep the same source offsets
+        // in both contexts so V8 coverage does not merge native and transformed ranges.
+        server: {deps: {external: [/\/deployment\/.*\.mts$/]}},
         include: [
             'packages/*/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}',
             'test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}'
@@ -17,6 +20,8 @@ export default defineConfig({
                 lines: 93
             },
             include: [
+                'deployment/*.mts',
+                'scripts/*.mts',
                 'packages/*/index.js',
                 'packages/*/lib/**/*.js',
                 'packages/algolia/bin/**/*.js',

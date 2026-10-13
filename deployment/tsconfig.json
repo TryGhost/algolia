@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "typeRoots": ["../packages/algolia-netlify/node_modules/@types"],
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": [
+    "*.mts",
+    "../scripts/*.mts",
+    "../test/deployment.acceptance.test.mts",
+    "../test/setup.acceptance.test.mts"
+  ]
+}

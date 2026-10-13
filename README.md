@@ -19,12 +19,13 @@ This pnpm monorepo contains five packages:
 
 ### Netlify Functions
 
-> [!WARNING]
-> The current handlers do not enforce authentication when the `key` query parameter is omitted. A public function URL is not a secret; do not expose these functions publicly until authentication is enforced or access is restricted outside the handlers.
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2FTryGhost%2Falgolia&base=deployment#ALGOLIA_ACTIVE=TRUE&ALGOLIA_APP_ID=&ALGOLIA_API_KEY=&ALGOLIA_INDEX=&NETLIFY_KEY=)
 
-Deployment, Algolia configuration, and Ghost webhook setup are described in the [`@tryghost/algolia-netlify` guide](packages/algolia-netlify/README.md).
+Existing Netlify installations keep their current build settings and webhook behavior. No configuration changes are required.
 
-The Netlify deployment publishes only a static landing page alongside the functions; repository package and function files are not site assets.
+The button opts into release-based deployments, creates a copy in your GitHub account, and guides you through configuration. Start with an existing Algolia index, or [import your posts with the CLI](packages/algolia/README.md). After deploying, open your Netlify site to get the webhook URLs for Ghost.
+
+See the [setup guide](USAGE.md) for the required credentials and [existing-installation instructions](packages/algolia-netlify/README.md#existing-installations) if search is already running. After opting in, rebuilds receive compatible patch and minor releases, including from forks. Major upgrades require your selection.
 
 ### CLI
 
@@ -50,12 +51,12 @@ Run only the lint and formatting checks across the packages:
 pnpm lint
 ```
 
-Package-specific development and verification commands are documented in each package README.
+Package-specific development and verification commands are documented in each package README. To test Netlify changes before merging, follow [Testing a Netlify prerelease](docs/testing-prereleases.md).
 
 ## Publishing
 
-The repository uses Nx to version packages independently. For routine releases, run one of the
-root aliases from a clean checkout of `main`:
+From a clean checkout of `main`, run `pnpm ship` and choose the version bump. Nx versions the
+packages independently. You can also choose the bump directly:
 
 ```sh
 pnpm ship:patch
@@ -72,7 +73,7 @@ pnpm ship patch --projects=@tryghost/algolia
 
 `ship` runs the test suite, updates the selected versions and their internal dependants, creates the
 release commit and tags, then pushes them upstream. The [`Publish` workflow](.github/workflows/publish.yml)
-publishes those versions through npm trusted publishing. Never run `npm publish` by hand.
+publishes those versions through npm trusted publishing, then promotes the Netlify package version as a GitHub Release for deployment updates. Netlify and npm use the same version. See the [deployment policy](docs/netlify-deployment.md) for release prerequisites and verification. Never run `npm publish` by hand.
 
 ---
 
