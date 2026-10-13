@@ -1,11 +1,13 @@
 [build]
-  base = "deployment"
-  command = "pnpm build"
-  functions = "runtime/packages/algolia-netlify/deployment-functions"
-  publish = "public"
+  # Deploys run only this command; package "prebuild" scripts never run on Netlify. The
+  # extractor's gitignored dist/ must exist before functions bundling, or the bundler silently
+  # drops the package from the function archives and the functions crash at runtime.
+  command = "pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck"
+  functions = "packages/algolia-netlify/functions"
+  publish = "packages/algolia-netlify/public"
 
 [build.environment]
-  NODE_VERSION = "24.21.0"
+  NODE_VERSION = "24"
 
 [template.environment]
   ALGOLIA_ACTIVE = "Leave TRUE to keep your search index up to date."

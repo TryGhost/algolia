@@ -1,14 +1,15 @@
-# Netlify deployment selection (unreleased)
+# Optional Netlify deployment selection (unreleased)
 
-Source deployments now use the root Netlify configuration and receive compatible runtime updates on rebuild. This implements the local build and safety work for #331; hosted validation remains pending.
+Existing root and package-directory deployments keep their build configuration, webhook URLs, and authentication behavior. No new environment variables or published deployment release are required to keep them working.
 
-- The Deploy to Netlify button creates a repository copy and prompts for configuration. After deployment, the site guides setup and generates the private webhook URLs to copy into Ghost. Existing forks can use Netlify’s repository import; build settings come from the repository. Initial indexing still uses the CLI.
-- Unset `ALGOLIA_INTEGRATION_VERSION` or `0` selects the latest stable `0.x` release on rebuild. Major upgrades require an explicit selection such as `1`. Exact published versions support pinning and rollback. Patch and minor releases preserve configuration and index contracts, including within `0.x`.
-- Netlify and npm share the `@tryghost/algolia-netlify` version. After successful npm publication, the Publish workflow promotes a GitHub Release with the version and source commit. Builds, including forks, select these published releases. Each runtime uses its pinned pnpm version and dependency lockfile.
-- Both current package handlers and deployment wrappers require a configured `NETLIFY_KEY` and one matching query key. Existing unauthenticated webhooks must add the key before upgrading. Missing server configuration returns `503`; missing, incorrect, empty, or duplicate request keys return `401`.
-- Generated preview and branch-deploy handlers return `403` before loading the indexing runtime. Production runtime credentials are excluded from build subprocesses. Existing function basenames stay unchanged.
-- The baseline preserves #330's upsert-only publishing, optional content projection, and slug-based unpublishing. It adds no index settings or data migration. Stale-fragment cleanup remains deferred.
+The new deployment setup is an explicit opt-in through the Deploy to Netlify button or the [migration steps](../../packages/algolia-netlify/README.md#existing-installations):
 
-If present, clear legacy Netlify base/package/build overrides before adopting the root configuration. Pin the previous exact release or restore a previous deploy to roll back code. Recovering index changes requires a retained index copy or reindexing; code rollback does not undo writes.
+- Base directory `deployment` selects published runtimes and provides a guided setup page. The page verifies the existing webhook secret before generating private URLs for Ghost. Initial indexing still uses the CLI.
+- Unset `ALGOLIA_INTEGRATION_VERSION` or `0` selects the latest stable `0.x` release on rebuild, including from forks. Major upgrades require an explicit selection. Exact published versions support pinning and rollback; automatic updates exclude prereleases.
+- Netlify and npm share the `@tryghost/algolia-netlify` version. Successful npm publication promotes an immutable GitHub Release with its source commit. Each runtime uses its pinned pnpm version and dependency lockfile.
+- Only the opt-in deployment wrappers require a configured `NETLIFY_KEY` and one matching query key. Configure the secret and update Ghost's webhook URLs before switching the base directory. Missing server configuration returns `503`; invalid request keys return `401`.
+- Opt-in preview and branch-deploy handlers return `403` before loading the runtime. Production runtime credentials are excluded from build subprocesses.
 
-The first successful Netlify package release after merge is required before customer deployment works. Package publication remains subject to the existing scoped Publish workflow. Installing an older npm package directly bypasses deployment guards.
+Publishing still upserts without deleting existing records first, and unpublishing deletes by slug. This change requires no index settings or data migration. Stale-fragment cleanup remains deferred. Code rollback does not undo accepted index writes.
+
+The first stable Netlify package release is required for the new customer button's default selection. Existing source deployments remain independent of that release; the explicit prerelease supports testing the new setup before merge. Hosted preview isolation and cross-version rollback validation remain pending.

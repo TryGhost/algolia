@@ -1,0 +1,14 @@
+[build]
+  command = "pnpm build"
+  functions = "runtime/packages/algolia-netlify/deployment-functions"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "24.21.0"
+
+[template.environment]
+  ALGOLIA_ACTIVE = "Leave TRUE to keep your search index up to date."
+  ALGOLIA_APP_ID = "Application ID from Algolia → Settings → API keys"
+  ALGOLIA_API_KEY = "Algolia key for this index, with addObject and deleteIndex permissions"
+  ALGOLIA_INDEX = "Name of the Algolia index"
+  NETLIFY_KEY = "Choose a long random secret. Keep it for the setup page after deployment."

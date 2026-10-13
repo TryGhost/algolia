@@ -9,13 +9,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 const execFileAsync = promisify(execFile);
 const packageDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workspaceDirectory = path.resolve(packageDirectory, '../..');
-// Netlify's local monorepo builder appends the selected package path to the build base
-// when choosing its archive output directory, even when the base is already that package.
-const functionsDistDirectory = path.join(
-    packageDirectory,
-    path.relative(workspaceDirectory, packageDirectory),
-    '.netlify/functions'
-);
+const functionsDistDirectory = path.join(packageDirectory, '.netlify/functions');
 const extractorDistDirectory = path.resolve(
     workspaceDirectory,
     'packages/algolia-html-extractor/dist'

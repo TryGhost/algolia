@@ -3,8 +3,17 @@ import {once} from 'node:events';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {createRequire} from 'node:module';
-import {pathToFileURL} from 'node:url';
-import {access, mkdtemp, readdir, rm, writeFile, readFile, symlink} from 'node:fs/promises';
+import {fileURLToPath, pathToFileURL} from 'node:url';
+import {
+    access,
+    mkdtemp,
+    readdir,
+    rm,
+    writeFile,
+    readFile,
+    symlink,
+    realpath
+} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -13,6 +22,31 @@ import {afterEach, expect, it, vi} from 'vitest';
 import {buildDeployment} from '../deployment/build.mts';
 
 const exec = promisify(execFile);
+const repositoryRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
+const resolveSiteBuild = async (base?: string) => {
+    const netlifyRequire = createRequire(
+        await realpath(
+            new URL(
+                '../packages/algolia-netlify/node_modules/netlify-cli/package.json',
+                import.meta.url
+            )
+        )
+    );
+    const configModule = pathToFileURL(netlifyRequire.resolve('@netlify/config')).href;
+    const {stdout} = await exec(process.execPath, [
+        '--input-type=module',
+        '-e',
+        `
+        const {resolveConfig} = await import(process.argv[1]);
+        const result = await resolveConfig({cwd: process.argv[2], repositoryRoot: process.argv[2], base: process.argv[3] || undefined, baseRelDir: true, offline: true, buffer: true});
+        console.log(JSON.stringify({configPath: result.configPath, buildDir: result.buildDir, command: result.config.build.command, publish: result.config.build.publish, functions: result.config.functionsDirectory}));
+    `,
+        configModule,
+        repositoryRoot,
+        base || ''
+    ]);
+    return JSON.parse(stdout);
+};
 const pnpmVersion = (await exec('pnpm', ['--version'])).stdout.trim();
 const directories: string[] = [];
 const functionsDirectory = (directory: string) =>
@@ -839,3 +873,36 @@ it.each(['deploy-preview', 'production'])(
     },
     30000
 );
+
+it('keeps existing root deployments on the source build without selecting a release', async () => {
+    expect(await resolveSiteBuild()).toEqual({
+        configPath: path.join(repositoryRoot, 'netlify.toml'),
+        buildDir: repositoryRoot,
+        command: 'pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck',
+        publish: path.join(repositoryRoot, 'packages/algolia-netlify/public'),
+        functions: path.join(repositoryRoot, 'packages/algolia-netlify/functions')
+    });
+});
+
+it('selects the release deployment only when the site explicitly uses the deployment base', async () => {
+    expect(await resolveSiteBuild('deployment')).toEqual({
+        configPath: path.join(repositoryRoot, 'deployment/netlify.toml'),
+        buildDir: path.join(repositoryRoot, 'deployment'),
+        command: 'pnpm build',
+        publish: path.join(repositoryRoot, 'deployment/public'),
+        functions: path.join(
+            repositoryRoot,
+            'deployment/runtime/packages/algolia-netlify/deployment-functions'
+        )
+    });
+});
+
+it('keeps existing package-base deployments on their source functions', async () => {
+    expect(await resolveSiteBuild('packages/algolia-netlify')).toEqual({
+        configPath: path.join(repositoryRoot, 'netlify.toml'),
+        buildDir: repositoryRoot,
+        command: 'pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck',
+        publish: path.join(repositoryRoot, 'packages/algolia-netlify/public'),
+        functions: path.join(repositoryRoot, 'packages/algolia-netlify/functions')
+    });
+});

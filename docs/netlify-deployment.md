@@ -1,6 +1,10 @@
 # Netlify deployment policy
 
-The root `netlify.toml` runs `pnpm build` in `deployment`: it compiles Tailwind CSS, then runs `build.mts`. This path works when Netlify connects to TryGhost/algolia or a fork. Direct package builds are for development and bypass release selection.
+Existing root and package-directory deployments keep building their connected source revision with unchanged configuration and webhook authentication. They do not use release selection or require a stable GitHub Release. Merging this change does not opt existing sites into the new setup.
+
+The Deploy to Netlify button explicitly selects base directory `deployment`, whose `netlify.toml` runs `pnpm build`: it compiles Tailwind CSS, then runs `build.mts`. Existing sites can [migrate voluntarily](../packages/algolia-netlify/README.md#existing-installations). Set the production Functions secret and update Ghost's webhook URLs before switching the base directory.
+
+The release policy below applies to sites that opt into `deployment`.
 
 ## Release selection
 
@@ -25,13 +29,13 @@ pnpm ship patch --projects=@tryghost/algolia-netlify --dry-run
 pnpm ship patch --projects=@tryghost/algolia-netlify
 ```
 
-The current stable package version is `0.4.6`, but no deployable stable GitHub Release exists yet. After this change merges, the first successful Netlify `pnpm ship` release is required before the main customer deployment button can work. Merging source changes alone does not publish a runtime update.
+The current stable package version is `0.4.6`, but no deployable stable GitHub Release exists yet. The first successful stable Netlify `pnpm ship` release is required before the main customer deployment button can work. Existing source deployments can rebuild before that release without changing configuration. Merging source changes alone does not publish a runtime update.
 
 To test before merging, publish an isolated prerelease through the manual Publish workflow on the candidate branch. Set `prerelease-tag` to `pr-333` (its default is empty) and disable dry-run only when ready to publish. Non-main publication requires this explicit input, and every queued version must be a prerelease. npm uses `pr-333`, leaving `latest` unchanged; the matching GitHub Release is marked as a prerelease.
 
 ## Deployment boundaries
 
-Authentication and non-production guards belong to the loader. These guards can change independently of the selected indexing runtime, so review loader changes for compatibility. Netlify build tooling, source availability, and registry availability also affect rebuilds. This design does not make a mutable upstream loader or an arbitrarily modified fork immutable.
+Mandatory authentication and non-production guards belong to the opt-in loader. Direct source deployments retain their existing behavior. These guards can change independently of the selected indexing runtime, so review loader changes for compatibility. Netlify build tooling, source availability, and registry availability also affect rebuilds. This design does not make a mutable upstream loader or an arbitrarily modified fork immutable.
 
 Builds must not contact Algolia or need customer credentials. The loader uses the build context to disable non-production functions; it does not depend on `CONTEXT` being available at function runtime. Keep production credentials scoped to production Functions. Use a separate Netlify site's production deployment and a separate index for upgrade acceptance.
 

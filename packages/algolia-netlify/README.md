@@ -10,7 +10,7 @@ import publishedHandler from '@tryghost/algolia-netlify/post-published';
 import unpublishedHandler from '@tryghost/algolia-netlify/post-unpublished';
 ```
 
-The named and subpath exports reference the same handlers. The repository's deployment loader preserves the `post-published` and `post-unpublished` function URLs.
+The named and subpath exports reference the same handlers. Both existing source deployments and the optional release-based deployment loader preserve the `post-published` and `post-unpublished` function URLs.
 
 ## Usage
 
@@ -31,19 +31,28 @@ Algolia requires `deleteIndex` for filtered deletions. The name is a bit mislead
 
 Follow the [guided setup](../../USAGE.md). Netlify creates a copy in your GitHub account and asks for your Algolia credentials, index name, and a webhook secret. The repository supplies the build settings. After deploying, open your site and enter the same secret to copy the webhook URLs into Ghost.
 
-To use an existing fork, sync it with this repository once to include the deployment setup. Then import it into Netlify and add the values from [`.env.example`](.env.example), with `ALGOLIA_ACTIVE=TRUE`. Keep the repository's build settings. The variables must be available to production Functions; redeploy after changing them.
+The button selects the optional release-based setup in `deployment`. Existing installations can keep their current setup or follow the migration steps below.
 
 Hosted configuration belongs in Netlify. A local `.env` belongs in `packages/algolia-netlify/` and is only for development. Never commit credentials.
 
 #### Existing installations
 
-If you use a fork, sync it once to include this deployment setup. Before deploying the update, set `NETLIFY_KEY` and add the same `?key=...` value to every Ghost webhook URL. Missing or incorrect request keys now return `401`; an unset or empty `NETLIFY_KEY` returns `503`.
+No action is required. Root and package-directory deployments keep building from their connected source revision, with the same configuration and webhook authentication behavior. They do not depend on a published deployment release. Forks update only when you sync them.
 
-If you previously set base, package-directory, or build-command overrides in Netlify, clear them so the repository configuration applies. In particular, deploying directly from `packages/algolia-netlify` bypasses release selection. Existing webhook paths stay unchanged.
+To opt into release-based updates:
+
+1. Sync your fork or repository copy to include `deployment/`, if needed.
+2. Before switching builds, ensure `NETLIFY_KEY` is available to production Functions and all Ghost webhook URLs contain the matching `?key=...`. If no secret is configured, create a long random one and add it to those URLs. Keep your existing Algolia settings.
+3. Set Netlify's base directory to `deployment`. Clear conflicting package-directory and build-command overrides so `deployment/netlify.toml` supplies the build settings.
+4. Deploy, open the setup page, and verify your existing secret. Test publishing, editing, and unpublishing a post.
+
+This setup requires a published deployment release. For pre-merge testing, use the [explicit prerelease instructions](../../docs/netlify-deployment.md#test-the-customer-installation).
+
+After opting in, missing or incorrect request keys return `401`; an unset or empty `NETLIFY_KEY` returns `503`. Existing webhook paths stay unchanged.
 
 #### Releases and rollback
 
-Leave `ALGOLIA_INTEGRATION_VERSION` unset, or set it to `0`, to receive the latest stable `0.x` release on each rebuild. Major upgrades require an explicit change, such as `1`. Running deployments stay unchanged until rebuilt. Patch and minor releases preserve your configuration and index contracts, including within `0.x`.
+These settings apply only after opting into the `deployment` setup. Leave `ALGOLIA_INTEGRATION_VERSION` unset, or set it to `0`, to receive the latest stable `0.x` release on each rebuild. Major upgrades require an explicit change, such as `1`. Running deployments stay unchanged until rebuilt. Patch and minor releases preserve your configuration and index contracts, including within `0.x`.
 
 Netlify uses the same version as the `@tryghost/algolia-netlify` npm package. To select a major or pin an exact published version, set `ALGOLIA_INTEGRATION_VERSION` in the **Builds** scope for **production**, then redeploy. Builds select from the upstream [GitHub Releases](https://github.com/TryGhost/algolia/releases), so forks receive runtime updates without syncing. An unavailable release or invalid selection fails the build. Automatic updates exclude prereleases; testing one requires its exact version.
 
@@ -114,7 +123,7 @@ pnpm --filter @tryghost/algolia-netlify build
 
 Run the full monorepo suite with `pnpm test`.
 
-The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Valid Ghost envelopes and endpoint URLs remain supported. Every request requires the configured `key`.
+The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Valid Ghost envelopes and endpoint URLs remain supported. The optional deployment loader requires a configured secret and matching `key` on every request. Direct package handlers retain their existing authentication behavior.
 
 From this package directory, `pnpm pack` builds an ESM-only package with generated TypeScript declarations. The supported Node range is declared in [`package.json`](package.json). The package intentionally exposes only the two handlers; webhook utilities remain internal.
 

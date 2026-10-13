@@ -388,8 +388,6 @@ describe('modern Netlify webhook handlers', () => {
 
     describe.each(['post-published', 'post-unpublished'] as const)('%s authorization', name => {
         it.each([
-            ['missing', ''],
-            ['empty', '?key='],
             ['wrong', '?key=wrong'],
             ['duplicate', '?key=acceptance-webhook-key&key=acceptance-webhook-key'],
             ['duplicate empty', '?key=&key=']
@@ -403,10 +401,26 @@ describe('modern Netlify webhook handlers', () => {
             expect(requests).toEqual([]);
         });
 
-        it.each([null, '', '   '])('fails closed when NETLIFY_KEY is %j', async netlifyKey => {
-            const {response, requests} = await invoke(name, {netlifyKey});
-            expectTextResponse(response, 503, 'Webhook authentication is not configured');
-            expect(requests).toEqual([]);
+        it.each([
+            ['missing query with configured secret', '', 'acceptance-webhook-key'],
+            ['empty query with configured secret', '?key=', 'acceptance-webhook-key'],
+            ['correct query', '?key=acceptance-webhook-key', 'acceptance-webhook-key'],
+            ['missing query without configured secret', '', null],
+            ['empty query without configured secret', '?key=', null],
+            ['missing query with empty configured secret', '', '']
+        ] as const)('preserves legacy indexing with %s', async (_case, query, netlifyKey) => {
+            const {response, requests} = await invoke(name, {query, netlifyKey});
+            expect(response.status).toBe(200);
+            expect(
+                requests.map(request => [request.method, new URL(request.url).pathname])
+            ).toEqual([
+                [
+                    'POST',
+                    name === 'post-published'
+                        ? '/1/indexes/ghost-content/batch'
+                        : '/1/indexes/ghost-content/deleteByQuery'
+                ]
+            ]);
         });
     });
 

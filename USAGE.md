@@ -2,6 +2,8 @@
 
 These functions keep an existing Algolia index up to date when posts change in Ghost. For a new index, [import your published posts with the CLI](https://github.com/TryGhost/algolia/blob/main/packages/algolia/README.md) first. Your website also needs a search interface connected to that index.
 
+This guide covers the optional release-based deployment setup. Existing installations can keep working without changes; see [optional migration](packages/algolia-netlify/README.md#existing-installations) to adopt this setup.
+
 ## Before deploying
 
 Have your Algolia application ID, index name, and an API key restricted to that index ready. The key needs `addObject` and `deleteIndex` permissions; the index needs `filterOnly(slug)` in its facets, which the CLI configures by default.
@@ -14,7 +16,7 @@ Create a long, random secret in your password manager for `NETLIFY_KEY`. Save it
 2. Enter `ALGOLIA_APP_ID`, `ALGOLIA_API_KEY`, `ALGOLIA_INDEX`, and your `NETLIFY_KEY`. Keep `ALGOLIA_ACTIVE` set to `TRUE`.
 3. Deploy using the repository's build settings.
 
-If you already have a fork, sync it with this repository once to include the deployment setup. Then import it into Netlify and enter these values in its environment variables, available to production Functions.
+To opt in with an existing fork, follow the [migration steps](packages/algolia-netlify/README.md#existing-installations).
 
 ## Connect Ghost
 
