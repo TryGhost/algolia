@@ -1,6 +1,6 @@
 # Netlify deployment policy
 
-The root `netlify.toml` builds through `deployment/build.mts`. This path works when Netlify connects to TryGhost/algolia or a fork. Direct package builds are for development and bypass release selection.
+The root `netlify.toml` runs `pnpm build` in `deployment`: it compiles Tailwind CSS, then runs `build.mts`. This path works when Netlify connects to TryGhost/algolia or a fork. Direct package builds are for development and bypass release selection.
 
 ## Release selection
 
@@ -55,3 +55,7 @@ This button follows the customer flow using the PR branch. It needs no manual bu
 For an injection-only check, set `ALGOLIA_ACTIVE=FALSE` in the template. Matching-key requests to both functions should return `Algolia is not activated`; missing or incorrect keys should return `401`. Restore `TRUE` and redeploy before indexing tests.
 
 Verify upgrades and rollback against a second tested release before claiming hosted cross-version validation. Code rollback does not undo Algolia writes.
+
+## Setup page styles
+
+Run `pnpm install --frozen-lockfile` in `deployment`, then `pnpm build:css` after editing the setup page. Tailwind reads `public/index.html` and generates `public/setup.css`; edit `styles.css` for the theme and focus rules. The generated stylesheet is not committed.

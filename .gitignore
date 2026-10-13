@@ -84,3 +84,4 @@ deployment/runtime/
 deployment/functions/
 deployment/release.json
 deployment/public/setup.js
+deployment/public/setup.css

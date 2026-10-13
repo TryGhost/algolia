@@ -1,0 +1,19 @@
+@import 'tailwindcss' source(none);
+@source "./public/index.html";
+
+@custom-variant dark {
+    &:where([data-theme='dark'], [data-theme='dark'] *) {
+        @slot;
+    }
+    @media (prefers-color-scheme: dark) {
+        &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+            @slot;
+        }
+    }
+}
+
+@layer base {
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-blue-600 dark:outline-blue-300;
+    }
+}
