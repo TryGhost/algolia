@@ -1,6 +1,6 @@
 # Optional Netlify deployment selection
 
-Existing root and package-directory deployments keep their build configuration, webhook URLs, and authentication behavior. No new environment variables or published deployment release are required to keep them working.
+Existing root and package-directory deployments keep their build configuration, webhook URLs, and authentication behavior. Direct handlers accept requests with a missing or empty `key`. A non-empty `key` must match `NETLIFY_KEY`; duplicate keys are rejected. No new environment variables or published deployment release are required to keep them working.
 
 The new deployment setup is an explicit opt-in through the Deploy to Netlify button or the [migration steps](../../packages/algolia-netlify/README.md#existing-installations):
 

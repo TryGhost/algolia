@@ -123,7 +123,7 @@ pnpm --filter @tryghost/algolia-netlify build
 
 Run the full monorepo suite with `pnpm test`.
 
-The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Valid Ghost envelopes and endpoint URLs remain supported. The optional deployment loader requires a configured secret and matching `key` on every request. Direct package handlers retain their existing authentication behavior.
+The modern handlers use native `Request` and `Response` objects. Malformed, empty, or structurally invalid JSON now receives `400 Invalid request body`; a valid Ghost envelope with no selected post remains a `200 No valid request body detected` response. Valid Ghost envelopes and endpoint URLs remain supported. The optional deployment loader requires a configured secret and matching `key` on every request. Direct package handlers accept requests with a missing or empty `key`. A non-empty `key` must match `NETLIFY_KEY`; duplicate keys are rejected.
 
 From this package directory, `pnpm pack` builds an ESM-only package with generated TypeScript declarations. The supported Node range is declared in [`package.json`](package.json). The package intentionally exposes only the two handlers; webhook utilities remain internal.
 

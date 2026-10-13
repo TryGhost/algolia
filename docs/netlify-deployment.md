@@ -37,7 +37,7 @@ For pre-merge development, follow [Testing a Netlify prerelease](testing-prerele
 
 ## Deployment boundaries
 
-Mandatory authentication and non-production guards belong to the opt-in loader. Direct source deployments retain their existing behavior. These guards can change independently of the selected indexing runtime, so review loader changes for compatibility. Netlify build tooling, source availability, and registry availability also affect rebuilds. This design does not make a mutable upstream loader or an arbitrarily modified fork immutable.
+Mandatory authentication and non-production guards belong to the opt-in loader. Direct source handlers accept requests with a missing or empty `key`. A non-empty `key` must match `NETLIFY_KEY`; duplicate keys are rejected. These guards can change independently of the selected indexing runtime, so review loader changes for compatibility. Netlify build tooling, source availability, and registry availability also affect rebuilds. This design does not make a mutable upstream loader or an arbitrarily modified fork immutable.
 
 Builds must not contact Algolia or need customer credentials. The loader uses the build context to disable non-production functions; it does not depend on `CONTEXT` being available at function runtime. Keep production credentials scoped to production Functions. Use a separate Netlify site's production deployment and a separate index for upgrade acceptance.
 
