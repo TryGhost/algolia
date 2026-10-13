@@ -9,6 +9,7 @@ import {afterEach, describe, expect, it} from 'vitest';
 
 const exec = promisify(execFile);
 const script = fileURLToPath(new URL('../scripts/promote-netlify-release.mts', import.meta.url));
+const channelScript = fileURLToPath(new URL('../scripts/release-channel.mts', import.meta.url));
 const commit = '1234567890abcdef1234567890abcdef12345678';
 const version = '0.4.7';
 const tag = `@tryghost/algolia-netlify@${version}`;
@@ -38,7 +39,7 @@ if (command === 'git') {
         result = JSON.stringify(state.pages ?? (state.release ? [[state.release]] : [[]]));
     }
 } else if (args[0] === 'release' && args[1] === 'create') {
-    state.release = {id: 1, tag_name: state.tag, draft: true, prerelease: false, target_commitish: state.commit, assets: []};
+    state.release = {id: 1, tag_name: state.tag, draft: true, prerelease: args.includes('--prerelease'), target_commitish: state.commit, assets: []};
 } else if (args[0] === 'release' && args[1] === 'upload') {
     if (state.uploadFailure) { state.uploadFailure = false; fail('Asset upload failed'); }
     state.asset = JSON.parse(fs.readFileSync(args[3], 'utf8'));
@@ -83,6 +84,7 @@ const createRelease = async (overrides = {}) => {
                     ...process.env,
                     PATH: `${bin}${path.delimiter}${process.env.PATH}`,
                     GITHUB_SHA: commit,
+                    PRERELEASE_TAG: overrides.prereleaseTag ?? '',
                     GITHUB_REPOSITORY: 'TryGhost/algolia',
                     RELEASE_TEST_STATE: stateFile
                 }
@@ -254,4 +256,96 @@ describe('Netlify release promotion command', () => {
         await expect(release.run()).rejects.toThrow('Multiple GitHub releases');
         expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(false);
     });
+    it('promotes a matching isolated PR candidate as a GitHub prerelease', async () => {
+        const candidate = '0.4.7-pr.333.1';
+        const release = await createRelease({
+            version: candidate,
+            manifestVersion: candidate,
+            tag: `@tryghost/algolia-netlify@${candidate}`,
+            prereleaseTag: 'pr-333'
+        });
+        await release.run();
+        const state = await release.state();
+        expect(state.asset).toEqual({version: candidate, commit});
+        expect(state.release.draft).toBe(false);
+        expect(state.release.prerelease).toBe(true);
+        expect(
+            state.calls.find(call => call.args[0] === 'release' && call.args[1] === 'create').args
+        ).toContain('--prerelease');
+    });
+
+    it.each([
+        ['latest', '0.4.7-pr.333.1'],
+        ['pr-0', '0.4.7-pr.0.1'],
+        ['pr-333', '0.4.7'],
+        ['pr-333', '0.4.7-pr.334.1'],
+        ['pr-333', '0.4.7-beta.1'],
+        ['pr-333', '0.4.7-pr.333.01'],
+        ['pr-333', '0.4.7-pr.333.1-extra']
+    ])(
+        'rejects candidate %s / %s before external promotion calls',
+        async (prereleaseTag, manifestVersion) => {
+            const release = await createRelease({prereleaseTag, manifestVersion});
+            await expect(release.run()).rejects.toThrow(
+                /Prerelease tag|matching prerelease version|stable package version/
+            );
+            expect((await release.state()).calls).toEqual([]);
+        }
+    );
+
+    it('reuses an already published matching prerelease without changing its channel', async () => {
+        const candidate = '0.4.7-pr.333.1';
+        const candidateTag = `@tryghost/algolia-netlify@${candidate}`;
+        const release = await createRelease({
+            version: candidate,
+            manifestVersion: candidate,
+            tag: candidateTag,
+            prereleaseTag: 'pr-333',
+            release: {
+                tag_name: candidateTag,
+                draft: false,
+                prerelease: true,
+                assets: [{id: 2, name: 'netlify-release.json'}]
+            },
+            asset: {version: candidate, commit}
+        });
+        await release.run();
+        const state = await release.state();
+        expect(state.release.prerelease).toBe(true);
+        expect(state.calls.some(call => call.args[0] === 'release')).toBe(false);
+    });
+});
+
+describe('Prerelease publication gate', () => {
+    it.each(['', 'pr-333'])('accepts valid channel %s before scanning packages', async channel => {
+        const result = await exec(process.execPath, [channelScript], {
+            env: {...process.env, PRERELEASE_TAG: channel}
+        });
+        expect(result.stdout).toBe('');
+    });
+
+    it('accepts a queued package matching the explicit PR channel', async () => {
+        const result = await exec(process.execPath, [channelScript, '0.4.7-pr.333.1'], {
+            env: {...process.env, PRERELEASE_TAG: 'pr-333'}
+        });
+        expect(result.stdout).toBe('');
+    });
+
+    it.each([
+        ['latest', undefined],
+        ['', '0.4.7-pr.333.1'],
+        ['pr-333', '0.4.7'],
+        ['pr-333', '0.4.7-pr.334.1']
+    ])(
+        'fails channel %s and queued version %s before npm publication',
+        async (channel, queuedVersion) => {
+            await expect(
+                exec(
+                    process.execPath,
+                    [channelScript, ...(queuedVersion === undefined ? [] : [queuedVersion])],
+                    {env: {...process.env, PRERELEASE_TAG: channel}}
+                )
+            ).rejects.toThrow(/Prerelease tag|matching prerelease version|stable package version/);
+        }
+    );
 });

@@ -130,13 +130,13 @@ afterEach(async () => {
     );
 });
 
-it.each(['latest', '', 'main', '__proto__', '../runtime', '^1', '1.0', '1.0.0-rc.1', '01'])(
+it.each(['latest', '', 'main', '__proto__', '../runtime', '^1', '1.0', '1.0.0-01', '01'])(
     'rejects unsupported selection %j before creating output',
     async version => {
         const directory = await mkdtemp(path.join(os.tmpdir(), 'algolia-deployment-'));
         directories.push(directory);
         await expect(buildDeployment({directory, version})).rejects.toThrow(
-            'Choose an integration major or exact stable version.'
+            'Choose an integration major or exact version.'
         );
         expect(await readdir(directory)).toEqual([]);
     }
@@ -226,7 +226,14 @@ it('updates within the default major while leaving major upgrades explicit', asy
     await buildDeployment({
         directory,
         repository,
-        releases: {'0.0.0': first, '0.0.2': first, '0.0.10': second, '1.0.0': first},
+        releases: {
+            '0.0.0': first,
+            '0.0.2': first,
+            '0.0.10': second,
+            '0.9.0-rc.1': first,
+            '1.0.0-rc.1': first,
+            '1.0.0': first
+        },
         context: 'production'
     });
     expect(await invoke(directory)).toEqual({status: 200, body: 'new release'});
@@ -284,86 +291,157 @@ it('reports an invalid CLI selection without echoing configuration', async () =>
         })
     ).rejects.toMatchObject({
         code: 1,
-        stderr: 'Choose an integration major or exact stable version.\n'
+        stderr: 'Choose an integration major or exact version.\n'
     });
 });
 
-it('discovers stable package releases across pages and loads the selected manifest', async () => {
-    const {repository, commit} = await createReleaseRepository();
-    const revision = await commit('released runtime');
-    const directory = await temporaryDirectory();
-    const requests: string[] = [];
-    const tag = '@tryghost/algolia-netlify@0.5.0';
-    const assetPath = `/TryGhost/algolia/releases/download/${encodeURIComponent(tag).replaceAll('%40', '@')}/netlify-release.json`;
-    const server = createServer((request, response) => {
-        requests.push(request.url ?? '');
-        response.setHeader('content-type', 'application/json');
-        if (request.url === `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`) {
-            response.end(JSON.stringify({sha: revision}));
-            return;
+it.each([
+    {selection: '0', version: '0.5.0', prerelease: false},
+    {selection: '0.4.7-pr.333.1', version: '0.4.7-pr.333.1', prerelease: true}
+])(
+    'discovers the published package release for $selection and verifies its manifest',
+    async ({selection, version, prerelease}) => {
+        const {repository, commit} = await createReleaseRepository();
+        const revision = await commit('released runtime');
+        const directory = await temporaryDirectory();
+        const requests: string[] = [];
+        const tag = `@tryghost/algolia-netlify@${version}`;
+        const assetPath = `/TryGhost/algolia/releases/download/${encodeURIComponent(tag).replaceAll('%40', '@')}/netlify-release.json`;
+        const server = createServer((request, response) => {
+            requests.push(request.url ?? '');
+            response.setHeader('content-type', 'application/json');
+            if (request.url === `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`) {
+                response.end(JSON.stringify({sha: revision}));
+                return;
+            }
+            if (request.url === assetPath) {
+                response.end(JSON.stringify({version, commit: revision}));
+                return;
+            }
+            const page = new URL(request.url ?? '', 'http://localhost').searchParams.get('page');
+            if (page === '1') {
+                response.setHeader('link', `<${origin}/releases?per_page=100&page=2>; rel="next"`);
+                response.end(
+                    JSON.stringify([{tag_name: 'unrelated', draft: false, prerelease: false}])
+                );
+            } else {
+                response.end(
+                    JSON.stringify([
+                        {tag_name: '@tryghost/algolia-netlify@9.0.0', draft: true},
+                        {
+                            tag_name: '@tryghost/algolia-netlify@0.9.0-rc.1',
+                            draft: false,
+                            prerelease: true
+                        },
+                        {
+                            tag_name: '@tryghost/algolia-netlify@9.0.0-rc.1',
+                            draft: false,
+                            prerelease: true
+                        },
+                        {
+                            tag_name: '@tryghost/algolia-netlify@0.9.0',
+                            draft: false,
+                            prerelease: true
+                        },
+                        {
+                            tag_name: tag,
+                            target_commitish: 'main',
+                            draft: false,
+                            prerelease,
+                            assets: [
+                                {
+                                    name: 'netlify-release.json',
+                                    browser_download_url: origin + assetPath
+                                }
+                            ]
+                        }
+                    ])
+                );
+            }
+        });
+        server.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+        const address = server.address();
+        if (!address || typeof address === 'string') {
+            throw new Error('Missing server address');
         }
-        if (request.url === assetPath) {
-            response.end(JSON.stringify({version: '0.5.0', commit: revision}));
-            return;
+        const origin = `http://127.0.0.1:${address.port}`;
+        try {
+            await buildDeployment({
+                directory,
+                version: selection,
+                repository,
+                releasesUrl: origin + '/releases',
+                offline: true,
+                context: 'production'
+            });
+            expect(await invoke(directory)).toEqual({status: 200, body: 'released runtime'});
+            expect(
+                JSON.parse(await readFile(path.join(directory, 'release.json'), 'utf8'))
+            ).toEqual({
+                selection,
+                version,
+                commit: revision
+            });
+            expect(requests).toEqual([
+                '/releases?per_page=100&page=1',
+                '/releases?per_page=100&page=2',
+                `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`,
+                assetPath
+            ]);
+        } finally {
+            server.closeAllConnections();
+            await new Promise<void>(resolve => {
+                server.close(() => resolve());
+            });
         }
-        const page = new URL(request.url ?? '', 'http://localhost').searchParams.get('page');
-        if (page === '1') {
-            response.setHeader('link', `<${origin}/releases?per_page=100&page=2>; rel="next"`);
-            response.end(
-                JSON.stringify([{tag_name: 'unrelated', draft: false, prerelease: false}])
-            );
-        } else {
+    },
+    30000
+);
+
+it.each([
+    {version: '0.4.7-pr.333.1', draft: true, prerelease: true},
+    {version: '0.4.7-pr.333.1', draft: false, prerelease: false},
+    {version: '0.4.7-pr.333.1', draft: false, prerelease: undefined},
+    {version: '0.5.0', draft: false, prerelease: true}
+])(
+    'rejects an exact $version release with draft=$draft and prerelease=$prerelease',
+    async ({version, draft, prerelease}) => {
+        const requests: string[] = [];
+        const server = createServer((request, response) => {
+            requests.push(request.url ?? '');
+            response.setHeader('content-type', 'application/json');
             response.end(
                 JSON.stringify([
-                    {tag_name: '@tryghost/algolia-netlify@9.0.0', draft: true},
-                    {tag_name: '@tryghost/algolia-netlify@0.9.0-rc.1', prerelease: true},
-                    {
-                        tag_name: tag,
-                        target_commitish: 'main',
-                        draft: false,
-                        prerelease: false,
-                        assets: [
-                            {name: 'netlify-release.json', browser_download_url: origin + assetPath}
-                        ]
-                    }
+                    {tag_name: `@tryghost/algolia-netlify@${version}`, draft, prerelease}
                 ])
             );
+        });
+        server.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+        const address = server.address();
+        if (!address || typeof address === 'string') {
+            throw new Error('Missing server address');
         }
-    });
-    server.listen(0, '127.0.0.1');
-    await once(server, 'listening');
-    const address = server.address();
-    if (!address || typeof address === 'string') {
-        throw new Error('Missing server address');
+        const directory = await temporaryDirectory();
+        try {
+            await expect(
+                buildDeployment({
+                    directory,
+                    version,
+                    releasesUrl: `http://127.0.0.1:${address.port}/releases`
+                })
+            ).rejects.toThrow('Unknown integration release.');
+            expect(requests).toEqual(['/releases?per_page=100&page=1']);
+            expect(await readdir(directory)).toEqual([]);
+        } finally {
+            server.closeAllConnections();
+            await new Promise<void>(resolve => {
+                server.close(() => resolve());
+            });
+        }
     }
-    const origin = `http://127.0.0.1:${address.port}`;
-    try {
-        await buildDeployment({
-            directory,
-            repository,
-            releasesUrl: origin + '/releases',
-            offline: true,
-            context: 'production'
-        });
-        expect(await invoke(directory)).toEqual({status: 200, body: 'released runtime'});
-        expect(JSON.parse(await readFile(path.join(directory, 'release.json'), 'utf8'))).toEqual({
-            selection: '0',
-            version: '0.5.0',
-            commit: revision
-        });
-        expect(requests).toEqual([
-            '/releases?per_page=100&page=1',
-            '/releases?per_page=100&page=2',
-            `/repos/TryGhost/algolia/commits/${encodeURIComponent(tag)}`,
-            assetPath
-        ]);
-    } finally {
-        server.closeAllConnections();
-        await new Promise<void>(resolve => {
-            server.close(() => resolve());
-        });
-    }
-}, 30000);
+);
 
 it.each([
     {status: 503, body: '{}', error: 'Could not load'},

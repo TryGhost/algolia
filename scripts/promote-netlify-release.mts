@@ -4,6 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {promisify} from 'node:util';
 
+import {validateReleaseVersion} from './release-channel.mts';
+
 const exec = promisify(execFile);
 const REPOSITORY = 'TryGhost/algolia';
 const PACKAGE = '@tryghost/algolia-netlify';
@@ -26,9 +28,7 @@ const promote = async (): Promise<void> => {
         await readFile('packages/algolia-netlify/package.json', 'utf8')
     ) as {version: string};
     const {version} = manifest;
-    if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
-        throw new Error('Netlify promotion requires a stable package version.');
-    }
+    const prerelease = validateReleaseVersion(version, process.env.PRERELEASE_TAG ?? '');
     const tag = `${PACKAGE}@${version}`;
     const commit = await run('git', ['rev-parse', 'HEAD']);
     const tagCommit = await run('git', ['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]);
@@ -67,10 +67,10 @@ const promote = async (): Promise<void> => {
     if (
         release &&
         (release.tag_name !== tag ||
-            release.prerelease !== false ||
+            release.prerelease !== prerelease ||
             typeof release.draft !== 'boolean')
     ) {
-        throw new Error('The existing GitHub release does not match this stable source release.');
+        throw new Error('The existing GitHub release does not match this source release.');
     }
     const existingAsset = release?.assets.find(asset => asset.name === ASSET);
     if (existingAsset) {
@@ -108,6 +108,7 @@ const promote = async (): Promise<void> => {
                 '--target',
                 commit,
                 '--draft',
+                ...(prerelease ? ['--prerelease'] : []),
                 '--title',
                 `Netlify integration ${version}`,
                 '--notes',
