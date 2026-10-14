@@ -32,6 +32,33 @@ const createIndexAdapter = (client, indexName) => ({
     deleteObjects: objectIDs => client.deleteObjects({indexName, objectIDs})
 });
 
+const contentKey = content => content && JSON.stringify([content.id, content.slug]);
+
+const contentMatcher = contents => {
+    const bySlug = new Map();
+    for (const content of contents) {
+        if (
+            !content ||
+            typeof content.id !== 'string' ||
+            !content.id ||
+            typeof content.slug !== 'string' ||
+            !content.slug
+        ) {
+            throw new TypeError('Replacement content requires an id and slug.');
+        }
+        const ids = bySlug.get(content.slug) || [];
+        ids.push(content);
+        bySlug.set(content.slug, ids);
+    }
+    return record =>
+        typeof record?.objectID === 'string' &&
+        (bySlug.get(record.slug) || []).find(
+            ({id}) =>
+                record.objectID.startsWith(`${id}_`) &&
+                /^(0|[1-9]\d*)(?:_([1-9]\d*))?$/.test(record.objectID.slice(id.length + 1))
+        );
+};
+
 /**
  * @param {options} options
  * @param {string} options.code
@@ -73,6 +100,8 @@ const AlgoliaError = ({code, statusCode, originalError}) => {
  * @property {() => void} initClient
  * @property {() => Promise<void>} initIndex
  * @property {({updateSettings?: boolean}) => Promise<object>} setSettingsForIndex
+ * @property {() => Promise<object>} prepareIndex
+ * @property {(fragments: object[], contents: {id: string, slug: string}[]) => Promise<{cleanupSkipped: boolean}>} replace
  * @property {(fragments: object[]) => Promise<void>} save
  * @property {(slug: string) => Promise<void>} delete
  * @property {(fragments: object[]) => Promise<void>} deleteObjects
@@ -93,7 +122,8 @@ class IndexFactory {
             throw new Error('Algolia appId, apiKey, and index is required!');
         }
         this.index = [];
-        this.options = algoliaSettings;
+        this.hasExplicitSettings = Boolean(algoliaSettings.indexSettings);
+        this.options = {...algoliaSettings};
 
         this.options.indexSettings = algoliaSettings.indexSettings || REQUIRED_SETTINGS;
     }
@@ -133,6 +163,97 @@ class IndexFactory {
                 statusCode: error.status,
                 originalError: error
             });
+        }
+    }
+
+    /**
+     * Preserve existing settings, initialize a missing index, or apply explicit settings.
+     * @returns {Promise<object>}
+     */
+    async prepareIndex() {
+        try {
+            await this.initIndex();
+            if (!this.hasExplicitSettings) {
+                try {
+                    return await this.index.getSettings();
+                } catch (error) {
+                    if (error.status !== 404) {
+                        throw error;
+                    }
+                }
+            }
+            const {taskID} = await this.index.setSettings(this.options.indexSettings);
+            await this.client.waitForTask({indexName: this.options.index, taskID});
+            return this.options.indexSettings;
+        } catch (error) {
+            throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
+        }
+    }
+
+    /**
+     * Save complete replacements before removing their stale managed records.
+     * Call initIndex() or prepareIndex() first. Every supplied content scope must have
+     * replacement records; an empty fragments array makes no requests.
+     * @param {object[]} fragments
+     * @param {{id: string, slug: string}[]} contents
+     * @returns {Promise<{cleanupSkipped: boolean}>} True when browse permission is missing.
+     */
+    async replace(fragments, contents) {
+        if (!Array.isArray(fragments) || !Array.isArray(contents)) {
+            throw new TypeError('Replacement requires fragment and content arrays.');
+        }
+        if (!fragments.length) {
+            return {cleanupSkipped: false};
+        }
+        const matchesContent = contentMatcher(contents);
+        const represented = new Set(
+            fragments.map(fragment => contentKey(matchesContent(fragment)))
+        );
+        if (
+            represented.has(false) ||
+            represented.has(undefined) ||
+            contents.some(content => !represented.has(contentKey(content)))
+        ) {
+            throw new TypeError('Replacement fragments must belong to the supplied content.');
+        }
+        try {
+            const retained = new Set(fragments.map(fragment => fragment.objectID));
+            const stale = new Set();
+            const indexName = this.options.index;
+            let cleanupSkipped = false;
+            try {
+                await this.client.browseObjects({
+                    indexName,
+                    browseParams: {attributesToRetrieve: ['objectID', 'slug']},
+                    aggregator: ({hits}) => {
+                        for (const hit of hits) {
+                            if (retained.has(hit.objectID)) {
+                                continue;
+                            }
+                            if (matchesContent(hit)) {
+                                stale.add(hit.objectID);
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                if (error.status !== 403 && error.status !== 404) {
+                    throw error;
+                }
+                stale.clear();
+                cleanupSkipped = error.status === 403;
+            }
+            await this.client.saveObjects({indexName, objects: fragments, waitForTasks: true});
+            if (stale.size) {
+                await this.client.deleteObjects({
+                    indexName,
+                    objectIDs: [...stale],
+                    waitForTasks: true
+                });
+            }
+            return {cleanupSkipped};
+        } catch (error) {
+            throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
         }
     }
 

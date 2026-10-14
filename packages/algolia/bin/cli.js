@@ -32,9 +32,9 @@ const getGhostInclude = contentProjection => {
     return enabledRelations.length === 0 ? undefined : enabledRelations.join(',');
 };
 
-const getAffectedSlugs = (posts, ignoreSlugs = []) => {
+const getAffectedContent = (posts, ignoreSlugs = []) => {
     const ignoredSlugs = new Set(ignoreSlugs);
-    return [...new Set(posts.map(post => post.slug).filter(slug => !ignoredSlugs.has(slug)))];
+    return posts.filter(post => !ignoredSlugs.has(post.slug)).map(({id, slug}) => ({id, slug}));
 };
 
 prettyCLI.preface('Command line utilities to batch index content from Ghost to Algolia');
@@ -153,7 +153,7 @@ prettyCLI.command({
             }
 
             context.fragments = transforms.createAlgoliaRecords(context.posts, recordOptions);
-            context.affectedSlugs = getAffectedSlugs(context.posts, context.ignore_slugs);
+            context.affectedContent = getAffectedContent(context.posts, context.ignore_slugs);
 
             // we don't need the posts anymore
             delete context.posts;
@@ -164,27 +164,35 @@ prettyCLI.command({
             return reportFailure('Error fragmenting posts', context.errors);
         }
 
+        if (context.fragments.length === 0) {
+            ui.log.ok('No records to index. Existing Algolia records were left unchanged.');
+            return;
+        }
+
         // 4. Save to Algolia
         try {
             let timer = Date.now();
 
             ui.log.info('Connecting to Algolia index and setting it up...');
 
-            // Instanciate the Algolia indexer, which connects to Algolia and
             const index = new IndexFactory(context.algolia);
-            // sets up the settings for the index.
-            await index.setSettingsForIndex();
+            await index.prepareIndex();
 
-            ui.log.info(`Done setting up Alolia index in ${Date.now() - timer}ms.`);
+            ui.log.info(`Done setting up Algolia index in ${Date.now() - timer}ms.`);
 
             timer = Date.now();
 
             ui.log.info('Saving fragments to Algolia...');
 
-            for (const slug of context.affectedSlugs) {
-                await index.delete(slug);
+            const {cleanupSkipped} = await index.replace(
+                context.fragments,
+                context.affectedContent
+            );
+            if (cleanupSkipped) {
+                ui.log.warn(
+                    'Records saved. Stale records were kept because this API key cannot browse the index.'
+                );
             }
-            await index.save(context.fragments);
 
             ui.log.ok(
                 `${context.fragments.length} Fragments successfully saved to Algolia index in ${Date.now() - timer}ms.`

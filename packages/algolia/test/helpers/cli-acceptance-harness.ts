@@ -41,6 +41,9 @@ export type CliConfig = Readonly<{[key: string]: JsonValue}>;
 type CliRunOptions = Readonly<{
     args?: readonly string[];
     algoliaStatePath?: string;
+    algoliaFailure?: string;
+    initialRecords?: readonly AlgoliaRecord[];
+    initialSettings?: JsonValue;
     replayMode?: string;
     replayPlan?: readonly ReplayPlanEntry[];
     config?: CliConfig | ((replayOrigin: string) => CliConfig);
@@ -235,7 +238,11 @@ export class CliAcceptanceHarness {
             writeFile(ghostRequestLog, '', {mode: 0o600}),
             writeFile(algoliaRequestLog, '', {mode: 0o600}),
             ...(options.algoliaStatePath === undefined
-                ? [writeFile(algoliaStatePath, '[]', {mode: 0o600})]
+                ? [
+                      writeFile(algoliaStatePath, JSON.stringify(options.initialRecords ?? []), {
+                          mode: 0o600
+                      })
+                  ]
                 : [])
         ]);
 
@@ -262,6 +269,8 @@ export class CliAcceptanceHarness {
                     NODE_OPTIONS: `--require=${requesterPreloadPath}`,
                     ALGOLIA_ACCEPTANCE_REQUEST_LOG: algoliaRequestLog,
                     ALGOLIA_ACCEPTANCE_STATE_PATH: algoliaStatePath,
+                    ALGOLIA_ACCEPTANCE_FAILURE: options.algoliaFailure,
+                    ALGOLIA_ACCEPTANCE_SETTINGS: JSON.stringify(options.initialSettings),
                     GHOST_REPLAY_ORIGIN: replayOrigin,
                     ...forwardedCoverageEnvironment()
                 },

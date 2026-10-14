@@ -137,6 +137,133 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
         await harness.cleanup();
     });
 
+    it('keeps existing records when saving the replacement fails', async () => {
+        const existing = {
+            objectID: 'post-id_0',
+            slug: 'projected-post',
+            html: 'Old searchable text'
+        };
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()], 'tags,authors'),
+            initialRecords: [existing],
+            algoliaFailure: 'save'
+        });
+        expect(run.result.status).not.toBe(0);
+        expect(cliOutput(run.result)).toContain('Save rejected.');
+        expect(run.algoliaRecords).toEqual([existing]);
+    });
+
+    it('keeps stale records when the save task cannot be confirmed', async () => {
+        const stale = {objectID: 'post-id_0_1', slug: 'projected-post', html: 'Still searchable'};
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()], 'tags,authors'),
+            initialRecords: [stale],
+            algoliaFailure: 'task'
+        });
+        expect(run.result.status).not.toBe(0);
+        expect(cliOutput(run.result)).toContain('Task confirmation failed.');
+        expect(run.algoliaRecords).toContainEqual(stale);
+        expect(run.algoliaRequests.some(request => request.data?.includes('deleteObject'))).toBe(
+            false
+        );
+    });
+
+    it('upserts with a restricted key and clearly reports skipped cleanup', async () => {
+        const stale = {objectID: 'post-id_0_1', slug: 'projected-post'};
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()], 'tags,authors'),
+            initialRecords: [stale],
+            algoliaFailure: 'browse'
+        });
+        expectCliSuccess(run);
+        expect(cliOutput(run.result)).toContain('Stale records were kept');
+        expect(run.algoliaRecords).toContainEqual(stale);
+        expect(run.algoliaRecords).toContainEqual(expect.objectContaining({objectID: 'post-id_0'}));
+    });
+
+    it('leaves Algolia untouched when all fetched posts are ignored', async () => {
+        const existing = {objectID: 'post-id_0', slug: 'projected-post'};
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()], 'tags,authors'),
+            initialRecords: [existing],
+            config: origin => createConfig(origin, {ignore_slugs: ['projected-post']})
+        });
+        expectCliSuccess(run);
+        expect(run.algoliaRequests).toEqual([]);
+        expect(run.algoliaRecords).toEqual([existing]);
+    });
+
+    it('preserves custom settings and unrelated records sharing a slug', async () => {
+        const unrelated = {objectID: 'other-post_0', slug: 'projected-post'};
+        const ignored = {objectID: 'ignored-id_0', slug: 'ignored-by-config'};
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()], 'tags,authors'),
+            initialRecords: [unrelated, ignored, {objectID: 'post-id_0_1', slug: 'projected-post'}],
+            initialSettings: {
+                distinct: false,
+                attributesForFaceting: ['category'],
+                customRanking: ['desc(score)']
+            }
+        });
+        expectCliSuccess(run);
+        expect(run.algoliaRequests.some(request => request.method === 'PUT')).toBe(false);
+        expect(run.algoliaRecords).toContainEqual(unrelated);
+        expect(run.algoliaRecords).toContainEqual(ignored);
+        expect(run.algoliaRecords.map(record => record.objectID)).toEqual([
+            'other-post_0',
+            'ignored-id_0',
+            'post-id_0'
+        ]);
+    });
+
+    it('initializes a new index only after Algolia reports it is missing', async () => {
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()], 'tags,authors'),
+            initialSettings: null
+        });
+        expectCliSuccess(run);
+        expect(run.algoliaRequests.slice(0, 2).map(requestPath)).toEqual([
+            'GET /1/indexes/ghost-content/settings',
+            'PUT /1/indexes/ghost-content/settings'
+        ]);
+        expect(requestBody(requestAt(run.algoliaRequests, 1))).toMatchObject({
+            distinct: true,
+            attributeForDistinct: 'slug'
+        });
+    });
+
+    it('retains saved records after cleanup failure and completes cleanup on retry', async () => {
+        const stale = {objectID: 'post-id_0_1', slug: 'projected-post'};
+        const replayPlan = createReplayPlan([createGhostContent()], 'tags,authors');
+        const failed = await harness.run({
+            replayPlan,
+            initialRecords: [stale],
+            algoliaFailure: 'cleanup'
+        });
+        expect(failed.result.status).not.toBe(0);
+        expect(cliOutput(failed.result)).toContain('Cleanup rejected.');
+        expect(failed.algoliaRecords).toContainEqual(stale);
+        expect(failed.algoliaRecords).toContainEqual(
+            expect.objectContaining({objectID: 'post-id_0'})
+        );
+        const retry = await harness.run({replayPlan, algoliaStatePath: failed.algoliaStatePath});
+        expectCliSuccess(retry);
+        expect(retry.algoliaRecords.map(record => record.objectID)).toEqual(['post-id_0']);
+    });
+
+    it('does not overwrite settings or records when settings cannot be read', async () => {
+        const existing = {objectID: 'post-id_0', slug: 'projected-post'};
+        const run = await harness.run({
+            replayPlan: createReplayPlan([createGhostContent()], 'tags,authors'),
+            initialRecords: [existing],
+            algoliaFailure: 'settings'
+        });
+        expect(run.result.status).not.toBe(0);
+        expect(cliOutput(run.result)).toContain('Settings read failed.');
+        expect(run.algoliaRequests.every(request => request.method === 'GET')).toBe(true);
+        expect(run.algoliaRecords).toEqual([existing]);
+    });
+
     it('rejects invalid projection configuration before any network request', async () => {
         const run = await harness.run({
             replayPlan: createReplayPlan([createGhostContent()]),
@@ -154,7 +281,7 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
         expect(run.algoliaRequests).toEqual([]);
     });
 
-    it('rejects an explicit facet replacement without the slug facet before any network request', async () => {
+    it('accepts explicit settings without requiring a slug facet', async () => {
         const run = await harness.run({
             replayPlan: createReplayPlan([createGhostContent()]),
             config: replayOrigin =>
@@ -172,12 +299,11 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
                 })
         });
 
-        expect(run.result.status).not.toBe(0);
-        expect(cliOutput(run.result)).toContain(
-            'Algolia indexSettings.attributesForFaceting must include filterOnly(slug) for record replacement.'
-        );
-        expect(run.ghostRequests).toEqual([]);
-        expect(run.algoliaRequests).toEqual([]);
+        expectCliSuccess(run);
+        expect(requestBody(requestAt(run.algoliaRequests, 0))).toEqual({
+            distinct: false,
+            attributesForFaceting: ['filterOnly(category)']
+        });
     });
 
     it('uses the default projection without sending a fields parameter', async () => {
@@ -194,12 +320,7 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
             page: '1'
         });
         expect(run.ghostRequests[0]?.query).not.toHaveProperty('fields');
-        expect(run.algoliaRequests.map(requestPath)).toEqual([
-            'PUT /1/indexes/ghost-content/settings',
-            'GET /1/indexes/ghost-content/settings',
-            'POST /1/indexes/ghost-content/deleteByQuery',
-            'POST /1/indexes/ghost-content/batch'
-        ]);
+        expect(run.algoliaRequests.some(request => request.method === 'PUT')).toBe(false);
 
         const [record] = batchEntries(run.algoliaRequests).map(entry => entry.body);
         expect(record).toMatchObject({
@@ -317,7 +438,7 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
         expect(run.algoliaRequests).toEqual([]);
     });
 
-    it('deletes every unique affected non-ignored slug before saving the validated records', async () => {
+    it('applies explicit settings and saves only non-ignored records', async () => {
         const customSettings = {
             distinct: false,
             searchableAttributes: ['title', 'summary']
@@ -345,28 +466,10 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
         });
 
         expectCliSuccess(run);
-        const requestPaths = run.algoliaRequests.map(requestPath);
-        expect(requestPaths).toEqual([
-            'PUT /1/indexes/ghost-content/settings',
-            'GET /1/indexes/ghost-content/settings',
-            'POST /1/indexes/ghost-content/deleteByQuery',
-            'POST /1/indexes/ghost-content/deleteByQuery',
-            'POST /1/indexes/ghost-content/batch'
-        ]);
-        const saveIndex = requestPaths.indexOf('POST /1/indexes/ghost-content/batch');
-        const deleteIndexes = requestPaths
-            .map((request, index) => ({request, index}))
-            .filter(({request}) => request.endsWith('/deleteByQuery'))
-            .map(({index}) => index);
-        expect(requestPaths.filter(request => request.endsWith('/batch'))).toHaveLength(1);
-        expect(deleteIndexes.every(index => index < saveIndex)).toBe(true);
-        const appliedSettings = requestBody(requestAt(run.algoliaRequests, 0));
-        expect(appliedSettings).toEqual(customSettings);
-        expect(appliedSettings).not.toHaveProperty('attributesForFaceting');
-        expect(run.algoliaRequests.slice(2, -1).map(request => requestBody(request))).toEqual([
-            {filters: 'slug:projected-post'},
-            {filters: 'slug:second-post'}
-        ]);
+        expect(requestBody(requestAt(run.algoliaRequests, 0))).toEqual(customSettings);
+        expect(
+            run.algoliaRequests.some(request => requestPath(request).endsWith('/deleteByQuery'))
+        ).toBe(false);
         expect(batchEntries(run.algoliaRequests).map(entry => entry.body.slug)).toEqual([
             'projected-post',
             'projected-post',
@@ -414,13 +517,6 @@ describe('CLI Ghost content projection', {timeout: 20000}, () => {
 
         for (const run of [secondRun, thirdRun]) {
             expectCliSuccess(run);
-            const paths = run.algoliaRequests.map(requestPath);
-            expect(paths.indexOf('POST /1/indexes/ghost-content/deleteByQuery')).toBeLessThan(
-                paths.indexOf('POST /1/indexes/ghost-content/batch')
-            );
-            expect(requestBody(requestAt(run.algoliaRequests, 2))).toEqual({
-                filters: 'slug:shrinking-post'
-            });
             expect(batchEntries(run.algoliaRequests).map(entry => entry.body.objectID)).toEqual([
                 'post-id_0'
             ]);
