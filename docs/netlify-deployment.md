@@ -20,7 +20,9 @@ The loader fetches the resolved commit from TryGhost/algolia into `deployment/ru
 
 Use the [version-plan workflow](../README.md#publishing). `pnpm ship` applies the selected plans and generates package changelogs, then commits and tags the release before pushing it. The Publish workflow validates and builds the packages, then publishes through npm OIDC. Only after that job succeeds does the dependent promotion job create a draft GitHub Release at the release tag’s commit, attach `netlify-release.json`, and publish the release with its package changelog entry. There is no separate catalog or promotion branch.
 
-If npm publication succeeded but Netlify promotion did not, run the Publish workflow from `main` with `dry-run` disabled and `recover-netlify-version` set to the exact published version. Recovery checks that the existing tag belongs to the workflow’s history, verifies the package on npm, and uses the tag’s source commit and changelog. It does not publish packages or change versions or tags. For a prerelease, also set its `prerelease-tag`.
+Promotion checks the current package version against its original release tag on every run. It resumes missing or draft releases, verifies published metadata, and leaves matching published releases unchanged. A later workflow commit can finish promotion without a new version or tag.
+
+If a workflow fails, rerun it after addressing the failure. When the fix requires a new commit, run Publish from `main` with `dry-run` disabled. It skips packages already on npm and automatically finishes promotion. Use `recover-netlify-version` only to select an older published version than the current package manifest; this also disables npm publishing. For a prerelease, set its `prerelease-tag`.
 
 Nx keeps its normal pre-1.0 bump behavior. When ready for the first major, select `1.0.0` explicitly.
 
