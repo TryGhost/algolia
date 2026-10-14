@@ -166,8 +166,6 @@ const promote = async (): Promise<void> => {
                 '--repo',
                 REPOSITORY,
                 '--verify-tag',
-                '--target',
-                commit,
                 '--draft',
                 ...(prerelease ? ['--prerelease'] : []),
                 '--title',

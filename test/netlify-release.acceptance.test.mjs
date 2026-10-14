@@ -47,7 +47,8 @@ if (command === 'git') {
         result = JSON.stringify(state.pages ?? (state.release ? [[state.release]] : [[]]));
     }
 } else if (args[0] === 'release' && args[1] === 'create') {
-    state.release = {body: args.includes('--notes-file') ? fs.readFileSync(args[args.indexOf('--notes-file') + 1], 'utf8') : args[args.indexOf('--notes') + 1], id: 1, tag_name: state.tag, draft: true, prerelease: args.includes('--prerelease'), target_commitish: args[args.indexOf('--target') + 1], assets: []};
+    if (state.rejectTarget && args.includes('--target')) fail('Resource not accessible by integration');
+    state.release = {body: args.includes('--notes-file') ? fs.readFileSync(args[args.indexOf('--notes-file') + 1], 'utf8') : args[args.indexOf('--notes') + 1], id: 1, tag_name: state.tag, draft: true, prerelease: args.includes('--prerelease'), target_commitish: state.tagCommit, assets: []};
 } else if (args[0] === 'release' && args[1] === 'upload') {
     if (state.uploadFailure) { state.uploadFailure = false; fail('Asset upload failed'); }
     state.asset = JSON.parse(fs.readFileSync(args[3], 'utf8'));
@@ -241,6 +242,7 @@ describe('Netlify release promotion command', () => {
         const source = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
         const release = await createRelease({
             recoverVersion: version,
+            rejectTarget: true,
             manifestVersion: '0.5.0',
             tagCommit: source,
             tagNotes: `## ${version} (2026-10-14)\n\n- Original release notes.\n`
