@@ -2,6 +2,8 @@
 
 `@tryghost/algolia-indexer` configures an Algolia index and saves or removes the records produced by the Ghost Algolia tools.
 
+See the [changelog](CHANGELOG.md) for changes between releases.
+
 ## Install
 
 ```sh
