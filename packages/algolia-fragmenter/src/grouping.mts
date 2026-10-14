@@ -1,6 +1,8 @@
-import type {ExtractionFragment} from '@tryghost/algolia-html-extractor';
+import type {ExtractionFragment, RichExtractionFragment} from '@tryghost/algolia-html-extractor';
 
-export type NonEmptyFragments = readonly [ExtractionFragment, ...ExtractionFragment[]];
+export type RecordFragment = ExtractionFragment | RichExtractionFragment;
+
+export type NonEmptyFragments = readonly [RecordFragment, ...RecordFragment[]];
 
 export type FragmentGroup = Readonly<{
     anchor: string | null;
@@ -9,7 +11,7 @@ export type FragmentGroup = Readonly<{
 
 type MutableFragmentGroup = {
     anchor: string | null;
-    fragments: [ExtractionFragment, ...ExtractionFragment[]];
+    fragments: [RecordFragment, ...RecordFragment[]];
 };
 
 /**
@@ -18,7 +20,7 @@ type MutableFragmentGroup = {
  * deprecated wrappers and the deep record interface.
  */
 export const groupFragmentsByAnchor = (
-    fragments: readonly ExtractionFragment[]
+    fragments: readonly RecordFragment[]
 ): readonly FragmentGroup[] => {
     const groups: MutableFragmentGroup[] = [];
     for (const fragment of fragments) {
@@ -33,14 +35,20 @@ export const groupFragmentsByAnchor = (
     return groups;
 };
 
+const isPreformatted = (fragment: RecordFragment): boolean => {
+    return 'sourceTag' in fragment
+        ? fragment.sourceTag === 'pre'
+        : fragment.source.kind === 'element' && fragment.source.tagName === 'pre';
+};
+
 /**
  * Merges the fragments of one record. The first fragment contributes its markup verbatim;
  * every later preformatted fragment contributes its text only.
  */
-export const mergeRecordHtml = (fragments: readonly ExtractionFragment[]): string => {
+export const mergeRecordHtml = (fragments: readonly RecordFragment[]): string => {
     return fragments
         .map((fragment, index) =>
-            index > 0 && fragment.sourceTag === 'pre' ? ` ${fragment.text}` : fragment.html
+            index > 0 && isPreformatted(fragment) ? ` ${fragment.text}` : fragment.html
         )
         .join('');
 };

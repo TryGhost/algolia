@@ -53,7 +53,7 @@ const ALGOLIA_RESERVED_NAMES = [
 ];
 const RANKING_CONTAINER = 'customRanking';
 const ALIAS_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/u;
-const OPTIONS_PROPERTIES = ['ignoreSlugs', 'contentProjection'];
+const OPTIONS_PROPERTIES = ['ignoreSlugs', 'contentProjection', 'extraction'];
 const CONTENT_PROJECTION_PROPERTIES = ['fields', 'customRanking'];
 const PROJECTION_FIELD_PROPERTIES = ['source', 'as'];
 export const isPlainObject = (value) => {
@@ -246,6 +246,16 @@ const resolveIgnoreSlugs = (value, issues) => {
     }
     return slugs;
 };
+const resolveExtraction = (value, issues) => {
+    if (value === undefined || value === 'compatibility') {
+        return 'compatibility';
+    }
+    if (value === 'rich') {
+        return 'rich';
+    }
+    issues.push(invalidShape('extraction', '"compatibility" or "rich"'));
+    return 'compatibility';
+};
 /**
  * Validates caller options before any Ghost content is inspected and returns the policy the
  * projection, ranking, and record stages read. Every policy issue is collected in declaration
@@ -254,7 +264,7 @@ const resolveIgnoreSlugs = (value, issues) => {
 export const resolvePolicy = (options) => {
     if (options === undefined) {
         const projection = createDefaultProjection();
-        return { ok: true, policy: { ignoreSlugs: [], ...projection } };
+        return { ok: true, policy: { ignoreSlugs: [], extraction: 'compatibility', ...projection } };
     }
     if (!isPlainObject(options)) {
         return { ok: false, issues: [invalidShape('options', 'an object')] };
@@ -263,9 +273,10 @@ export const resolvePolicy = (options) => {
     collectUnknownProperties(options, OPTIONS_PROPERTIES, 'options', issues);
     const ignoreSlugs = resolveIgnoreSlugs(options.ignoreSlugs, issues);
     const projection = resolveContentProjection(options.contentProjection, issues);
+    const extraction = resolveExtraction(options.extraction, issues);
     if (issues.length > 0) {
         return { ok: false, issues };
     }
-    return { ok: true, policy: { ignoreSlugs, ...projection } };
+    return { ok: true, policy: { ignoreSlugs, extraction, ...projection } };
 };
 //# sourceMappingURL=policy.mjs.map

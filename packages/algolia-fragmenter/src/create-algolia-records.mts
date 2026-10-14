@@ -1,4 +1,4 @@
-import {extract} from '@tryghost/algolia-html-extractor';
+import {extract, extractRich} from '@tryghost/algolia-html-extractor';
 
 import {FragmenterError, type RecordSizeIssue} from './errors.mjs';
 import {groupFragmentsByAnchor} from './grouping.mjs';
@@ -34,7 +34,9 @@ export const createAlgoliaRecords = (
     const records: AlgoliaRecord[] = [];
     const issues: RecordSizeIssue[] = [];
     for (const content of prepared.contents) {
-        const groups = groupFragmentsByAnchor(extract(content.html));
+        const fragments =
+            policy.policy.extraction === 'rich' ? extractRich(content.html) : extract(content.html);
+        const groups = groupFragmentsByAnchor(fragments);
         const contentRecords = createContentRecords(content, groups);
         records.push(...contentRecords.records);
         issues.push(...contentRecords.issues);

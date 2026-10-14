@@ -2,7 +2,7 @@
 
 ## Decision
 
-`@tryghost/algolia-html-extractor` exposes one synchronous named function at its package root:
+`@tryghost/algolia-html-extractor` preserves this synchronous compatibility interface at its package root:
 
 ```ts
 export type ExtractedTagName = 'p' | 'pre' | 'td' | 'li';
@@ -68,7 +68,7 @@ The fragmenter continues to own anchor grouping, preformatted-content merging, d
 
 ## Options and errors
 
-There is no options parameter. The selected elements, heading behaviour, anchor behaviour, and parser are compatibility rules owned by the package rather than caller policy. Richer rendered-HTML semantics require their own explicit interface decision instead of a speculative compatibility mode or public selector language.
+There is no options parameter. The selected elements, heading behaviour, anchor behaviour, and parser are compatibility rules owned by the package rather than caller policy. Richer rendered-HTML semantics are available through the separate [`extractRich()` interface](richer-extraction-fragment-representation.md); calling `extract()` keeps compatibility behavior.
 
 Every string is valid input. Empty input returns an empty array, and malformed HTML uses normal HTML5 recovery. A non-string value from an untyped caller throws a native `TypeError` synchronously. Unexpected resource or runtime failures remain native errors; their messages and parse5 provenance are not contractual.
 
@@ -90,6 +90,5 @@ Extraction is synchronous and parses the complete input. Time and memory are pro
 
 - [Approved interface prototype](https://github.com/TryGhost/algolia/blob/aileen/prototype-html-extractor-interface/packages/algolia-html-extractor/prototype/PROTOTYPE-public-interface.html)
 - [Strict TypeScript prototype source](https://github.com/TryGhost/algolia/blob/aileen/prototype-html-extractor-interface/packages/algolia-html-extractor/prototype/PROTOTYPE-public-interface.ts)
-- [Design the public HTML extractor API](https://github.com/TryGhost/algolia/issues/193)
 - `docs/research/legacy-extraction-compatibility-contract.md`
 - `docs/research/html-parser-primitive.md`

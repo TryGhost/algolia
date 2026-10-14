@@ -35,7 +35,10 @@ export type ContentProjection = Readonly<{
     customRanking?: readonly RankingField[];
 }>;
 
+export type ExtractionMode = 'compatibility' | 'rich';
+
 export type CreateAlgoliaRecordsOptions = Readonly<{
+    extraction?: ExtractionMode;
     ignoreSlugs?: readonly string[];
     contentProjection?: ContentProjection;
 }>;
@@ -51,6 +54,7 @@ export type ResolvedRankingField = Readonly<{
 }>;
 
 export type ResolvedPolicy = Readonly<{
+    extraction: ExtractionMode;
     ignoreSlugs: readonly string[];
     fields: readonly ResolvedProjectionField[];
     rankingFields: readonly ResolvedRankingField[];
@@ -135,7 +139,7 @@ const ALGOLIA_RESERVED_NAMES: readonly string[] = [
 
 const RANKING_CONTAINER = 'customRanking';
 const ALIAS_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/u;
-const OPTIONS_PROPERTIES: readonly string[] = ['ignoreSlugs', 'contentProjection'];
+const OPTIONS_PROPERTIES: readonly string[] = ['ignoreSlugs', 'contentProjection', 'extraction'];
 const CONTENT_PROJECTION_PROPERTIES: readonly string[] = ['fields', 'customRanking'];
 const PROJECTION_FIELD_PROPERTIES: readonly string[] = ['source', 'as'];
 
@@ -477,6 +481,17 @@ const resolveIgnoreSlugs = (value: unknown, issues: PolicyIssue[]): readonly str
     return slugs;
 };
 
+const resolveExtraction = (value: unknown, issues: PolicyIssue[]): ExtractionMode => {
+    if (value === undefined || value === 'compatibility') {
+        return 'compatibility';
+    }
+    if (value === 'rich') {
+        return 'rich';
+    }
+    issues.push(invalidShape('extraction', '"compatibility" or "rich"'));
+    return 'compatibility';
+};
+
 /**
  * Validates caller options before any Ghost content is inspected and returns the policy the
  * projection, ranking, and record stages read. Every policy issue is collected in declaration
@@ -485,7 +500,7 @@ const resolveIgnoreSlugs = (value: unknown, issues: PolicyIssue[]): readonly str
 export const resolvePolicy = (options: unknown): PolicyResolution => {
     if (options === undefined) {
         const projection = createDefaultProjection();
-        return {ok: true, policy: {ignoreSlugs: [], ...projection}};
+        return {ok: true, policy: {ignoreSlugs: [], extraction: 'compatibility', ...projection}};
     }
     if (!isPlainObject(options)) {
         return {ok: false, issues: [invalidShape('options', 'an object')]};
@@ -495,10 +510,11 @@ export const resolvePolicy = (options: unknown): PolicyResolution => {
     collectUnknownProperties(options, OPTIONS_PROPERTIES, 'options', issues);
     const ignoreSlugs = resolveIgnoreSlugs(options.ignoreSlugs, issues);
     const projection = resolveContentProjection(options.contentProjection, issues);
+    const extraction = resolveExtraction(options.extraction, issues);
 
     if (issues.length > 0) {
         return {ok: false, issues};
     }
 
-    return {ok: true, policy: {ignoreSlugs, ...projection}};
+    return {ok: true, policy: {ignoreSlugs, extraction, ...projection}};
 };

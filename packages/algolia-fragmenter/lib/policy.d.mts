@@ -13,7 +13,9 @@ export type ContentProjection = Readonly<{
     fields: readonly ProjectionField[];
     customRanking?: readonly RankingField[];
 }>;
+export type ExtractionMode = 'compatibility' | 'rich';
 export type CreateAlgoliaRecordsOptions = Readonly<{
+    extraction?: ExtractionMode;
     ignoreSlugs?: readonly string[];
     contentProjection?: ContentProjection;
 }>;
@@ -26,6 +28,7 @@ export type ResolvedRankingField = Readonly<{
     outputKey: string;
 }>;
 export type ResolvedPolicy = Readonly<{
+    extraction: ExtractionMode;
     ignoreSlugs: readonly string[];
     fields: readonly ResolvedProjectionField[];
     rankingFields: readonly ResolvedRankingField[];

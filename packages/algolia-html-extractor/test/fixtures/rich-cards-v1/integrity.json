@@ -1,0 +1,10 @@
+{
+  "capture.mts": {
+    "bytes": 4140,
+    "sha256": "db7cd6276177ec2398833e54f9ecb27fa275a4a5bbf0d1feeda5c2fa3b0966a3"
+  },
+  "rendered.json": {
+    "bytes": 21115,
+    "sha256": "3fac061a37a56253c1d1c1a39569e273e3c77c19aa3cb056ab81ccc88545c23e"
+  }
+}

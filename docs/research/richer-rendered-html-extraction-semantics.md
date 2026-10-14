@@ -2,11 +2,15 @@
 
 ## Decision
 
-A follow-on extractor version should extract **searchable rendered meaning** from
-Ghost-rendered HTML. This is an additive semantic layer over the
-compatibility-first release: the observable extraction of `p`, `pre`, `td`, and
-`li` elements remains unchanged, including its existing traversal, whitespace,
-heading, anchor, position, and duplication behaviour.
+`extractRich()` extracts searchable rendered meaning from Ghost-rendered HTML.
+It includes the compatibility-selected `p`, `pre`, `td`, and `li` elements and
+adds the semantic roles below. Their traversal, whitespace, heading, anchor,
+and duplication behavior stays unchanged; rich fragments receive positions in
+the expanded stream.
+
+`extract()` and the fragmenter's default mode keep the exact compatibility
+stream, including its original positions. Rich extraction requires an explicit
+opt-in and does not change existing CLI or Netlify configuration.
 
 Searchable rendered meaning is author-controlled meaning intended for readers.
 It includes meaningful text that is not necessarily visible, such as an image
@@ -16,9 +20,11 @@ decorative content, and content explicitly marked as non-semantic.
 ## Semantic selection
 
 The richer layer emits the smallest qualifying semantic units in document
-order. It must not add a container fragment when qualifying descendants already
-represent the same meaning. A wrapper is a fallback only when it contains
-otherwise-unrepresented searchable meaning.
+order. A rich container is a fallback only when it has no qualifying descendant.
+The extractor does not split loose text from a container that also contains a
+qualifying descendant or add overlapping wrapper HTML. For example, a
+blockquote containing loose text and a `cite` emits the citation alone. Wrap the
+quote text in a paragraph to make both units extractable.
 
 Compatibility-preserved `p`, `pre`, `td`, and `li` elements count as qualifying
 descendants for this precedence rule. For example,
@@ -33,8 +39,7 @@ Add these general semantic units:
 - `th` for table headers, alongside compatibility-preserved `td` cells;
 - `figcaption` for authored image, gallery, video, or embed captions;
 - `cite` for quote attribution;
-- `blockquote` only when qualifying descendants do not already represent the
-  quote; and
+- `blockquote` only when it has no qualifying descendants; and
 - a non-empty meaningful `img` alternative as attribute-derived meaning.
 
 New element text preserves its source value. Trimmed text determines whether a
@@ -43,10 +48,13 @@ such as an image alternative repeated by its caption, without rewriting the
 preserved source value. The richer public-interface decision owns the exact
 comparison normalization.
 
-Duplicate suppression applies only among rich candidates within the same local
-semantic container, such as an image and its figure caption. It never removes,
-rewrites, or suppresses a compatibility fragment, and it does not deduplicate
-identical meaning repeated in separate parts of the document.
+Duplicate suppression removes only rich candidates within the same local semantic
+container, such as an image and its figure caption. Caption precedence also
+applies when a compatibility paragraph represents the caption: the repeated
+image alternative is omitted and the paragraph stays unchanged. Other rich
+candidates are compared only with rich candidates. Compatibility fragments are
+never removed or rewritten, and identical meaning in separate containers stays
+separate.
 
 An image alternative is excluded when it is empty or whitespace-only, repeated
 by a caption, explicitly non-semantic, or part of known renderer-generated
@@ -116,23 +124,15 @@ an extraction fragment belongs to the separate field-projection decision.
 
 ## Compatibility and public-interface consequences
 
-Richer semantics are not part of the compatibility-first extractor release.
-They deliberately change fragment streams and final Algolia records, so they
-belong in a separately reviewed follow-on release.
+`extract()` keeps `ExtractionFragment` and its `sourceTag` field.
+`extractRich()` returns `RichExtractionFragment`, whose discriminated `source`
+identifies an element or image alternative. Both functions are synchronous and
+return immutable values from the package's ESM entry.
 
-The compatibility interface cannot express all of this policy unchanged:
-
-- `ExtractedTagName` currently names only `p`, `pre`, `td`, and `li`;
-- `html` currently promises a selected element's serialized outer HTML;
-- image alternatives are attribute-derived rather than DOM `textContent`; and
-- a fallback card-heading fragment may represent a semantic role rather than a
-  legacy selected element.
-
-A follow-on prototype decision must define the richer extraction-fragment
-representation, including element and attribute sources, `html`, `text`, source
-identity, comparison normalization, and generated ESM/CommonJS declarations.
-The Ghost field-projection decision separately owns which fragment and projected
-fields become searchable Algolia record attributes.
+The [rich fragment contract](richer-extraction-fragment-representation.md)
+defines searchable HTML, preserved text, source representation, and comparison
+normalization. The fragmenter consumes rich fragments only when the caller sets
+`extraction: 'rich'`; it continues to own projection and record-size handling.
 
 ## Evidence and verification consequences
 
@@ -162,6 +162,4 @@ mutable editorial content never becomes fixture data or an exact CI assertion.
 - [Legacy extraction compatibility contract](legacy-extraction-compatibility-contract.md)
 - [Ghost HTML evidence corpus](ghost-html-evidence-corpus.md)
 - [Public HTML extractor interface](public-html-extractor-interface.md)
-- [Decide richer rendered-HTML extraction semantics](https://github.com/TryGhost/algolia/issues/197)
-- [Decide the Ghost field projection and excerpt contract](https://github.com/TryGhost/algolia/issues/196)
 - [`CONTEXT.md`](../../CONTEXT.md)

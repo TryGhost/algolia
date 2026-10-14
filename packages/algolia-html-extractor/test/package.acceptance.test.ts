@@ -118,6 +118,7 @@ describe('@tryghost/algolia-html-extractor packed package', () => {
                 console.log(JSON.stringify({
                     esmKeys: Object.keys(esm),
                     esmResult,
+                    richResult: esm.extractRich('<img alt="Rich &amp; safe">'),
                     synchronous: !(esmResult instanceof Promise)
                 }));
             `
@@ -126,7 +127,18 @@ describe('@tryghost/algolia-html-extractor packed package', () => {
             cwd: temporaryDirectory
         });
         expect(JSON.parse(runtimeResult.stdout)).toEqual({
-            esmKeys: ['extract'],
+            esmKeys: ['extract', 'extractRich'],
+            richResult: [
+                {
+                    html: 'Rich &amp; safe',
+                    text: 'Rich & safe',
+                    headingPath: [],
+                    anchor: null,
+                    position: 0,
+                    headingRank: 100,
+                    source: {kind: 'attribute', tagName: 'img', attributeName: 'alt'}
+                }
+            ],
             esmResult: [
                 {
                     html: '<p>Ready.</p>',
@@ -154,11 +166,19 @@ describe('@tryghost/algolia-html-extractor packed package', () => {
         await writeFile(
             esmTypeConsumer,
             `
-                import {extract, type ExtractionFragment} from '@tryghost/algolia-html-extractor';
+                import {extract, extractRich, type ExtractionFragment, type RichExtractionFragment, type FragmentSource} from '@tryghost/algolia-html-extractor';
                 // @ts-expect-error The package deliberately has no default export.
                 import extractor from '@tryghost/algolia-html-extractor';
 
                 const fragments: readonly ExtractionFragment[] = extract('<p>Typed.</p>');
+                const rich: readonly RichExtractionFragment[] = extractRich('<img alt="Typed">');
+                const source: FragmentSource = rich[0]!.source;
+                // @ts-expect-error Fragment sources are immutable.
+                source.kind = 'element';
+                // @ts-expect-error Legacy fragments retain their sourceTag contract.
+                fragments[0]!.source;
+                // @ts-expect-error Rich fragments do not expose a compatibility-only tag.
+                rich[0]!.sourceTag;
                 void fragments;
                 void extractor;
             `

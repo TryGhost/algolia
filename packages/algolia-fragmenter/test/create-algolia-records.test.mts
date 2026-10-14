@@ -1516,3 +1516,128 @@ describe('deprecated wrapper non-regression', () => {
         expect(record).not.toHaveProperty('reading_time');
     });
 });
+
+describe('createAlgoliaRecords extraction selection', () => {
+    it.each(['unknown', null, 1, {}])(
+        'rejects invalid extraction %j before inspecting content',
+        extraction => {
+            const error = expectFragmenterError(() => buildRecords(null, {extraction}));
+
+            expect(error.code).toBe('INVALID_POLICY');
+            expect(error.issues).toEqual([
+                {
+                    kind: 'policy',
+                    reason: 'invalid-shape',
+                    path: 'extraction',
+                    message: 'extraction: expected "compatibility" or "rich".'
+                }
+            ]);
+        }
+    );
+});
+
+describe('createAlgoliaRecords rich extraction', () => {
+    it('keeps default and explicit compatibility records unchanged beside new semantic units', () => {
+        const contents = [
+            createContent({
+                html: '<h2 id="intro">Intro</h2><p>Body.</p><figure><img alt="Map"><figcaption>Caption</figcaption></figure>'
+            })
+        ];
+        const expected = [
+            {
+                objectID: 'post-1_0',
+                slug: 'getting-started',
+                url: 'https://example.com/getting-started/#intro',
+                html: '<p>Body.</p>',
+                title: 'Getting started',
+                headings: ['Intro'],
+                anchor: 'intro',
+                customRanking: {position: 0, heading: 80}
+            }
+        ];
+
+        expect(buildRecords(contents, {contentProjection: {fields: []}})).toEqual(expected);
+        expect(
+            buildRecords(contents, {extraction: 'compatibility', contentProjection: {fields: []}})
+        ).toEqual(expected);
+    });
+
+    it('includes opted-in semantic units while retaining preformatted merge behavior', () => {
+        const contents = [
+            createContent({
+                html: '<h2 id="intro">Intro</h2><pre>First</pre><figure><img alt="Map &amp; key"><figcaption>Caption</figcaption></figure><pre>Last</pre>'
+            })
+        ];
+
+        expect(
+            createAlgoliaRecords(contents, {extraction: 'rich', contentProjection: {fields: []}})
+        ).toEqual([
+            {
+                objectID: 'post-1_0',
+                slug: 'getting-started',
+                url: 'https://example.com/getting-started/#intro',
+                html: '<pre>First</pre>Map &amp; key<figcaption>Caption</figcaption> Last',
+                title: 'Getting started',
+                headings: ['Intro'],
+                anchor: 'intro',
+                customRanking: {position: 0, heading: 80}
+            }
+        ]);
+    });
+});
+
+describe('createAlgoliaRecords rich record safety', () => {
+    it('rejects an oversized rich unit without returning a partial batch', () => {
+        const contents = [
+            createContent(),
+            createContent({id: 'large', html: `<img alt="${'a'.repeat(10000)}">`})
+        ];
+
+        expect(buildRecords(contents, {contentProjection: {fields: []}})).toHaveLength(2);
+        const error = expectFragmenterError(() =>
+            createAlgoliaRecords(contents, {extraction: 'rich', contentProjection: {fields: []}})
+        );
+        expect(error.code).toBe('RECORD_TOO_LARGE');
+        expect(sizeIssuesOf(error)).toMatchObject([
+            {
+                contentId: 'large',
+                objectID: 'large_0',
+                position: 0,
+                anchor: null,
+                limit: 9999
+            }
+        ]);
+    });
+
+    it('packs complete rich units into continuations within the record ceiling', () => {
+        const contents = [
+            createContent({
+                html: `<figure><img alt="${'a'.repeat(6000)}"><figcaption>${'b'.repeat(6000)}</figcaption></figure>`
+            })
+        ];
+        const records = createAlgoliaRecords(contents, {
+            extraction: 'rich',
+            contentProjection: {fields: []}
+        });
+
+        expect(
+            records.map(record => ({
+                objectID: record.objectID,
+                html: record.html,
+                customRanking: record.customRanking
+            }))
+        ).toEqual([
+            {
+                objectID: 'post-1_0',
+                html: 'a'.repeat(6000),
+                customRanking: {position: 0, heading: 100}
+            },
+            {
+                objectID: 'post-1_0_1',
+                html: `<figcaption>${'b'.repeat(6000)}</figcaption>`,
+                customRanking: {position: 1, heading: 100}
+            }
+        ]);
+        expect(records.every(record => bytesOf(record) <= MAX_RECORD_BYTES)).toBe(true);
+    });
+});

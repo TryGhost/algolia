@@ -15,13 +15,18 @@ export const groupFragmentsByAnchor = (fragments) => {
     }
     return groups;
 };
+const isPreformatted = (fragment) => {
+    return 'sourceTag' in fragment
+        ? fragment.sourceTag === 'pre'
+        : fragment.source.kind === 'element' && fragment.source.tagName === 'pre';
+};
 /**
  * Merges the fragments of one record. The first fragment contributes its markup verbatim;
  * every later preformatted fragment contributes its text only.
  */
 export const mergeRecordHtml = (fragments) => {
     return fragments
-        .map((fragment, index) => index > 0 && fragment.sourceTag === 'pre' ? ` ${fragment.text}` : fragment.html)
+        .map((fragment, index) => index > 0 && isPreformatted(fragment) ? ` ${fragment.text}` : fragment.html)
         .join('');
 };
 //# sourceMappingURL=grouping.mjs.map
