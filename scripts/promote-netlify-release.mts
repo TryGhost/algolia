@@ -23,10 +23,16 @@ const run = async (command: string, args: string[]): Promise<string> => {
     return stdout.trim();
 };
 
-const releaseNotes = async (version: string, candidateNotes?: string): Promise<string> => {
+const releaseNotes = async (
+    version: string,
+    candidateNotes?: string,
+    source?: string
+): Promise<string> => {
     let contents: string;
     try {
-        contents = await readFile('packages/algolia-netlify/CHANGELOG.md', 'utf8');
+        contents = source
+            ? await run('git', ['show', `${source}:packages/algolia-netlify/CHANGELOG.md`])
+            : await readFile('packages/algolia-netlify/CHANGELOG.md', 'utf8');
     } catch (error) {
         if (
             candidateNotes &&
@@ -61,18 +67,31 @@ const promote = async (): Promise<void> => {
     const manifest = JSON.parse(
         await readFile('packages/algolia-netlify/package.json', 'utf8')
     ) as {version: string};
-    const {version} = manifest;
+    const recoveryVersion = process.env.NETLIFY_RECOVER_VERSION ?? '';
+    const version = recoveryVersion || manifest.version;
     const prerelease = validateReleaseVersion(version, process.env.PRERELEASE_TAG ?? '');
     const tag = `${PACKAGE}@${version}`;
-    const commit = await run('git', ['rev-parse', 'HEAD']);
+    const workflowCommit = await run('git', ['rev-parse', 'HEAD']);
     const tagCommit = await run('git', ['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]);
-    if (commit !== process.env.GITHUB_SHA) {
+    if (workflowCommit !== process.env.GITHUB_SHA) {
         throw new Error('The checkout does not match the workflow commit.');
     }
-    if (tagCommit !== commit) {
+    if (!recoveryVersion && tagCommit !== workflowCommit) {
         process.stdout.write(`Netlify integration ${version} is unchanged; skipping promotion.\n`);
         return;
     }
+    if (recoveryVersion) {
+        await run('git', ['merge-base', '--is-ancestor', tagCommit, workflowCommit]);
+        const taggedManifest = JSON.parse(
+            await run('git', ['show', `${tagCommit}:packages/algolia-netlify/package.json`])
+        ) as {name?: string; version?: string};
+        if (taggedManifest.name !== PACKAGE || taggedManifest.version !== version) {
+            throw new Error(
+                'The release tag does not contain the requested Netlify package version.'
+            );
+        }
+    }
+    const commit = tagCommit;
     const published: unknown = JSON.parse(
         await run('npm', [
             'view',
@@ -130,7 +149,8 @@ const promote = async (): Promise<void> => {
     }
     const notes = await releaseNotes(
         version,
-        prerelease ? `Deploys ${PACKAGE}@${version} from commit ${commit}.\n` : undefined
+        prerelease ? `Deploys ${PACKAGE}@${version} from commit ${commit}.\n` : undefined,
+        recoveryVersion ? tagCommit : undefined
     );
     const directory = await mkdtemp(path.join(os.tmpdir(), 'algolia-netlify-release-'));
     try {

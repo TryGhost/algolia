@@ -27,7 +27,15 @@ const save = () => fs.writeFileSync(statePath, JSON.stringify(state));
 const fail = message => { save(); process.stderr.write(message); process.exit(1); };
 let result;
 if (command === 'git') {
-    result = args.some(arg => arg.startsWith('refs/tags/')) ? state.tagCommit : state.commit;
+    if (args[0] === 'show') {
+        result = args[1].endsWith('/package.json')
+            ? JSON.stringify({name: '@tryghost/algolia-netlify', version: state.tagVersion ?? state.version})
+            : state.tagNotes;
+    } else if (args[0] === 'merge-base') {
+        if (state.unrelatedTag) fail('Tag is not an ancestor');
+    } else {
+        result = args.some(arg => arg.startsWith('refs/tags/')) ? state.tagCommit : state.commit;
+    }
 } else if (command === 'npm') {
     if (state.npmFailure) fail('Registry request failed');
     result = JSON.stringify(state.version);
@@ -39,7 +47,7 @@ if (command === 'git') {
         result = JSON.stringify(state.pages ?? (state.release ? [[state.release]] : [[]]));
     }
 } else if (args[0] === 'release' && args[1] === 'create') {
-    state.release = {body: args.includes('--notes-file') ? fs.readFileSync(args[args.indexOf('--notes-file') + 1], 'utf8') : args[args.indexOf('--notes') + 1], id: 1, tag_name: state.tag, draft: true, prerelease: args.includes('--prerelease'), target_commitish: state.commit, assets: []};
+    state.release = {body: args.includes('--notes-file') ? fs.readFileSync(args[args.indexOf('--notes-file') + 1], 'utf8') : args[args.indexOf('--notes') + 1], id: 1, tag_name: state.tag, draft: true, prerelease: args.includes('--prerelease'), target_commitish: args[args.indexOf('--target') + 1], assets: []};
 } else if (args[0] === 'release' && args[1] === 'upload') {
     if (state.uploadFailure) { state.uploadFailure = false; fail('Asset upload failed'); }
     state.asset = JSON.parse(fs.readFileSync(args[3], 'utf8'));
@@ -93,6 +101,7 @@ const createRelease = async (overrides = {}) => {
                     PATH: `${bin}${path.delimiter}${process.env.PATH}`,
                     GITHUB_SHA: commit,
                     PRERELEASE_TAG: overrides.prereleaseTag ?? '',
+                    NETLIFY_RECOVER_VERSION: overrides.recoverVersion ?? '',
                     GITHUB_REPOSITORY: 'TryGhost/algolia',
                     RELEASE_TEST_STATE: stateFile
                 }
@@ -226,6 +235,70 @@ describe('Netlify release promotion command', () => {
         expect(
             state.calls.filter(call => call.command === 'gh').every(call => call.args[0] === 'api')
         ).toBe(true);
+    });
+
+    it('recovers a published version from its original tag after a later workflow fix', async () => {
+        const source = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+        const release = await createRelease({
+            recoverVersion: version,
+            manifestVersion: '0.5.0',
+            tagCommit: source,
+            tagNotes: `## ${version} (2026-10-14)\n\n- Original release notes.\n`
+        });
+        await release.run();
+        const state = await release.state();
+        expect(state.asset).toEqual({version, commit: source});
+        expect(state.release.target_commitish).toBe(source);
+        expect(state.release.body).toBe('- Original release notes.\n');
+        expect(state.release.draft).toBe(false);
+    });
+
+    it.each([{unrelatedTag: true}, {tagVersion: '0.9.0'}, {npmFailure: true}])(
+        'rejects unsafe recovery before changing GitHub releases: %j',
+        async failure => {
+            const release = await createRelease({
+                recoverVersion: version,
+                tagCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                ...failure
+            });
+            await expect(release.run()).rejects.toThrow(failure.message);
+            expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(
+                false
+            );
+        }
+    );
+
+    it('verifies recovered metadata on reruns without replacing the published release', async () => {
+        const source = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+        const release = await createRelease({
+            recoverVersion: version,
+            tagCommit: source,
+            release: {
+                tag_name: tag,
+                draft: false,
+                prerelease: false,
+                assets: [{id: 2, name: 'netlify-release.json'}]
+            },
+            asset: {version, commit: source}
+        });
+        await release.run();
+        expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(false);
+    });
+
+    it('rejects recovery when the published manifest points to the workflow commit', async () => {
+        const release = await createRelease({
+            recoverVersion: version,
+            tagCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            release: {
+                tag_name: tag,
+                draft: false,
+                prerelease: false,
+                assets: [{id: 2, name: 'netlify-release.json'}]
+            },
+            asset: {version, commit}
+        });
+        await expect(release.run()).rejects.toThrow('manifest conflicts with this release');
+        expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(false);
     });
 
     it('skips the unchanged Netlify version when another package ships', async () => {

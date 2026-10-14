@@ -13,6 +13,11 @@ on:
         required: false
         type: boolean
         default: true
+      recover-netlify-version:
+        description: Recover promotion of an existing published version without publishing packages
+        required: false
+        type: string
+        default: ''
       prerelease-tag:
         description: Isolated PR channel (for example pr-333); leave empty for stable main releases
         required: false
@@ -20,6 +25,7 @@ on:
         default: ''
 
 env:
+  NETLIFY_RECOVER_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs['recover-netlify-version'] || '' }}
   PRERELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs['prerelease-tag'] || '' }}
 
 concurrency:
@@ -98,7 +104,7 @@ jobs:
           done
           (IFS=,; echo "projects=${to_publish[*]}") >> "$GITHUB_OUTPUT"
       - name: Publish to npm
-        if: steps.packages.outputs.projects != ''
+        if: steps.packages.outputs.projects != '' && env.NETLIFY_RECOVER_VERSION == ''
         shell: bash
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs['dry-run'] || false }}
