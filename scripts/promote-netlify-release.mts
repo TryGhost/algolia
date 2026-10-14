@@ -23,6 +23,7 @@ const run = async (command: string, args: string[]): Promise<string> => {
     return stdout.trim();
 };
 
+/** Reads the selected version’s notes from its source, with fallback notes for prereleases. */
 const releaseNotes = async (
     version: string,
     candidateNotes?: string,
@@ -75,6 +76,7 @@ const releaseNotes = async (
     return `${notes}\n`;
 };
 
+/** Publishes or verifies deployment metadata for the package’s original release tag. */
 const promote = async (): Promise<void> => {
     const manifest = JSON.parse(
         await readFile('packages/algolia-netlify/package.json', 'utf8')

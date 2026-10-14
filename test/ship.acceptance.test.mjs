@@ -16,6 +16,7 @@ import {afterEach, expect, it} from 'vitest';
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const directories = [];
+/** Creates an isolated Git workspace and bare remote for exercising the release command. */
 function fixture(plans = {one: {'@test/one': 'patch'}}, withDependent = false, environment = {}) {
     const directory = mkdtempSync(path.join(os.tmpdir(), 'algolia-ship-'));
     directories.push(directory);
