@@ -89,8 +89,14 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
             main?: unknown;
             module?: unknown;
         };
+        const extractorManifest = JSON.parse(
+            await readFile(
+                path.join(packageDirectory, '../algolia-html-extractor/package.json'),
+                'utf8'
+            )
+        ) as {version: string};
         expect(manifest.dependencies).toEqual({
-            '@tryghost/algolia-html-extractor': '^0.1.0'
+            '@tryghost/algolia-html-extractor': `^${extractorManifest.version}`
         });
         expect(manifest.type).toBe('module');
         expect(manifest.main).toBeUndefined();
