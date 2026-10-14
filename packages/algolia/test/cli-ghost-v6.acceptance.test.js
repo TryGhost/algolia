@@ -26,9 +26,6 @@ const contentApiKey = defaultContentApiKey;
 const expectedRecords = JSON.parse(
     await readFile(path.join(fixtureDirectory, 'expected-algolia-records.json'), 'utf8')
 );
-const expectedSettings = JSON.parse(
-    await readFile(path.join(fixtureDirectory, 'expected-index-settings.json'), 'utf8')
-);
 const harness = new CliAcceptanceHarness({
     fixtureDirectory,
     temporaryDirectoryPrefix: 'algolia-ghost-v6-'
@@ -174,9 +171,10 @@ describe('Ghost 6 CLI acceptance', function () {
                 }
             ]);
 
-            const [settingsPut, settingsGet] = algoliaRequests;
-            const recordsBatch = algoliaRequests.at(-1);
-            const deleteRequests = algoliaRequests.slice(2, -1);
+            const [settingsGet] = algoliaRequests;
+            const recordsBatch = algoliaRequests.find(request =>
+                new URL(request.url).pathname.endsWith('/batch')
+            );
             const expectedAlgoliaHeaders = {
                 accept: 'application/json',
                 'x-algolia-api-key': 'acceptance-admin-key',
@@ -198,26 +196,14 @@ describe('Ghost 6 CLI acceptance', function () {
                 };
             };
 
-            expect(algoliaRequests).toHaveLength(103);
-            expect(deleteRequests).toHaveLength(100);
+            expect(algoliaRequests.some(request => request.method === 'PUT')).toBe(false);
             expect(
-                deleteRequests.every(request =>
+                algoliaRequests.some(request =>
                     new URL(request.url).pathname.endsWith('/deleteByQuery')
                 )
-            ).toBe(true);
-            const algoliaAgent = normalizeRequest(settingsPut).query['x-algolia-agent'];
-            expect(algoliaAgent).toMatch(
-                /^Algolia for JavaScript \(5\.\d+\.\d+\); Search \(5\.\d+\.\d+\); Node\.js \(.+\)$/
-            );
+            ).toBe(false);
+            const algoliaAgent = normalizeRequest(settingsGet).query['x-algolia-agent'];
             expect(algoliaAgent).toContain(`Node.js (${process.versions.node})`);
-            expect(normalizeRequest(settingsPut)).toEqual({
-                method: 'PUT',
-                origin: 'https://acceptance-app.algolia.net',
-                pathname: '/1/indexes/ghost-content/settings',
-                query: {'x-algolia-agent': algoliaAgent},
-                headers: expectedAlgoliaHeaders
-            });
-            expect(JSON.parse(settingsPut.data)).toEqual(expectedSettings);
             expect(normalizeRequest(settingsGet)).toEqual({
                 method: 'GET',
                 origin: 'https://acceptance-app-dsn.algolia.net',
@@ -317,7 +303,13 @@ describe('Ghost 6 CLI acceptance', function () {
                 }
             ]);
             expect(algoliaRequests).toHaveLength(4);
-            expect(JSON.parse(algoliaRequests.at(-1).data).requests).toHaveLength(2);
+            expect(
+                JSON.parse(
+                    algoliaRequests.find(request =>
+                        new URL(request.url).pathname.endsWith('/batch')
+                    ).data
+                ).requests
+            ).toHaveLength(2);
             expect(`${result.stdout}${result.stderr}`).toMatch(/2 Fragments successfully saved/);
         }
     );
@@ -345,7 +337,9 @@ describe('Ghost 6 CLI acceptance', function () {
             }
         ]);
         expect(algoliaRequests).toHaveLength(4);
-        const requests = JSON.parse(algoliaRequests.at(-1).data).requests;
+        const requests = JSON.parse(
+            algoliaRequests.find(request => new URL(request.url).pathname.endsWith('/batch')).data
+        ).requests;
         expect(requests).toHaveLength(1);
         expect(requests[0].body).toEqual(expectedRecords.at(-1));
         expect(`${result.stdout}${result.stderr}`).toMatch(/1 Fragments successfully saved/);

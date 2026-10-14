@@ -23,7 +23,12 @@ const denyNetwork = transport => () => {
 };
 
 const responseFor = (request, requestNumber) => {
-    if (state.failure) {
+    if (typeof state.failure === 'function') {
+        const response = state.failure(request, requestNumber);
+        if (response) {
+            return {isTimedOut: false, ...response, content: JSON.stringify(response.content)};
+        }
+    } else if (state.failure) {
         return {
             status: state.failure.status,
             content: JSON.stringify({message: state.failure.message}),
@@ -38,6 +43,13 @@ const responseFor = (request, requestNumber) => {
             content: JSON.stringify({distinct: true}),
             isTimedOut: false
         };
+    }
+
+    if (pathname.includes('/task/')) {
+        return {status: 200, content: JSON.stringify({status: 'published'}), isTimedOut: false};
+    }
+    if (pathname.endsWith('/browse')) {
+        return {status: 200, content: JSON.stringify({hits: []}), isTimedOut: false};
     }
 
     return {

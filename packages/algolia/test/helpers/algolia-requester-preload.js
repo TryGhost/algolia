@@ -19,8 +19,12 @@ const allowedPort = Number(parsedAllowedOrigin.port);
 const settingsPath = '/1/indexes/ghost-content/settings';
 const batchPath = '/1/indexes/ghost-content/batch';
 const deleteByQueryPath = '/1/indexes/ghost-content/deleteByQuery';
+const browsePath = '/1/indexes/ghost-content/browse';
 const requiredSlugFacet = 'filterOnly(slug)';
-let currentSettings = {...expectedSettings};
+let currentSettings = process.env.ALGOLIA_ACCEPTANCE_SETTINGS
+    ? JSON.parse(process.env.ALGOLIA_ACCEPTANCE_SETTINGS)
+    : {...expectedSettings};
+const failure = process.env.ALGOLIA_ACCEPTANCE_FAILURE;
 let taskId = 0;
 
 const updateState = update => {
@@ -134,7 +138,7 @@ const responseFor = request => {
     const url = new URL(request.url);
     const hasExpectedHost =
         url.hostname ===
-        (request.method === 'GET'
+        (request.method === 'GET' || url.pathname === browsePath
             ? 'acceptance-app-dsn.algolia.net'
             : 'acceptance-app.algolia.net');
     const hasExpectedHeaders =
@@ -144,12 +148,14 @@ const responseFor = request => {
         request.headers['content-type'] === 'text/plain';
 
     if (
-        ![
+        (![
             `PUT ${settingsPath}`,
             `GET ${settingsPath}`,
             `POST ${batchPath}`,
+            `POST ${browsePath}`,
             `POST ${deleteByQueryPath}`
-        ].includes(`${request.method} ${url.pathname}`) ||
+        ].includes(`${request.method} ${url.pathname}`) &&
+            !/^\/1\/indexes\/ghost-content\/task\/\d+$/.test(url.pathname)) ||
         !hasExpectedHost ||
         !hasExpectedHeaders
     ) {
@@ -162,7 +168,42 @@ const responseFor = request => {
         };
     }
 
+    if (url.pathname.includes('/task/')) {
+        if (failure === 'task') {
+            return {
+                status: 400,
+                content: JSON.stringify({message: 'Task confirmation failed.'}),
+                isTimedOut: false
+            };
+        }
+        return {status: 200, content: JSON.stringify({status: 'published'}), isTimedOut: false};
+    }
+    if (url.pathname === browsePath) {
+        if (failure === 'browse') {
+            return {
+                status: 403,
+                content: JSON.stringify({message: 'Browse forbidden.'}),
+                isTimedOut: false
+            };
+        }
+        const records = statePath ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : [];
+        return {status: 200, content: JSON.stringify({hits: records}), isTimedOut: false};
+    }
     if (request.method === 'GET') {
+        if (failure === 'settings') {
+            return {
+                status: 400,
+                content: JSON.stringify({message: 'Settings read failed.'}),
+                isTimedOut: false
+            };
+        }
+        if (currentSettings === null) {
+            return {
+                status: 404,
+                content: JSON.stringify({message: 'Index not found.'}),
+                isTimedOut: false
+            };
+        }
         return {status: 200, content: JSON.stringify(currentSettings), isTimedOut: false};
     }
 
@@ -213,10 +254,22 @@ const responseFor = request => {
     }
 
     const body = JSON.parse(request.data);
+    const deleting = body.requests.some(entry => entry.action === 'deleteObject');
+    if (failure === (deleting ? 'cleanup' : 'save')) {
+        return {
+            status: 400,
+            content: JSON.stringify({message: deleting ? 'Cleanup rejected.' : 'Save rejected.'}),
+            isTimedOut: false
+        };
+    }
     updateState(records => {
         const recordsById = new Map(records.map(record => [record.objectID, record]));
         for (const entry of body.requests) {
-            recordsById.set(entry.body.objectID, entry.body);
+            if (entry.action === 'deleteObject') {
+                recordsById.delete(entry.body.objectID);
+            } else {
+                recordsById.set(entry.body.objectID, entry.body);
+            }
         }
         return [...recordsById.values()];
     });

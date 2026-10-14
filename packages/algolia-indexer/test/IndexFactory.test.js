@@ -345,6 +345,334 @@ describe('IndexFactory public contracts', function () {
         });
     });
 
+    it('prepares an existing index without replacing its settings', async function () {
+        expect(await createIndexer().prepareIndex()).toEqual({distinct: true});
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .map(({method}) => method)
+        ).toEqual(['GET']);
+    });
+
+    it('initializes defaults only for a missing index and honors explicit settings', async function () {
+        requester.reset(request =>
+            new URL(request.url).pathname.endsWith('/settings') && request.method === 'GET'
+                ? {status: 404, content: {message: 'Missing index'}}
+                : undefined
+        );
+        await createIndexer().prepareIndex();
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .map(({method, body}) => ({method, body}))
+        ).toEqual([
+            {method: 'GET', body: undefined},
+            {method: 'PUT', body: REQUIRED_SETTINGS},
+            {method: 'GET', body: undefined}
+        ]);
+        requester.reset();
+        await createIndexer({indexSettings: {distinct: false}}).prepareIndex();
+        expect(requester.requests().map(normalizeRequest)[0]).toMatchObject({
+            method: 'PUT',
+            body: {distinct: false}
+        });
+        requester.reset({status: 403, message: 'Forbidden'});
+        await expect(createIndexer().prepareIndex()).rejects.toMatchObject({status: 403});
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .map(({method}) => method)
+        ).toEqual(['GET']);
+    });
+
+    it('confirms replacement saves before deleting only stale fragments across browse pages', async function () {
+        requester.reset(request => {
+            if (!new URL(request.url).pathname.endsWith('/browse')) {
+                return;
+            }
+            const body = JSON.parse(request.data);
+            return {
+                status: 200,
+                content: body.cursor
+                    ? {
+                          hits: [
+                              {objectID: 'post-1_1_1', slug: 'first'},
+                              {objectID: 'post-1_2', slug: 'other'},
+                              {objectID: 'post-1_custom', slug: 'first'},
+                              {objectID: 'post-1_0_0', slug: 'first'},
+                              {objectID: 'post-1_01', slug: 'first'},
+                              {objectID: 'post-1_0_01', slug: 'first'},
+                              {objectID: 'post-10_0', slug: 'first'}
+                          ]
+                      }
+                    : {
+                          hits: [
+                              {objectID: 'post-1_0', slug: 'first'},
+                              {objectID: 'post-1_1', slug: 'first'}
+                          ],
+                          cursor: 'next'
+                      }
+            };
+        });
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        expect(
+            await indexer.replace(
+                [{objectID: 'post-1_0', slug: 'first'}],
+                [{id: 'post-1', slug: 'first'}]
+            )
+        ).toEqual({cleanupSkipped: false});
+        const requests = requester.requests().map(normalizeRequest);
+        expect(requests.map(({pathname}) => pathname)).toEqual([
+            '/1/indexes/help-center/browse',
+            '/1/indexes/help-center/browse',
+            '/1/indexes/help-center/batch',
+            '/1/indexes/help-center/task/3',
+            '/1/indexes/help-center/batch',
+            '/1/indexes/help-center/task/5'
+        ]);
+        expect(requests[0].body).toMatchObject({attributesToRetrieve: ['objectID', 'slug']});
+        expect(requests[4].body.requests).toEqual([
+            {action: 'deleteObject', body: {objectID: 'post-1_1'}},
+            {action: 'deleteObject', body: {objectID: 'post-1_1_1'}}
+        ]);
+    });
+
+    it.each([403, 404])('safely upserts when browse returns %s', async function (status) {
+        requester.reset(request =>
+            new URL(request.url).pathname.endsWith('/browse')
+                ? {status, content: {message: 'Cannot browse'}}
+                : undefined
+        );
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        expect(
+            await indexer.replace(
+                [{objectID: 'post-1_0', slug: 'first'}],
+                [{id: 'post-1', slug: 'first'}]
+            )
+        ).toEqual({cleanupSkipped: status === 403});
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .filter(({pathname}) => pathname.endsWith('/batch'))
+        ).toHaveLength(1);
+    });
+
+    it.each(['browse', 'save', 'confirmation'])(
+        'does not delete when %s fails',
+        async function (stage) {
+            requester.reset(request => {
+                const path = new URL(request.url).pathname;
+                if (
+                    (stage === 'browse' && path.endsWith('/browse')) ||
+                    (stage === 'save' && path.endsWith('/batch')) ||
+                    (stage === 'confirmation' && path.includes('/task/'))
+                ) {
+                    return {status: 400, content: {message: 'Rejected'}};
+                }
+                if (path.endsWith('/browse')) {
+                    return {status: 200, content: {hits: [{objectID: 'post-1_1', slug: 'first'}]}};
+                }
+            });
+            const indexer = createIndexer();
+            await indexer.initIndex();
+            await expect(
+                indexer.replace(
+                    [{objectID: 'post-1_0', slug: 'first'}],
+                    [{id: 'post-1', slug: 'first'}]
+                )
+            ).rejects.toMatchObject({errorType: 'AlgoliaError', status: 400});
+            const writes = requester
+                .requests()
+                .map(normalizeRequest)
+                .filter(({pathname}) => pathname.endsWith('/batch'));
+            expect(
+                writes
+                    .flatMap(({body}) => body.requests)
+                    .every(({action}) => action === 'addObject')
+            ).toBe(true);
+            if (stage === 'browse') {
+                expect(writes).toHaveLength(0);
+            }
+        }
+    );
+
+    it('does not mutate an empty replacement or accept records outside its content scope', async function () {
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        expect(await indexer.replace([], [{id: 'post-1', slug: 'first'}])).toEqual({
+            cleanupSkipped: false
+        });
+        expect(requester.requests()).toHaveLength(0);
+        for (const [records, contents] of [
+            [[{objectID: 'other_0', slug: 'first'}], [{id: 'post-1', slug: 'first'}]],
+            [[{objectID: 'post-1_0', slug: 'wrong'}], [{id: 'post-1', slug: 'first'}]],
+            [[{objectID: 'post-1_0', slug: 'first'}], []],
+            [[{objectID: 'post-1_0', slug: 'first'}], [{id: '', slug: 'first'}]],
+            [
+                [{objectID: 'post-1_0', slug: 'first'}],
+                [
+                    {id: 'post-1', slug: 'first'},
+                    {id: 'post-2', slug: 'second'}
+                ]
+            ],
+            [null, []]
+        ]) {
+            await expect(indexer.replace(records, contents)).rejects.toThrow('Replacement');
+        }
+        expect(requester.requests()).toHaveLength(0);
+    });
+
+    it('maps settings initialization failure instead of continuing', async function () {
+        requester.reset(request => ({
+            status: request.method === 'GET' ? 404 : 403,
+            content: {message: 'Settings rejected'}
+        }));
+        await expect(createIndexer().prepareIndex()).rejects.toMatchObject({
+            errorType: 'AlgoliaError',
+            status: 403
+        });
+    });
+
+    it('confirms every save batch before cleanup and safely retries failed cleanup', async function () {
+        const records = Array.from({length: 1001}, (_, index) => ({
+            objectID: `post-1_${index}`,
+            slug: 'first'
+        }));
+        let rejectCleanup = true;
+        requester.reset(request => {
+            const path = new URL(request.url).pathname;
+            if (path.endsWith('/browse')) {
+                return {status: 200, content: {hits: [{objectID: 'post-1_1001', slug: 'first'}]}};
+            }
+            if (
+                path.endsWith('/batch') &&
+                JSON.parse(request.data).requests[0].action === 'deleteObject' &&
+                rejectCleanup
+            ) {
+                return {status: 400, content: {message: 'Cleanup rejected'}};
+            }
+        });
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        await expect(
+            indexer.replace(records, [{id: 'post-1', slug: 'first'}])
+        ).rejects.toMatchObject({errorType: 'AlgoliaError', status: 400});
+        const firstRun = requester.requests().map(normalizeRequest);
+        expect(firstRun.filter(({pathname}) => pathname.includes('/task/'))).toHaveLength(2);
+        expect(firstRun.at(-1).body.requests).toEqual([
+            {action: 'deleteObject', body: {objectID: 'post-1_1001'}}
+        ]);
+        expect(
+            firstRun
+                .filter(({pathname}) => pathname.endsWith('/batch'))
+                .slice(0, 2)
+                .map(({body}) => body.requests.length)
+        ).toEqual([1000, 1]);
+        rejectCleanup = false;
+        await expect(indexer.replace(records, [{id: 'post-1', slug: 'first'}])).resolves.toEqual({
+            cleanupSkipped: false
+        });
+        expect(requester.requests().map(normalizeRequest).at(-1).pathname).toContain('/task/');
+    });
+
+    it('retains stale records when a later save batch fails', async function () {
+        let batches = 0;
+        requester.reset(request => {
+            const path = new URL(request.url).pathname;
+            if (path.endsWith('/browse')) {
+                return {status: 200, content: {hits: [{objectID: 'post-1_1001', slug: 'first'}]}};
+            }
+            if (path.endsWith('/batch')) {
+                batches += 1;
+            }
+            if (path.endsWith('/batch') && batches === 2) {
+                return {status: 400, content: {message: 'Second batch rejected'}};
+            }
+        });
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        const records = Array.from({length: 1001}, (_, index) => ({
+            objectID: `post-1_${index}`,
+            slug: 'first'
+        }));
+        await expect(
+            indexer.replace(records, [{id: 'post-1', slug: 'first'}])
+        ).rejects.toMatchObject({status: 400});
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .filter(({pathname}) => pathname.endsWith('/batch'))
+                .flatMap(({body}) => body.requests)
+                .every(({action}) => action === 'addObject')
+        ).toBe(true);
+    });
+
+    it('waits for a pending save task to publish before cleanup', async function () {
+        let pending = true;
+        requester.reset(request => {
+            const path = new URL(request.url).pathname;
+            if (path.endsWith('/browse')) {
+                return {status: 200, content: {hits: [{objectID: 'post-1_1', slug: 'first'}]}};
+            }
+            if (path.includes('/task/') && pending) {
+                pending = false;
+                return {status: 200, content: {status: 'notPublished'}};
+            }
+        });
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        await indexer.replace(
+            [{objectID: 'post-1_0', slug: 'first'}],
+            [{id: 'post-1', slug: 'first'}]
+        );
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .map(({pathname}) => pathname)
+        ).toEqual([
+            '/1/indexes/help-center/browse',
+            '/1/indexes/help-center/batch',
+            '/1/indexes/help-center/task/2',
+            '/1/indexes/help-center/task/2',
+            '/1/indexes/help-center/batch',
+            '/1/indexes/help-center/task/5'
+        ]);
+    });
+
+    it('preserves existing settings when callers reuse their connection options', async function () {
+        const options = {...ALGOLIA_OPTIONS};
+        await new IndexFactory(options).prepareIndex();
+        await new IndexFactory(options).prepareIndex();
+        expect(
+            requester
+                .requests()
+                .map(normalizeRequest)
+                .map(({method}) => method)
+        ).toEqual(['GET', 'GET']);
+    });
+
+    it('accepts repeated content scopes from overlapping source pages', async function () {
+        const indexer = createIndexer();
+        await indexer.initIndex();
+        await expect(
+            indexer.replace(
+                [{objectID: 'post-1_0', slug: 'first'}],
+                [
+                    {id: 'post-1', slug: 'first'},
+                    {id: 'post-1', slug: 'first'}
+                ]
+            )
+        ).resolves.toEqual({cleanupSkipped: false});
+    });
+
     it('serializes the exact records for saving', async function () {
         const indexer = createIndexer();
         const records = [{objectID: 'post-1_0'}, {objectID: 'post-1_1'}];
