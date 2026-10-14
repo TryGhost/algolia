@@ -111,6 +111,7 @@ const isExtractedTagName = (tagName: string): tagName is ExtractedTagName => {
 
 const isPresentHeading = (value: string | null): value is string => value !== null && value !== '';
 
+/** Returns immutable compatibility fragments in document order, preserving legacy selection. */
 export function extract(renderedHtml: string): readonly ExtractionFragment[] {
     if (typeof renderedHtml !== 'string') {
         throw new TypeError('renderedHtml must be a string');
@@ -204,7 +205,9 @@ const CARD_HEADING_ROLES: Readonly<Record<string, readonly string[]>> = {
 
 const isCardHeading = (element: Element, card: Element): boolean =>
     classes(card).some(
-        name => CARD_HEADING_ROLES[name]?.some(role => classes(element).includes(role)) ?? false
+        name =>
+            Object.hasOwn(CARD_HEADING_ROLES, name) &&
+            (CARD_HEADING_ROLES[name]?.some(role => classes(element).includes(role)) ?? false)
     );
 
 const closestCard = (element: Element): Element | null => {
@@ -290,24 +293,53 @@ const isExcluded = (element: Element): boolean => {
     return false;
 };
 
-const hasQualifyingDescendant = (element: Element): boolean => {
-    let found = false;
-    visitElements(element, descendant => {
-        const alternative = descendant.tagName === 'img' ? getAttribute(descendant, 'alt') : null;
-        const text = alternative ?? getTextContent(descendant);
-        if (
-            isExtractedTagName(descendant.tagName)
-                ? text.length > 0
-                : (RICH_TAGS.has(descendant.tagName) ||
-                      isCardRole(descendant) ||
-                      alternative !== null) &&
-                  text.trim().length > 0 &&
-                  !isExcluded(descendant)
-        ) {
-            found = true;
+const copyRichElement = (element: Element): Element => {
+    const copy: Element = {...element, parentNode: null, childNodes: []};
+    for (const child of element.childNodes) {
+        if (isElement(child) && isExcluded(child)) {
+            continue;
         }
-    });
-    return found;
+        const childCopy = isElement(child) ? copyRichElement(child) : {...child};
+        childCopy.parentNode = copy;
+        copy.childNodes.push(childCopy);
+    }
+    return copy;
+};
+
+const isQualifyingElement = (element: Element): boolean => {
+    if (isExtractedTagName(element.tagName)) {
+        return getTextContent(element).length > 0;
+    }
+    const alternative = element.tagName === 'img' ? getAttribute(element, 'alt') : null;
+    if (
+        (!RICH_TAGS.has(element.tagName) && !isCardRole(element) && alternative === null) ||
+        isExcluded(element)
+    ) {
+        return false;
+    }
+    const text = alternative ?? getTextContent(copyRichElement(element));
+    return text.trim().length > 0;
+};
+
+const isRepresentedByDescendants = (element: Element): boolean => {
+    let hasQualifyingDescendant = false;
+    const unrepresentedText = (node: Node): string => {
+        if (isElement(node)) {
+            if (isQualifyingElement(node)) {
+                hasQualifyingDescendant = true;
+                return '';
+            }
+            if (isExcluded(node)) {
+                return '';
+            }
+        }
+        if ('value' in node) {
+            return node.value;
+        }
+        return 'childNodes' in node ? node.childNodes.map(unrepresentedText).join('') : '';
+    };
+    const remainingText = element.childNodes.map(unrepresentedText).join('');
+    return hasQualifyingDescendant && remainingText.trim().length === 0;
 };
 
 type RichCandidate = Readonly<{
@@ -403,6 +435,7 @@ const emitCandidates = (
     return Object.freeze(emitted);
 };
 
+/** Returns immutable rich fragments while keeping candidate selection and duplicate handling private. */
 export function extractRich(renderedHtml: string): readonly RichExtractionFragment[] {
     if (typeof renderedHtml !== 'string') {
         throw new TypeError('renderedHtml must be a string');
@@ -434,14 +467,16 @@ export function extractRich(renderedHtml: string): readonly RichExtractionFragme
         ) {
             return;
         }
-        const text = alternative ?? getTextContent(element);
         const compatibility = isExtractedTagName(element.tagName);
+        if (!compatibility && isExcluded(element)) {
+            return;
+        }
+        const selectedElement = compatibility ? element : copyRichElement(element);
+        const text = alternative ?? getTextContent(selectedElement);
         if (
             compatibility
                 ? text.length === 0
-                : text.trim().length === 0 ||
-                  isExcluded(element) ||
-                  hasQualifyingDescendant(element)
+                : text.trim().length === 0 || isRepresentedByDescendants(element)
         ) {
             return;
         }
@@ -457,7 +492,10 @@ export function extractRich(renderedHtml: string): readonly RichExtractionFragme
             element,
             compatibility,
             fragment: Object.freeze({
-                html: alternative === null ? serializeOuter(element).trim() : escapeText(text),
+                html:
+                    alternative === null
+                        ? serializeOuter(selectedElement).trim()
+                        : escapeText(text),
                 text,
                 headingPath: Object.freeze(headingPath.filter(isPresentHeading)),
                 anchor,

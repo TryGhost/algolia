@@ -94,9 +94,10 @@ and source IDs are not.
 
 Every extraction fragment exposes one uniform `html` string:
 
-- an element source uses the selected element's trimmed serialized outer HTML;
+- an element source uses the selected element's trimmed serialized outer HTML,
+  omitting excluded descendants for newly selected rich elements;
 - a card-heading fallback uses its selected heading element's trimmed
-  serialized outer HTML; and
+  serialized outer HTML with excluded descendants omitted; and
 - an image-alternative source uses the preserved alternative text escaped for
   safe HTML text content, without an invented wrapper element.
 
@@ -104,10 +105,12 @@ This broadens `html` from "selected outer HTML" to **searchable fragment HTML**:
 safe content that the fragmenter may group and index without switching on the
 source. It does not promise sanitized arbitrary author HTML; element sources
 retain the same rendered-HTML trust boundary as the compatibility interface.
+Compatibility-selected elements keep their exact original HTML and text,
+including descendants that rich selection would exclude.
 
-`text` preserves the source value selected by the extractor. Trimming and
-normalization decide eligibility and local equality but do not rewrite the
-returned source text.
+`text` preserves the selected source text, including whitespace, after rich
+subtree exclusions. Trimming and comparison normalization decide eligibility
+and local equality without rewriting returned text.
 
 ## Source contract
 

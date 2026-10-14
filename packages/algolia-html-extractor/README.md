@@ -39,7 +39,8 @@ const fragments = extractRich(ghostContent.html);
 Rich fragments use a read-only `source` object in place of `sourceTag`. Its `kind` is `element` or
 `attribute`; image alternatives identify the `alt` attribute. Every fragment's `html` is ready for
 grouping, including escaped image alternative text. Element HTML retains the input's trust boundary;
-the extractor is not an HTML sanitizer.
+the extractor is not an HTML sanitizer. Newly selected rich elements omit excluded descendants
+from their HTML and text.
 
 Rich extraction excludes card controls and hidden content from the additional roles. It keeps legacy
 fragments and suppresses repeated rich meaning only within the same semantic container, such as an

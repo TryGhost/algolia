@@ -20,11 +20,11 @@ decorative content, and content explicitly marked as non-semantic.
 ## Semantic selection
 
 The richer layer emits the smallest qualifying semantic units in document
-order. A rich container is a fallback only when it has no qualifying descendant.
-The extractor does not split loose text from a container that also contains a
-qualifying descendant or add overlapping wrapper HTML. For example, a
-blockquote containing loose text and a `cite` emits the citation alone. Wrap the
-quote text in a paragraph to make both units extractable.
+order. A rich container is a fallback when it contains meaningful text that its
+qualifying descendants do not represent. A blockquote with loose quote text and
+a `cite` emits the blockquote and citation, so the quote remains searchable.
+When the quote is inside a `p`, the paragraph and citation represent the content
+and no blockquote fallback is needed.
 
 Compatibility-preserved `p`, `pre`, `td`, and `li` elements count as qualifying
 descendants for this precedence rule. For example,
@@ -39,10 +39,11 @@ Add these general semantic units:
 - `th` for table headers, alongside compatibility-preserved `td` cells;
 - `figcaption` for authored image, gallery, video, or embed captions;
 - `cite` for quote attribution;
-- `blockquote` only when it has no qualifying descendants; and
+- `blockquote` when qualifying descendants do not represent all of its meaning; and
 - a non-empty meaningful `img` alternative as attribute-derived meaning.
 
-New element text preserves its source value. Trimmed text determines whether a
+New element text preserves eligible source text, including whitespace, after
+excluding the non-semantic subtrees below. Trimmed text determines whether a
 candidate is empty. A normalized comparison key suppresses duplicate meaning,
 such as an image alternative repeated by its caption, without rewriting the
 preserved source value. The richer public-interface decision owns the exact
@@ -97,7 +98,8 @@ not a generic all-card selector.
 For new semantic roles, ignore candidates inside `script`, `style`, `template`,
 `noscript`, and SVG chrome, or inside a subtree marked with `hidden`, `inert`, or
 `aria-hidden="true"`. Card adapters additionally exclude their known control and
-state regions.
+state regions. Newly selected rich elements omit these descendants from their
+fragment HTML and text. This does not sanitize arbitrary author HTML.
 
 Do not evaluate stylesheets or infer visual visibility from classes or inline
 CSS. These exclusions do not remove or rewrite compatibility-preserved `p`,

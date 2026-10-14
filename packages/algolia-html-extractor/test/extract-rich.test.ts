@@ -4,7 +4,39 @@ import {describe, expect, it} from 'vitest';
 import {extract, extractRich} from '../index.mts';
 
 describe('extractRich', () => {
-    it('keeps an image alternative when only part of its caption is represented', () => {
+    it('omits excluded descendants from rich content without changing hidden compatibility fragments', () => {
+        const html =
+            '<figcaption> Coastline <span hidden>Loading error<p>Legacy hidden</p></span><span inert>Disabled</span><span aria-hidden="TRUE">Icon</span><script>bad()</script><button>Play</button> </figcaption>';
+        expect(extractRich(html).map(fragment => [fragment.html, fragment.text])).toEqual([
+            ['<figcaption> Coastline  </figcaption>', ' Coastline  '],
+            ['<p>Legacy hidden</p>', 'Legacy hidden']
+        ]);
+        expect(extract(html)).toEqual([
+            {
+                html: '<p>Legacy hidden</p>',
+                text: 'Legacy hidden',
+                headingPath: [],
+                anchor: null,
+                position: 0,
+                headingRank: 100,
+                sourceTag: 'p'
+            }
+        ]);
+    });
+    it('preserves substantive quote text beside a qualifying citation', () => {
+        const html =
+            '<blockquote> We chose the <em>scenic</em> route. <cite>Jane Doe</cite></blockquote>';
+        expect(extractRich(html).map(fragment => [fragment.html, fragment.text])).toEqual([
+            [html, ' We chose the scenic route. Jane Doe'],
+            ['<cite>Jane Doe</cite>', 'Jane Doe']
+        ]);
+    });
+    it('treats inherited object property names as ordinary unknown card classes', () => {
+        const html =
+            '<div class="kg-card constructor toString __proto__"><h2>Heading</h2><p>Body</p></div>';
+        expect(extractRich(html).map(fragment => fragment.text)).toEqual(['Body']);
+    });
+    it('gives a complete caption precedence over its matching image alternative', () => {
         const html =
             '<figure><img alt="Quote Author"><figcaption>Quote <cite>Author</cite></figcaption></figure>';
         expect(extractRich(html).map(fragment => fragment.text)).toEqual([
@@ -112,7 +144,13 @@ describe('extractRich', () => {
                     '<div class="kg-card kg-unknown-card">Wrapper text<figcaption>General caption</figcaption><p>Legacy</p></div>' +
                     '<figcaption>Container<img alt="Smallest alternative"></figcaption>'
             ).map(fragment => fragment.text)
-        ).toEqual(['Authored embed caption', 'General caption', 'Legacy', 'Smallest alternative']);
+        ).toEqual([
+            'Authored embed caption',
+            'General caption',
+            'Legacy',
+            'Container',
+            'Smallest alternative'
+        ]);
     });
 
     it('uses only authored card headings for fallback and keeps duplicate meaning in separate containers', () => {
@@ -147,16 +185,13 @@ describe('extractRich', () => {
                 '<figure><img alt=" Multiple&#9;spaces "><figcaption>multiple spaces</figcaption></figure>'
         );
         expect(fragments[0]).toMatchObject({
-            html: '<figcaption> Visible <span hidden="">source</span> </figcaption>',
-            text: ' Visible source ',
+            html: '<figcaption> Visible  </figcaption>',
+            text: ' Visible  ',
             headingPath: ['First', 'Second'],
             anchor: 'kept',
             headingRank: 70
         });
-        expect(fragments.map(fragment => fragment.text)).toEqual([
-            ' Visible source ',
-            'multiple spaces'
-        ]);
+        expect(fragments.map(fragment => fragment.text)).toEqual([' Visible  ', 'multiple spaces']);
         expect(extractRich('')).toEqual([]);
         // @ts-expect-error Runtime callers can supply a non-string value.
         expect(() => extractRich(null)).toThrow(TypeError);
@@ -206,7 +241,7 @@ describe('extractRich', () => {
             extractRich('<blockquote>Loose quote <cite>Attribution</cite></blockquote>').map(
                 fragment => fragment.text
             )
-        ).toEqual(['Attribution']);
+        ).toEqual(['Loose quote Attribution', 'Attribution']);
     });
 
     it('uses immutable controlled renderer evidence with recorded integrity', () => {
