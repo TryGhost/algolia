@@ -46,13 +46,25 @@ The optional source allowlist is `image`, `tags`, `authors`, `excerpt`, `custom_
 
 Enabled optional fields are repeated in every record derived from the same Ghost content. A missing scalar becomes `null`, missing `tags` or `authors` become `[]`, and meaningful `false`, `0`, and empty-string values are preserved. `image` reads Ghost's `feature_image`, and `tags` and `authors` keep the `{name, slug}` shape.
 
+### Rich extraction
+
+By default, extraction keeps the existing `p`, `pre`, `td`, and `li` behavior. Opt in to additional rendered meaning with:
+
+```js
+const records = createAlgoliaRecords(posts, {extraction: 'rich'});
+```
+
+This includes table headers, captions, citations, plain blockquotes, meaningful image alternatives, and supported authored Ghost card content. It can change record contents, counts, and IDs. Test it against a separate index before replacing an existing index. The same projection, size limits, and whole-batch validation apply.
+
+Omit `extraction` or set it to `'compatibility'` to keep the default. The CLI, Netlify webhooks, and deprecated wrappers continue to use compatibility extraction; their existing configuration needs no changes.
+
 ### Record size
 
 Every complete record stays within 9,999 compact UTF-8 bytes. Whole extraction fragments are packed greedily and never truncated: the first record of an anchor group keeps `<content id>_<group index>` and continuations add `_<continuation index>`. An indivisible fragment, or required metadata that leaves no room for one, fails instead of being shortened.
 
 ### Errors
 
-`createAlgoliaRecords` validates the whole batch and returns no records when any deterministic problem exists — it never returns a partial array. It throws one `FragmenterError` whose `code` is `INVALID_POLICY`, `INVALID_GHOST_CONTENT`, or `RECORD_TOO_LARGE`, and whose `issues` array lists every issue in input order:
+`createAlgoliaRecords` validates the whole batch and returns no records when any deterministic problem exists; it never returns a partial array. It throws one `FragmenterError` whose `code` is `INVALID_POLICY`, `INVALID_GHOST_CONTENT`, or `RECORD_TOO_LARGE`, and whose `issues` array lists every issue in input order:
 
 ```js
 import {createAlgoliaRecords, FragmenterError} from '@tryghost/algolia-fragmenter';

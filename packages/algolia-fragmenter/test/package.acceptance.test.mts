@@ -188,6 +188,7 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
                     records,
                     synchronous: !(records instanceof Promise),
                     deepRecords,
+                    richHtml: createAlgoliaRecords([{...${JSON.stringify(runtimeInput)}, html: '<img alt="Packed alternative">'}], {extraction: 'rich'})[0].html,
                     deepSynchronous: !(deepRecords instanceof Promise),
                     policyFailure
                 }));
@@ -236,6 +237,7 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
                     customRanking: {position: 0, heading: 80, isFeatured: null}
                 }
             ],
+            richHtml: 'Packed alternative',
             deepSynchronous: true,
             policyFailure: {
                 name: 'FragmenterError',
@@ -268,6 +270,7 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
                     type AlgoliaRecord,
                     type ContentProjection,
                     type CreateAlgoliaRecordsOptions,
+                    type ExtractionMode,
                     type ProjectionField,
                     type RankingField
                 } from '@tryghost/algolia-fragmenter';
@@ -283,7 +286,9 @@ describe('@tryghost/algolia-fragmenter packed artifact', () => {
                     {source: 'featured', as: 'isFeatured'}
                 ];
                 const contentProjection: ContentProjection = {fields, customRanking};
+                const extraction: ExtractionMode = 'rich';
                 const options: CreateAlgoliaRecordsOptions = {
+                    extraction,
                     ignoreSlugs: ['ignored'],
                     contentProjection
                 };

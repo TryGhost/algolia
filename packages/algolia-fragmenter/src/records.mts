@@ -1,9 +1,14 @@
 import {Buffer} from 'node:buffer';
 
-import type {ExtractionFragment, HeadingRank} from '@tryghost/algolia-html-extractor';
+import type {HeadingRank} from '@tryghost/algolia-html-extractor';
 
 import type {RecordSizeIssue} from './errors.mjs';
-import {mergeRecordHtml, type FragmentGroup, type NonEmptyFragments} from './grouping.mjs';
+import {
+    mergeRecordHtml,
+    type FragmentGroup,
+    type NonEmptyFragments,
+    type RecordFragment
+} from './grouping.mjs';
 import type {PreparedContent} from './projection.mjs';
 
 export type AlgoliaRecord = Record<string, unknown>;
@@ -78,7 +83,7 @@ const buildFragmentRecord = (
 const createSizeIssue = (
     content: PreparedContent,
     objectID: string,
-    fragment: ExtractionFragment | null,
+    fragment: RecordFragment | null,
     bytes: number
 ): RecordSizeIssue => {
     const path = `ghostContent[${content.index}]`;

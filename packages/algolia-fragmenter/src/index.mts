@@ -19,6 +19,7 @@ export type {
 export type {
     ContentProjection,
     CreateAlgoliaRecordsOptions,
+    ExtractionMode,
     OptionalProjectionSource,
     ProjectionField,
     RankingField,

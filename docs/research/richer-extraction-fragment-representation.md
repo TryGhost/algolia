@@ -7,12 +7,12 @@ extraction fragments only. Candidate discovery, parser-node identity, local
 semantic-container identity, comparison normalization, precedence, and
 duplicate suppression remain private extractor concerns.
 
-The synchronous package-root operation remains:
+Rich extraction is an explicit opt-in through a synchronous package-root function:
 
 ```ts
-export function extract(
+export function extractRich(
     renderedHtml: string
-): readonly ExtractionFragment[];
+): readonly RichExtractionFragment[];
 ```
 
 Its richer fragment representation is:
@@ -34,7 +34,7 @@ export type FragmentSource =
     | ElementFragmentSource
     | AttributeFragmentSource;
 
-export type ExtractionFragment = Readonly<{
+export type RichExtractionFragment = Readonly<{
     html: string;
     text: string;
     headingPath: readonly string[];
@@ -45,11 +45,9 @@ export type ExtractionFragment = Readonly<{
 }>;
 ```
 
-This replaces the compatibility interface's `sourceTag` with a source value
-that can represent element text, an image alternative, and a card-heading
-fallback without exposing parse5 nodes. The compatible release retains its
-already-approved interface and exact output. The implementation and release
-sequence decides the semver boundary for the richer default.
+`extract()` continues to return `ExtractionFragment` values with `sourceTag` and
+exact compatibility behavior. `extractRich()` returns `RichExtractionFragment`
+values with `source`. Existing callers do not change behavior when they upgrade.
 
 ## Emission boundary
 
@@ -72,8 +70,9 @@ It is ranking and ordering context, not stable source-node identity.
 
 ## Comparison normalization
 
-The extractor compares rich candidates only within the local semantic
-container established by the approved richer semantics. It derives the private
+The extractor compares rich candidates within their local semantic container.
+For image alternatives, caption precedence also considers a caption represented
+by compatibility descendants; those descendants remain unchanged. It derives the private
 comparison key from preserved source text by:
 
 1. applying Unicode NFC normalization;
@@ -95,9 +94,10 @@ and source IDs are not.
 
 Every extraction fragment exposes one uniform `html` string:
 
-- an element source uses the selected element's trimmed serialized outer HTML;
+- an element source uses the selected element's trimmed serialized outer HTML,
+  omitting excluded descendants for newly selected rich elements;
 - a card-heading fallback uses its selected heading element's trimmed
-  serialized outer HTML; and
+  serialized outer HTML with excluded descendants omitted; and
 - an image-alternative source uses the preserved alternative text escaped for
   safe HTML text content, without an invented wrapper element.
 
@@ -105,10 +105,12 @@ This broadens `html` from "selected outer HTML" to **searchable fragment HTML**:
 safe content that the fragmenter may group and index without switching on the
 source. It does not promise sanitized arbitrary author HTML; element sources
 retain the same rendered-HTML trust boundary as the compatibility interface.
+Compatibility-selected elements keep their exact original HTML and text,
+including descendants that rich selection would exclude.
 
-`text` preserves the source value selected by the extractor. Trimming and
-normalization decide eligibility and local equality but do not rewrite the
-returned source text.
+`text` preserves the selected source text, including whitespace, after rich
+subtree exclusions. Trimming and comparison normalization decide eligibility
+and local equality without rewriting returned text.
 
 ## Source contract
 
@@ -147,20 +149,20 @@ responsibilities.
 
 ## Package and compatibility contract
 
-The richer interface keeps the approved package shape:
+The package exports synchronous `extract` and `extractRich` functions from its
+root. Strict TypeScript source produces ESM runtime and declaration artifacts.
+Parser nodes, selectors, card configuration, and normalization keys stay private.
+Both functions preserve native input and runtime errors.
 
-- one synchronous named `extract` function at the package root;
-- strict TypeScript source;
-- generated ESM and synchronous CommonJS runtime and declaration artifacts;
-- no options, selectors, parser injection, card configuration, or public
-  subpaths; and
-- native input and runtime errors.
+The fragmenter selects rich extraction only with `{extraction: 'rich'}`. Omitted
+options, explicit compatibility mode, deprecated wrappers, CLI commands, and
+Netlify webhooks keep compatibility extraction. The new source representation
+belongs only to rich fragments, so consumers of `sourceTag` continue to work.
 
-The compatibility-first fragment stream and final Algolia records remain exact
-in their release slice. Richer semantics deliberately add fragments and evolve
-the source representation, so they ship only through the separately reviewed
-follow-on boundary owned by the compatible implementation and release
-sequence.
+Rich extraction can change record contents, counts, and IDs. Callers should test
+it in a separate index before replacing existing records. A coordinated release
+must raise the fragmenter's extractor dependency floor to a version that exports
+`extractRich`; upgrading either package must not activate rich extraction.
 
 ## Rejected representations
 
@@ -191,5 +193,4 @@ The extractor continues to own one reviewed semantic policy.
 - [Strict TypeScript prototype source](https://github.com/TryGhost/algolia/blob/2799cadffc30fbe85ec0dc67fe0f72ee6c4956f5/packages/algolia-html-extractor/prototype/PROTOTYPE-richer-fragment-representation.ts)
 - [Richer rendered-HTML extraction semantics](richer-rendered-html-extraction-semantics.md)
 - [Public HTML extractor interface](public-html-extractor-interface.md)
-- [Design the richer extraction-fragment representation](https://github.com/TryGhost/algolia/issues/208)
 - [`CONTEXT.md`](../../CONTEXT.md)
