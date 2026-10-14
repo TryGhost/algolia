@@ -19,5 +19,6 @@ allowBuilds:
   unix-dgram: false
 
 minimumReleaseAgeExclude:
+  - '@tryghost/content-api'
   - '@tryghost/errors'
   - '@tryghost/pretty-cli'
