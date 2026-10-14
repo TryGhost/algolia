@@ -4,8 +4,6 @@
 
 The CLI uses the Ghost 6 Content API. By default, it requests the [maximum 100 posts](https://docs.ghost.org/content-api/parameters#limit) at a time, follows Ghost's [`meta.pagination.next`](https://docs.ghost.org/content-api/pagination) value, and pauses briefly between pages until the full site has been fetched.
 
-See the [changelog](CHANGELOG.md) for changes between releases.
-
 ## Install
 
 Add the CLI to a project:
