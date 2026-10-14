@@ -33,6 +33,8 @@ Follow the [guided setup](../../USAGE.md). Netlify creates a copy in your GitHub
 
 The button selects the optional release-based setup in `deployment`. Existing installations can keep their current setup or follow the migration steps below.
 
+Use the [configuration reference](../../docs/netlify-configuration.md) for each setting and copyable examples, and the [customer update guide](../../USAGE.md#update-your-integration) to choose, verify, or roll back a release.
+
 Hosted configuration belongs in Netlify. A local `.env` belongs in `packages/algolia-netlify/` and is only for development. Never commit credentials.
 
 #### Existing installations
