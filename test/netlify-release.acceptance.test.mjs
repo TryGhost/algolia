@@ -28,9 +28,12 @@ const fail = message => { save(); process.stderr.write(message); process.exit(1)
 let result;
 if (command === 'git') {
     if (args[0] === 'show') {
+        if (args[1].endsWith('/CHANGELOG.md') && state.tagNotes === null) fail('Missing tagged changelog');
         result = args[1].endsWith('/package.json')
-            ? JSON.stringify({name: '@tryghost/algolia-netlify', version: state.tagVersion ?? state.version})
+            ? JSON.stringify({name: '@tryghost/algolia-netlify', version: state.tagVersion})
             : state.tagNotes;
+    } else if (args[0] === 'ls-tree') {
+        result = state.tagNotes === null ? '' : 'packages/algolia-netlify/CHANGELOG.md';
     } else if (args[0] === 'merge-base') {
         if (state.unrelatedTag) fail('Tag is not an ancestor');
     } else {
@@ -91,7 +94,15 @@ const createRelease = async (overrides = {}) => {
     const stateFile = path.join(directory, 'state.json');
     await writeFile(
         stateFile,
-        JSON.stringify({commit, tagCommit: commit, version, tag, calls: [], ...overrides})
+        JSON.stringify({
+            commit,
+            tagCommit: commit,
+            version,
+            tag,
+            calls: [],
+            tagVersion: overrides.recoverVersion || overrides.manifestVersion || version,
+            ...overrides
+        })
     );
     return {
         run: () =>
@@ -202,6 +213,8 @@ describe('Netlify release promotion command', () => {
         expect(state.calls.map(call => call.command)).toEqual([
             'git',
             'git',
+            'git',
+            'git',
             'npm',
             'gh',
             'gh',
@@ -255,20 +268,18 @@ describe('Netlify release promotion command', () => {
         expect(state.release.draft).toBe(false);
     });
 
-    it.each([{unrelatedTag: true}, {tagVersion: '0.9.0'}, {npmFailure: true}])(
-        'rejects unsafe recovery before changing GitHub releases: %j',
-        async failure => {
-            const release = await createRelease({
-                recoverVersion: version,
-                tagCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-                ...failure
-            });
-            await expect(release.run()).rejects.toThrow(failure.message);
-            expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(
-                false
-            );
-        }
-    );
+    it.each([
+        {unrelatedTag: true, message: 'Tag is not an ancestor'},
+        {tagVersion: '0.9.0', message: 'does not contain the requested Netlify package version'},
+        {npmFailure: true, message: 'Registry request failed'}
+    ])('rejects unsafe automatic promotion before changing GitHub releases: %j', async failure => {
+        const release = await createRelease({
+            tagCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            ...failure
+        });
+        await expect(release.run()).rejects.toThrow(failure.message);
+        expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(false);
+    });
 
     it('verifies recovered metadata on reruns without replacing the published release', async () => {
         const source = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -303,14 +314,43 @@ describe('Netlify release promotion command', () => {
         expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(false);
     });
 
-    it('skips the unchanged Netlify version when another package ships', async () => {
+    it('automatically resumes a prerelease whose original tag has no changelog', async () => {
+        const candidate = '0.4.7-pr.42.1';
+        const source = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
         const release = await createRelease({
-            tagCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+            manifestVersion: candidate,
+            version: candidate,
+            tag: `@tryghost/algolia-netlify@${candidate}`,
+            prereleaseTag: 'pr-42',
+            tagCommit: source,
+            tagNotes: null
         });
         await release.run();
         const state = await release.state();
-        expect(state.release).toBeUndefined();
-        expect(state.calls.map(call => call.command)).toEqual(['git', 'git']);
+        expect(state.asset).toEqual({version: candidate, commit: source});
+        expect(state.release.prerelease).toBe(true);
+        expect(state.release.body).toContain(source);
+    });
+
+    it('automatically finishes promotion from a later workflow commit', async () => {
+        const source = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+        const release = await createRelease({
+            tagCommit: source,
+            rejectTarget: true,
+            uploadFailure: true,
+            tagNotes: `## ${version} (2026-10-14)\n\n- Original release notes.\n`
+        });
+        await expect(release.run()).rejects.toThrow('Asset upload failed');
+        await release.run();
+        const state = await release.state();
+        expect(state.asset).toEqual({version, commit: source});
+        expect(state.release.body).toBe('- Original release notes.\n');
+        expect(state.release.draft).toBe(false);
+        const mutations = state.calls.filter(call => call.args[0] === 'release').length;
+        await release.run();
+        expect(
+            (await release.state()).calls.filter(call => call.args[0] === 'release')
+        ).toHaveLength(mutations);
     });
 
     it.each([

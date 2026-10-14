@@ -55,6 +55,15 @@ if (
     Object.values(result.projectsVersionData).some(project => project.newVersion)
 ) {
     try {
+        execFileSync('pnpm', ['test'], {stdio: 'inherit'});
+        execFileSync('git', ['diff', '--exit-code', 'HEAD'], {stdio: 'inherit'});
+    } catch (cause) {
+        throw new Error(
+            'Verification failed after versioning. The release commit and tags remain local. Do not run pnpm ship again. Fix the failure, rerun pnpm test, then push the prepared release with git push --atomic --follow-tags using the same remote.',
+            {cause}
+        );
+    }
+    try {
         execFileSync('git', ['push', '--atomic', '--follow-tags', remote], {stdio: 'inherit'});
     } catch (cause) {
         throw new Error(

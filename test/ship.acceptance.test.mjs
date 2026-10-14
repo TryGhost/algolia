@@ -34,7 +34,21 @@ function fixture(plans = {one: {'@test/one': 'patch'}}, withDependent = false, e
             typeof value === 'string' ? value : JSON.stringify(value, null, 2)
         );
     };
-    write('package.json', {private: true, workspaces: ['packages/*']});
+    write('package.json', {
+        private: true,
+        workspaces: ['packages/*'],
+        scripts: {test: 'node verify-release.cjs'}
+    });
+    write(
+        'verify-release.cjs',
+        `
+        const fs = require('node:fs');
+        const version = JSON.parse(fs.readFileSync('packages/one/package.json', 'utf8')).version;
+        if (process.env.FAIL_VERSIONED_TEST === 'true' && version !== '1.0.0') {
+            throw new Error('Versioned package verification failed');
+        }
+    `
+    );
     const config = JSON.parse(readFileSync(path.join(repository, 'nx.json'), 'utf8'));
     config.release.version.versionActionsOptions = {skipLockFileUpdate: true};
     write('nx.json', config);
@@ -318,4 +332,16 @@ it('uses the upstream remote configured in the environment', () => {
     const result = site.ship('--projects=@test/one');
     expect(result.status).toBe(0);
     expect(site.git('rev-parse', 'upstream/main')).toBe(site.git('rev-parse', 'HEAD'));
+}, 120000);
+
+it('keeps the prepared release local when tests fail after versioning', () => {
+    const site = fixture(undefined, false, {FAIL_VERSIONED_TEST: 'true'});
+    const result = site.ship('--projects=@test/one');
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain('Versioned package verification failed');
+    expect(result.output).toContain('Do not run pnpm ship again');
+    expect(JSON.parse(site.read('packages/one/package.json')).version).toBe('1.0.1');
+    expect(site.git('rev-parse', 'origin/main')).toBe(site.initial);
+    expect(site.git('ls-remote', '--tags', 'origin', '@test/one@1.0.1')).toBe('');
+    expect(site.git('rev-parse', '@test/one@1.0.1^{}')).toBe(site.git('rev-parse', 'HEAD'));
 }, 120000);

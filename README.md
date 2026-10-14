@@ -72,9 +72,9 @@ pnpm ship --dry-run
 pnpm ship
 ```
 
-`ship` runs the tests, applies the plans, and generates each released package's `CHANGELOG.md`. It commits the version changes, changelogs, and consumed plans together, creates the tags, and pushes them. With no plans, it releases nothing.
+`ship` runs the tests, applies the plans, and generates each released package's `CHANGELOG.md`. It commits the version changes, changelogs, and consumed plans together, creates the tags, and tests the versioned files before pushing them. With no plans, it releases nothing.
 
-If the push fails after the release commit is created, fix the Git error and run `git push --atomic --follow-tags` to the same remote. This pushes the prepared release without changing versions again.
+If verification fails after versioning, keep the prepared commit and tags, fix the failure, and rerun `pnpm test`. Do not run `pnpm ship` again. Once verification passes, or after fixing a rejected push, run `git push --atomic --follow-tags` to the same remote. This pushes the prepared release without changing versions again.
 
 To release one package, add its Nx project name to both commands:
 
