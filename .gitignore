@@ -77,7 +77,8 @@ packages/algolia-html-extractor/dist/
 packages/algolia-fragmenter/lib/.tsbuildinfo
 
 # Nx local cache and workspace data
-.nx/
+.nx/*
+!.nx/version-plans/
 
 # Isolated Netlify deployment output
 deployment/runtime/

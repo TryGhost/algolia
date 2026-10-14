@@ -18,7 +18,7 @@ The loader fetches the resolved commit from TryGhost/algolia into `deployment/ru
 
 ## Releasing
 
-Use the existing `pnpm ship` flow. Nx versions the selected packages, creates the release commit and tags, and pushes them. The Publish workflow validates and builds the packages, then publishes through npm OIDC. Only after that job succeeds does the dependent promotion job create a draft GitHub Release at the workflow commit, attach `netlify-release.json`, and publish the release. There is no separate catalog or promotion branch.
+Use the [version-plan workflow](../README.md#publishing). `pnpm ship` applies the selected plans and generates package changelogs, then commits and tags the release before pushing it. The Publish workflow validates and builds the packages, then publishes through npm OIDC. Only after that job succeeds does the dependent promotion job create a draft GitHub Release at the workflow commit, attach `netlify-release.json`, and publish the release with its package changelog entry. There is no separate catalog or promotion branch.
 
 Nx keeps its normal pre-1.0 bump behavior. When ready for the first major, select `1.0.0` explicitly.
 
@@ -27,8 +27,8 @@ Each public package must trust GitHub repository `TryGhost/algolia`, workflow fi
 For a Netlify-only release, preview the scoped command, then run it from a clean `main` checkout:
 
 ```sh
-pnpm ship patch --projects=@tryghost/algolia-netlify --dry-run
-pnpm ship patch --projects=@tryghost/algolia-netlify
+pnpm ship --projects=@tryghost/algolia-netlify --dry-run
+pnpm ship --projects=@tryghost/algolia-netlify
 ```
 
 Release-based deployments require a published GitHub Release for the selected version or major. Existing source deployments build independently of releases. Merging source changes does not publish a runtime update.

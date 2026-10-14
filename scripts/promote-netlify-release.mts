@@ -23,6 +23,42 @@ const run = async (command: string, args: string[]): Promise<string> => {
     return stdout.trim();
 };
 
+const releaseNotes = async (version: string, candidateNotes?: string): Promise<string> => {
+    let contents: string;
+    try {
+        contents = await readFile('packages/algolia-netlify/CHANGELOG.md', 'utf8');
+    } catch (error) {
+        if (
+            candidateNotes &&
+            error instanceof Error &&
+            'code' in error &&
+            error.code === 'ENOENT'
+        ) {
+            return candidateNotes;
+        }
+        throw error;
+    }
+    const headings = [
+        ...contents.matchAll(
+            /^(#{1,2}) (\d+\.\d+\.\d+(?:-[\w.]+)?)(?: \(\d{4}-\d{2}-\d{2}\))?\r?$/gm
+        )
+    ];
+    const index = headings.findIndex(heading => heading[2] === version);
+    if (index === -1) {
+        if (candidateNotes) {
+            return candidateNotes;
+        }
+        throw new Error(`The Netlify changelog has no entry for ${version}.`);
+    }
+    const heading = headings[index];
+    const next = headings[index + 1];
+    const notes = contents.slice(heading.index + heading[0].length, next?.index).trim();
+    if (!notes) {
+        throw new Error(`The Netlify changelog entry for ${version} is empty.`);
+    }
+    return `${notes}\n`;
+};
+
 const promote = async (): Promise<void> => {
     const manifest = JSON.parse(
         await readFile('packages/algolia-netlify/package.json', 'utf8')
@@ -94,9 +130,15 @@ const promote = async (): Promise<void> => {
         process.stdout.write(`Netlify integration ${version} is already promoted.\n`);
         return;
     }
+    const notes = await releaseNotes(
+        version,
+        prerelease ? `Deploys ${PACKAGE}@${version} from commit ${commit}.\n` : undefined
+    );
     const directory = await mkdtemp(path.join(os.tmpdir(), 'algolia-netlify-release-'));
     try {
         const asset = path.join(directory, ASSET);
+        const notesFile = path.join(directory, 'notes.md');
+        await writeFile(notesFile, notes);
         await writeFile(asset, JSON.stringify({version, commit}, null, 2) + '\n');
         if (!release) {
             await run('gh', [
@@ -112,8 +154,8 @@ const promote = async (): Promise<void> => {
                 ...(prerelease ? ['--prerelease'] : []),
                 '--title',
                 `Netlify integration ${version}`,
-                '--notes',
-                `Deploys ${PACKAGE}@${version} from commit ${commit}.`
+                '--notes-file',
+                notesFile
             ]);
         }
         if (!existingAsset) {
@@ -125,6 +167,8 @@ const promote = async (): Promise<void> => {
             tag,
             '--repo',
             REPOSITORY,
+            '--notes-file',
+            notesFile,
             '--draft=false',
             '--latest=false'
         ]);

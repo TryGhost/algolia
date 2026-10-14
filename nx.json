@@ -1,23 +1,40 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "release": {
-    "projects": ["packages/*"],
+    "projects": [
+      "packages/*"
+    ],
     "projectsRelationship": "independent",
     "version": {
-      "preserveMatchingDependencyRanges": false,
-      "git": {
-        "commit": true,
-        "tag": true,
-        "commitMessage": "Published new versions"
-      }
+      "preserveMatchingDependencyRanges": false
     },
     "changelog": {
-      "workspaceChangelog": false
+      "workspaceChangelog": false,
+      "projectChangelogs": {
+        "createRelease": false,
+        "renderOptions": {
+          "authors": false,
+          "commitReferences": false
+        }
+      }
+    },
+    "git": {
+      "commit": true,
+      "tag": true,
+      "commitMessage": "Published new versions"
+    },
+    "versionPlans": {
+      "ignorePatternsForPlanCheck": [
+        "**/test/**",
+        "**/*.md"
+      ]
     }
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "analytics": false
