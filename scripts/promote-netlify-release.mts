@@ -39,9 +39,7 @@ const releaseNotes = async (version: string, candidateNotes?: string): Promise<s
         throw error;
     }
     const headings = [
-        ...contents.matchAll(
-            /^(#{1,2}) (\d+\.\d+\.\d+(?:-[\w.]+)?)(?: \(\d{4}-\d{2}-\d{2}\))?\r?$/gm
-        )
+        ...contents.matchAll(/^(#{1,2}) (\d+\.\d+\.\d+(?:-[\w.]+)?) \(\d{4}-\d{2}-\d{2}\)\r?$/gm)
     ];
     const index = headings.findIndex(heading => heading[2] === version);
     if (index === -1) {

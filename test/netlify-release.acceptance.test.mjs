@@ -168,16 +168,18 @@ describe('Netlify release promotion command', () => {
         await expect(release.run()).rejects.toThrow(/CHANGELOG|changelog/);
         expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(false);
     });
-    it('preserves authored headings inside the released notes', async () => {
-        const release = await createRelease({
-            changelog:
-                '## 0.4.7 (2026-10-14)\n\n## Migration\n\nKeep the existing index.\n\n## 0.4.6 (2026-10-01)\n\n- Previous release.\n'
-        });
-        await release.run();
-        expect((await release.state()).release.body).toBe(
-            '## Migration\n\nKeep the existing index.\n'
-        );
-    });
+    it.each(['Migration', '0.4.6'])(
+        'preserves authored heading %s inside the released notes',
+        async heading => {
+            const release = await createRelease({
+                changelog: `## 0.4.7 (2026-10-14)\n\n## ${heading}\n\nKeep the existing index.\n\n## 0.4.6 (2026-10-01)\n\n- Previous release.\n`
+            });
+            await release.run();
+            expect((await release.state()).release.body).toBe(
+                `## ${heading}\n\nKeep the existing index.\n`
+            );
+        }
+    );
     it('publishes a source manifest only after verifying the npm version and release tag', async () => {
         const release = await createRelease();
         await release.run();
