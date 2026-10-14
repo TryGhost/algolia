@@ -55,25 +55,39 @@ Package-specific development and verification commands are documented in each pa
 
 ## Publishing
 
-From a clean checkout of `main`, run `pnpm ship` and choose the version bump. Nx versions the
-packages independently. You can also choose the bump directly:
+Include an Nx version plan with each change that needs a package release:
 
 ```sh
-pnpm ship:patch
-pnpm ship:minor
-pnpm ship:major
+pnpm exec nx release plan --projects=@tryghost/algolia
 ```
 
-To release one package, call `pnpm ship` with its Nx project name. Preview the result first:
+Choose the bump, describe what someone upgrading needs to know, and commit the generated file in `.nx/version-plans/` with the change. Create a separate plan for each package so maintainers can release them independently. Keep this directory for version plans only.
+
+Pull requests that change package source need a version plan; documentation and test-only changes do not.
+
+From a clean checkout of `main`, preview the release, then ship it:
 
 ```sh
-pnpm ship patch --projects=@tryghost/algolia --dry-run
-pnpm ship patch --projects=@tryghost/algolia
+pnpm ship --dry-run
+pnpm ship
 ```
 
-`ship` runs the test suite, updates the selected versions and their internal dependants, creates the
-release commit and tags, then pushes them upstream. The [`Publish` workflow](.github/workflows/publish.yml)
-publishes those versions through npm trusted publishing, then promotes the Netlify package version as a GitHub Release for deployment updates. Netlify and npm use the same version. See the [deployment policy](docs/netlify-deployment.md) for release prerequisites and verification. Never run `npm publish` by hand.
+`ship` runs the tests, applies the plans, and generates each released package's `CHANGELOG.md`. It commits the version changes, changelogs, and consumed plans together, creates the tags, and pushes them. With no plans, it releases nothing.
+
+If the push fails after the release commit is created, fix the Git error and run `git push --atomic --follow-tags` to the same remote. This pushes the prepared release without changing versions again.
+
+To release one package, add its Nx project name to both commands:
+
+```sh
+pnpm ship --projects=@tryghost/algolia --dry-run
+pnpm ship --projects=@tryghost/algolia
+```
+
+Nx may also update internal dependants. Plans for other packages remain pending. A plan that spans selected and unselected packages must be split before a scoped release.
+
+For a release without plans, the explicit `pnpm ship patch`, `pnpm ship minor`, and `pnpm ship major` overrides remain available, along with their `ship:patch`, `ship:minor`, and `ship:major` aliases. Preview and scope these commands as needed. Explicit stable releases require no pending version plans.
+
+The [`Publish` workflow](.github/workflows/publish.yml) publishes through npm trusted publishing. After publication, it promotes the Netlify package version as a GitHub Release with the generated changelog entry. Netlify and npm use the same version. See the [deployment policy](docs/netlify-deployment.md) for release prerequisites and verification. Never run `npm publish` by hand.
 
 ---
 

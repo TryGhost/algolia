@@ -37,7 +37,11 @@ pnpm ship "$candidate_version" --projects=@tryghost/algolia-netlify --dry-run
 pnpm ship "$candidate_version" --projects=@tryghost/algolia-netlify
 ```
 
-Review the dry run before running the second command. It creates and pushes the version commit and tag. Branch pushes do not publish automatically. If Nx includes dependent packages, every unpublished version must match the PR channel; the workflow rejects stable versions on this channel.
+Review the dry run before running the second command. It creates and pushes the version commit and tag.
+
+An exact prerelease version leaves stable version plans and package changelogs unchanged. The prerelease GitHub Release uses deployment metadata for its notes.
+
+Branch pushes do not publish automatically. If Nx includes dependent packages, every unpublished version must match the PR channel; the workflow rejects stable versions on this channel.
 
 Preview publication from the pushed branch:
 

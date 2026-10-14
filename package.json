@@ -20,7 +20,7 @@
     "lint:fix": "oxlint --fix && oxfmt .",
     "format": "oxfmt .",
     "preship": "git diff --quiet && git diff --cached --quiet || (echo 'Error: working tree must be clean before shipping' && exit 1) && pnpm test",
-    "ship": "nx release version --git-push --git-remote ${GHOST_UPSTREAM:-origin}",
+    "ship": "node scripts/ship.mts",
     "ship:patch": "pnpm ship patch",
     "ship:minor": "pnpm ship minor",
     "ship:major": "pnpm ship major"

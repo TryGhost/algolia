@@ -39,12 +39,13 @@ if (command === 'git') {
         result = JSON.stringify(state.pages ?? (state.release ? [[state.release]] : [[]]));
     }
 } else if (args[0] === 'release' && args[1] === 'create') {
-    state.release = {id: 1, tag_name: state.tag, draft: true, prerelease: args.includes('--prerelease'), target_commitish: state.commit, assets: []};
+    state.release = {body: args.includes('--notes-file') ? fs.readFileSync(args[args.indexOf('--notes-file') + 1], 'utf8') : args[args.indexOf('--notes') + 1], id: 1, tag_name: state.tag, draft: true, prerelease: args.includes('--prerelease'), target_commitish: state.commit, assets: []};
 } else if (args[0] === 'release' && args[1] === 'upload') {
     if (state.uploadFailure) { state.uploadFailure = false; fail('Asset upload failed'); }
     state.asset = JSON.parse(fs.readFileSync(args[3], 'utf8'));
     state.release.assets = [{id: 2, name: 'netlify-release.json'}];
 } else if (args[0] === 'release' && args[1] === 'edit') {
+    if (args.includes('--notes-file')) state.release.body = fs.readFileSync(args[args.indexOf('--notes-file') + 1], 'utf8');
     state.release.draft = false;
 } else {
     fail('Unexpected external command: ' + command + ' ' + args.join(' '));
@@ -66,6 +67,13 @@ const createRelease = async (overrides = {}) => {
             version: overrides.manifestVersion ?? version
         })
     );
+    if (overrides.changelog !== null) {
+        await writeFile(
+            path.join(directory, 'packages/algolia-netlify/CHANGELOG.md'),
+            overrides.changelog ??
+                `## ${overrides.manifestVersion ?? version} (2026-10-14)\n\n### Fixes\n\n- Preserved existing webhook configuration.\n\n## 0.4.6 (2026-10-01)\n\n- Previous release.\n`
+        );
+    }
     for (const command of ['gh', 'git', 'npm']) {
         const filename = path.join(bin, command);
         await writeFile(filename, externalCommands);
@@ -100,6 +108,78 @@ afterEach(async () => {
 });
 
 describe('Netlify release promotion command', () => {
+    it('uses only the matching package changelog entry as release notes', async () => {
+        const release = await createRelease();
+        await release.run();
+        expect((await release.state()).release.body).toBe(
+            '### Fixes\n\n- Preserved existing webhook configuration.\n'
+        );
+    });
+    it('refreshes an unpublished draft from the matching changelog entry', async () => {
+        const release = await createRelease({
+            release: {
+                tag_name: tag,
+                draft: true,
+                prerelease: false,
+                body: 'Old draft notes',
+                assets: []
+            }
+        });
+        await release.run();
+        expect((await release.state()).release.body).toBe(
+            '### Fixes\n\n- Preserved existing webhook configuration.\n'
+        );
+    });
+    it('keeps major release notes separate from older minor releases', async () => {
+        const release = await createRelease({
+            manifestVersion: '1.0.0',
+            version: '1.0.0',
+            tag: '@tryghost/algolia-netlify@1.0.0',
+            changelog:
+                '# 1.0.0 (2026-10-14)\n\n### Features\n\n- New setup.\n\n## 0.4.7 (2026-10-01)\n\n- Previous release.\n'
+        });
+        await release.run();
+        expect((await release.state()).release.body).toBe('### Features\n\n- New setup.\n');
+    });
+    it.each([null, '## 0.4.7 (2026-10-14)\n\n- Stable notes.\n'])(
+        'promotes isolated candidates without a generated changelog entry',
+        async changelog => {
+            const candidate = '0.4.7-pr.333.1';
+            const release = await createRelease({
+                manifestVersion: candidate,
+                version: candidate,
+                tag: `@tryghost/algolia-netlify@${candidate}`,
+                prereleaseTag: 'pr-333',
+                changelog
+            });
+            await release.run();
+            expect((await release.state()).release.body).toBe(
+                `Deploys @tryghost/algolia-netlify@${candidate} from commit ${commit}.\n`
+            );
+        }
+    );
+    it.each([
+        null,
+        '## 0.4.70 (2026-10-14)\n\n- Different version.\n',
+        '## 0.4.7-pr.333.1 (2026-10-14)\n\n- Candidate only.\n',
+        '## 0.4.7 (2026-10-14)\n'
+    ])('does not publish a stable release without its notes', async changelog => {
+        const release = await createRelease({changelog});
+        await expect(release.run()).rejects.toThrow(/CHANGELOG|changelog/);
+        expect((await release.state()).calls.some(call => call.args[0] === 'release')).toBe(false);
+    });
+    it.each(['Migration', '0.4.6'])(
+        'preserves authored heading %s inside the released notes',
+        async heading => {
+            const release = await createRelease({
+                changelog: `## 0.4.7 (2026-10-14)\n\n## ${heading}\n\nKeep the existing index.\n\n## 0.4.6 (2026-10-01)\n\n- Previous release.\n`
+            });
+            await release.run();
+            expect((await release.state()).release.body).toBe(
+                `## ${heading}\n\nKeep the existing index.\n`
+            );
+        }
+    );
     it('publishes a source manifest only after verifying the npm version and release tag', async () => {
         const release = await createRelease();
         await release.run();
@@ -129,6 +209,7 @@ describe('Netlify release promotion command', () => {
     });
     it('leaves an already published matching release unchanged on a rerun', async () => {
         const release = await createRelease({
+            changelog: null,
             release: {
                 id: 1,
                 tag_name: tag,
