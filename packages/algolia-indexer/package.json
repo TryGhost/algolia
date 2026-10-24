@@ -26,6 +26,6 @@
     "access": "public"
   },
   "dependencies": {
-    "algoliasearch": "5.59.0"
+    "algoliasearch": "5.60.0"
   }
 }
