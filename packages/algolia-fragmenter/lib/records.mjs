@@ -14,6 +14,7 @@ const assembleRecord = (content, parts) => ({
     title: content.title,
     headings: [...parts.headings],
     anchor: parts.anchor,
+    ...content.identity,
     ...content.projected,
     customRanking: {
         position: parts.position,

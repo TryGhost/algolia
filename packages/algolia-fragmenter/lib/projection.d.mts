@@ -8,6 +8,7 @@ export type PreparedContent = Readonly<{
     url: string;
     title: string;
     html: string;
+    identity: Readonly<Record<string, unknown>>;
     projected: Readonly<Record<string, unknown>>;
     rankingSiblings: Readonly<Record<string, unknown>>;
 }>;

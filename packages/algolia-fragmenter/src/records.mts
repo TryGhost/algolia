@@ -44,6 +44,7 @@ const assembleRecord = (content: PreparedContent, parts: RecordParts): AlgoliaRe
     title: content.title,
     headings: [...parts.headings],
     anchor: parts.anchor,
+    ...content.identity,
     ...content.projected,
     customRanking: {
         position: parts.position,

@@ -1641,3 +1641,111 @@ describe('createAlgoliaRecords rich record safety', () => {
         expect(records.every(record => bytesOf(record) <= MAX_RECORD_BYTES)).toBe(true);
     });
 });
+
+describe('createAlgoliaRecords content identity', () => {
+    it('repeats contentId and contentType in every record when a content type is supplied', () => {
+        const contents = [
+            createContent({
+                id: 'post-1',
+                html: `<h2 id="one">One</h2>${paragraphs('First.')}<h2 id="two">Two</h2>${paragraphs('Second.')}`
+            }),
+            createContent({id: 'post-2', slug: 'second', url: 'https://example.com/second/'})
+        ];
+
+        const records = createAlgoliaRecords(contents, {contentType: 'page'});
+
+        expect(records.length).toBeGreaterThan(1);
+        for (const record of records) {
+            expect(record.contentType).toBe('page');
+        }
+        expect(records.filter(record => record.contentId === 'post-1').length).toBeGreaterThan(1);
+        expect(
+            records.filter(record => record.contentId === 'post-2').map(record => record.objectID)
+        ).toEqual(['post-2_0']);
+    });
+
+    it('rejects projection and ranking aliases that collide with the identity fields', () => {
+        const error = expectFragmenterError(() =>
+            buildRecords([createContent()], {
+                contentProjection: {
+                    fields: [{source: 'canonical_url', as: 'contentId'}],
+                    customRanking: [{source: 'featured', as: 'contentType'}]
+                }
+            })
+        );
+
+        expect(error.code).toBe('INVALID_POLICY');
+        expect(describeIssues(error)).toEqual([
+            'protected-collision @ contentProjection.fields[0].as',
+            'protected-collision @ contentProjection.customRanking[0].as'
+        ]);
+    });
+
+    it('emits no identity fields when no content type is supplied', () => {
+        const records = createAlgoliaRecords([createContent()]);
+
+        expect(records).toHaveLength(1);
+        expect(records[0]).not.toHaveProperty('contentId');
+        expect(records[0]).not.toHaveProperty('contentType');
+    });
+
+    it.each(['posts', 'pages', '', 42, null, true])(
+        'rejects the content type %j before reading Ghost content',
+        contentType => {
+            const error = expectFragmenterError(() => buildRecords('not-an-array', {contentType}));
+
+            expect(error.code).toBe('INVALID_POLICY');
+            expect(describeIssues(error)).toEqual(['invalid-shape @ contentType']);
+        }
+    );
+
+    it('repeats identity in the fallback record for content without fragments', () => {
+        const records = createAlgoliaRecords(
+            [createContent({html: '<div>no extractable fragments</div>'})],
+            {contentType: 'post'}
+        );
+
+        expect(records).toEqual([
+            expect.objectContaining({
+                objectID: 'post-1_0',
+                contentId: 'post-1',
+                contentType: 'post',
+                html: ''
+            })
+        ]);
+    });
+
+    it('repeats identity in every continuation record within the byte ceiling', () => {
+        const half = `<p>${'a'.repeat(6000)}</p>`;
+        const records = createAlgoliaRecords([createContent({html: `${half}${half}`})], {
+            contentType: 'page',
+            contentProjection: {fields: []}
+        });
+
+        expect(records.map(record => record.objectID)).toEqual(['post-1_0', 'post-1_0_1']);
+        for (const record of records) {
+            expect(record.contentId).toBe('post-1');
+            expect(record.contentType).toBe('page');
+            expect(bytesOf(record)).toBeLessThanOrEqual(MAX_RECORD_BYTES);
+        }
+    });
+
+    it('counts identity fields inside the complete-record byte ceiling', () => {
+        // 9,771 content bytes put the complete identity-free record at 9,980 bytes, inside the
+        // ceiling; the 42 identity bytes push the same indivisible fragment to 10,022.
+        const content = createContent({html: `<p>${'a'.repeat(9771)}</p>`});
+        const options = {contentProjection: {fields: []}} as const;
+
+        const withoutIdentity = createAlgoliaRecords([content], options);
+        expect(withoutIdentity).toHaveLength(1);
+        expect(bytesOf(withoutIdentity[0])).toBe(9980);
+
+        const error = expectFragmenterError(() =>
+            createAlgoliaRecords([content], {...options, contentType: 'post'})
+        );
+        expect(error.code).toBe('RECORD_TOO_LARGE');
+        expect(sizeIssuesOf(error)).toEqual([
+            expect.objectContaining({contentId: 'post-1', bytes: 10022, excess: 23})
+        ]);
+    });
+});

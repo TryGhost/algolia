@@ -14,10 +14,12 @@ export type ContentProjection = Readonly<{
     customRanking?: readonly RankingField[];
 }>;
 export type ExtractionMode = 'compatibility' | 'rich';
+export type GhostContentType = 'post' | 'page';
 export type CreateAlgoliaRecordsOptions = Readonly<{
     extraction?: ExtractionMode;
     ignoreSlugs?: readonly string[];
     contentProjection?: ContentProjection;
+    contentType?: GhostContentType;
 }>;
 export type ResolvedProjectionField = Readonly<{
     source: OptionalProjectionSource;
@@ -32,6 +34,7 @@ export type ResolvedPolicy = Readonly<{
     ignoreSlugs: readonly string[];
     fields: readonly ResolvedProjectionField[];
     rankingFields: readonly ResolvedRankingField[];
+    contentType: GhostContentType | null;
 }>;
 export type PolicyResolution = Readonly<{
     ok: true;
