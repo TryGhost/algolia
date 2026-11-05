@@ -43,6 +43,15 @@ After validating the entire batch with the fragmenter, call `replace(records, co
 
 If the key cannot browse the index, replacement still saves records and returns `{cleanupSkipped: true}`. Callers should warn that stale fragments remain. Pause concurrent writers during a batch import; replacement is not transactional.
 
+## Ghost content identity
+
+These operations work on the protected `contentId` and `contentType` fields that the fragmenter repeats in every record when its `contentType` option is set. They stay dormant until an index has completed the one-time identity migration; the slug-based operations above keep working unchanged. None of them reads or writes index settings.
+
+- `browseContentIdentities()` returns every record's `objectID`, `slug`, `contentId`, and `contentType` (missing values come back as `null`) for classification and migration preflight.
+- `replaceContent(records, contents)` mirrors `replace`, keyed by Ghost content ID instead of slug. Each entry in `contents` provides `contentId` and `contentType`, every record must belong to one of those identities, and saves are confirmed before that content's stale records are removed. A key without browse permission still saves and returns `{cleanupSkipped: true}`.
+- `deleteContent(contentId)` removes every record carrying one Ghost content ID and waits for completion. It needs the `filterOnly(contentId)` facet from the identity migration.
+- `reconcileContent(records)` removes the identity-managed records a complete run no longer produces, leaving records without identity fields untouched. Run it only after every replacement save is confirmed.
+
 ## Development
 
 Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and lint checks with:

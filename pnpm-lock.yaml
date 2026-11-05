@@ -256,6 +256,13 @@ importers:
       algoliasearch:
         specifier: 5.59.0
         version: 5.59.0
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   packages/algolia-netlify:
     dependencies:

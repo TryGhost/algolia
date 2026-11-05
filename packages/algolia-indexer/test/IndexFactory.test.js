@@ -8,6 +8,7 @@ import tls from 'node:tls';
 
 const require = createRequire(import.meta.url);
 const requester = require('./helpers/algolia-requester-register.js');
+const {ALGOLIA_OPTIONS, normalizeRequest} = require('./helpers/request-contract.js');
 const packageEntryPath = require.resolve('../index.js');
 const indexFactoryPath = require.resolve('../lib/IndexFactory.js');
 const algoliaSearchPath = require.resolve('algoliasearch');
@@ -83,29 +84,8 @@ const REQUIRED_SETTINGS = {
     attributesForFaceting: ['filterOnly(slug)']
 };
 
-const ALGOLIA_OPTIONS = {
-    appId: 'app-id',
-    apiKey: 'admin-api-key',
-    index: 'help-center'
-};
-
 const createIndexer = (overrides = {}) => {
     return new IndexFactory({...ALGOLIA_OPTIONS, ...overrides});
-};
-
-const normalizeRequest = request => {
-    const url = new URL(request.url);
-    // algoliasearch 5.57+ stamps every request with a randomly generated request-id header,
-    // so it cannot be part of a deterministic request contract.
-    const headers = {...request.headers};
-    delete headers['request-id'];
-    return {
-        method: request.method,
-        origin: url.origin,
-        pathname: url.pathname,
-        headers,
-        body: request.data ? JSON.parse(request.data) : undefined
-    };
 };
 
 const exactMappedError = error => ({

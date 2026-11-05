@@ -12,6 +12,7 @@
     ".nx/**",
     "packages/*/build/**",
     "packages/algolia-fragmenter/lib/**",
+    "packages/algolia-indexer/dist/**",
     "packages/algolia-netlify/.netlify/**",
     "packages/algolia-netlify/build/**",
     "packages/algolia-netlify/dist/**",

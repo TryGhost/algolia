@@ -14,18 +14,29 @@
   "main": "index.js",
   "scripts": {
     "dev": "echo \"Implement me!\"",
+    "pretest": "pnpm build",
     "test": "NODE_ENV=testing vitest run --root .",
+    "typecheck": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.build.json",
+    "prepack": "pnpm build",
     "lint": "oxlint --quiet . && oxfmt --check .",
-    "posttest": "pnpm lint"
+    "posttest": "pnpm typecheck && pnpm lint"
   },
   "files": [
     "index.js",
-    "lib"
+    "lib",
+    "dist",
+    "!dist/.tsbuildinfo",
+    "src"
   ],
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
     "algoliasearch": "5.59.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
   }
 }
