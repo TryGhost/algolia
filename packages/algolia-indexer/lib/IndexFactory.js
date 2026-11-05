@@ -1,4 +1,11 @@
 const {algoliasearch} = require('algoliasearch');
+const {
+    browseContentIdentities,
+    deleteContent,
+    reconcileContent,
+    replaceContent
+} = require('../dist/content-identity.cjs');
+const {mapAlgoliaError} = require('../dist/errors.cjs');
 
 // Any defined settings will override those in the algolia UI
 // TODO: make this a custom setting
@@ -57,29 +64,6 @@ const contentMatcher = contents => {
                 record.objectID.startsWith(`${id}_`) &&
                 /^(0|[1-9]\d*)(?:_([1-9]\d*))?$/.test(record.objectID.slice(id.length + 1))
         );
-};
-
-/**
- * @param {options} options
- * @param {string} options.code
- * @param {number} options.statusCode
- * @param {object} options.originalError
- * @returns {Error}
- */
-const AlgoliaError = ({code, statusCode, originalError}) => {
-    let error = new Error({message: 'Error processing Algolia'});
-
-    error.errorType = 'AlgoliaError';
-    error.code = code;
-    if (statusCode) {
-        error.status = statusCode;
-    }
-    if (originalError.message) {
-        error.message = originalError.message;
-    }
-    error.originalError = originalError;
-
-    return error;
 };
 
 /**
@@ -158,11 +142,7 @@ class IndexFactory {
             }
             return await this.index.getSettings();
         } catch (error) {
-            throw AlgoliaError({
-                code: error.code,
-                statusCode: error.status,
-                originalError: error
-            });
+            throw mapAlgoliaError(error);
         }
     }
 
@@ -186,7 +166,7 @@ class IndexFactory {
             await this.client.waitForTask({indexName: this.options.index, taskID});
             return this.options.indexSettings;
         } catch (error) {
-            throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
+            throw mapAlgoliaError(error);
         }
     }
 
@@ -253,8 +233,50 @@ class IndexFactory {
             }
             return {cleanupSkipped};
         } catch (error) {
-            throw AlgoliaError({code: error.code, statusCode: error.status, originalError: error});
+            throw mapAlgoliaError(error);
         }
+    }
+
+    /**
+     * Browse every record's identity attributes for classification and reconciliation.
+     * Call initIndex() or prepareIndex() first.
+     * @returns {Promise<import('../dist/content-identity.cjs').RecordIdentity[]>}
+     */
+    async browseContentIdentities() {
+        return browseContentIdentities(this.client, this.options.index);
+    }
+
+    /**
+     * Save complete replacements for the supplied Ghost content and confirm them before
+     * removing that content's stale records by Ghost content ID.
+     * Call initIndex() or prepareIndex() first.
+     * @param {object[]} fragments
+     * @param {{contentId: string, contentType: 'post' | 'page'}[]} contents
+     * @returns {Promise<{cleanupSkipped: boolean}>} True when browse permission is missing.
+     */
+    async replaceContent(fragments, contents) {
+        return replaceContent(this.client, this.options.index, fragments, contents);
+    }
+
+    /**
+     * Delete every record carrying one Ghost content ID and wait for completion.
+     * Call initIndex() or prepareIndex() first.
+     * @param {string} contentId
+     * @returns {Promise<void>}
+     */
+    async deleteContent(contentId) {
+        return deleteContent(this.client, this.options.index, contentId);
+    }
+
+    /**
+     * Remove package-managed records a complete run no longer produces, preserving records
+     * without Ghost content identity. Run only after every replacement save is confirmed.
+     * Call initIndex() or prepareIndex() first.
+     * @param {object[]} fragments
+     * @returns {Promise<{cleanupSkipped: boolean}>} True when browse permission is missing.
+     */
+    async reconcileContent(fragments) {
+        return reconcileContent(this.client, this.options.index, fragments);
     }
 
     /**
@@ -266,11 +288,7 @@ class IndexFactory {
         try {
             await this.index.saveObjects(fragments);
         } catch (error) {
-            throw AlgoliaError({
-                code: error.code,
-                statusCode: error.status,
-                originalError: error
-            });
+            throw mapAlgoliaError(error);
         }
     }
 
@@ -283,11 +301,7 @@ class IndexFactory {
         try {
             await this.index.deleteBy({filters: `slug:${slug}`});
         } catch (error) {
-            throw AlgoliaError({
-                code: error.code,
-                statusCode: error.status,
-                originalError: error
-            });
+            throw mapAlgoliaError(error);
         }
     }
 
@@ -300,11 +314,7 @@ class IndexFactory {
         try {
             await this.index.deleteObjects(fragments);
         } catch (error) {
-            throw AlgoliaError({
-                code: error.code,
-                statusCode: error.status,
-                originalError: error
-            });
+            throw mapAlgoliaError(error);
         }
     }
 }

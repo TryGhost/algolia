@@ -11,7 +11,8 @@ const execFileAsync = promisify(execFile);
 const workspaceDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const buildOutputDirectories = [
     'packages/algolia-html-extractor/dist',
-    'packages/algolia-fragmenter/lib'
+    'packages/algolia-fragmenter/lib',
+    'packages/algolia-indexer/dist'
 ];
 
 const snapshotBuildOutputs = async () => {

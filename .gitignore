@@ -73,8 +73,9 @@ packages/algolia/config*.json
 packages/algolia-netlify/dist/
 packages/algolia-html-extractor/dist/
 
-# Incremental build state lives beside the committed fragmenter output
+# Incremental build state lives beside the committed fragmenter and indexer output
 packages/algolia-fragmenter/lib/.tsbuildinfo
+packages/algolia-indexer/dist/.tsbuildinfo
 
 # Nx local cache and workspace data
 .nx/*
