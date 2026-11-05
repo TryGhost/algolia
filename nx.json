@@ -26,7 +26,8 @@
     "versionPlans": {
       "ignorePatternsForPlanCheck": [
         "**/test/**",
-        "**/*.md"
+        "**/*.md",
+        "**/vitest.config.mjs"
       ]
     }
   },

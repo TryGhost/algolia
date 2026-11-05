@@ -1,13 +1,37 @@
-import {defineConfig} from 'vitest/config';
+import {configDefaults, defineConfig} from 'vitest/config';
+
+// This file deletes packages/algolia-html-extractor/dist to simulate a fresh Netlify
+// clone. Every test that starts a new Node process resolves that dist through the
+// fragmenter, so the deletion window must never overlap the rest of the suite.
+const deployBuildSimulationFile =
+    'packages/algolia-netlify/test/function-tracing.acceptance.test.mjs';
 
 export default defineConfig({
     test: {
         // The loader also runs in native Node subprocesses. Keep the same source offsets
         // in both contexts so V8 coverage does not merge native and transformed ranges.
         server: {deps: {external: [/\/deployment\/.*\.mts$/]}},
-        include: [
-            'packages/*/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}',
-            'test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}'
+        projects: [
+            {
+                extends: true,
+                test: {
+                    name: 'workspace',
+                    sequence: {groupOrder: 0},
+                    include: [
+                        'packages/*/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}',
+                        'test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}'
+                    ],
+                    exclude: [...configDefaults.exclude, deployBuildSimulationFile]
+                }
+            },
+            {
+                extends: true,
+                test: {
+                    name: 'deploy-build-simulation',
+                    sequence: {groupOrder: 1},
+                    include: [deployBuildSimulationFile]
+                }
+            }
         ],
         coverage: {
             provider: 'v8',
