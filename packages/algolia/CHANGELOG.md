@@ -1,3 +1,10 @@
+## 0.3.9 (2026-11-05)
+
+### 🧱 Updated Dependencies
+
+- Updated @tryghost/algolia-fragmenter to 0.4.2
+- Updated @tryghost/algolia-indexer to 0.3.6
+
 ## 0.3.8 (2026-10-14)
 
 ### 🧱 Updated Dependencies

@@ -1,3 +1,9 @@
+## 0.4.2 (2026-11-05)
+
+### 🚀 Features
+
+- Added an opt-in `contentType` option to `createAlgoliaRecords`. Declaring the batch as `'post'` or `'page'` content repeats the protected `contentId` and `contentType` fields in every derived record, counted inside the record byte ceiling. Records keep their existing shape when the option is omitted. One configuration contract change: projection and ranking aliases can no longer take the two identity names, so rename any alias called `contentId` or `contentType` before upgrading.
+
 ## 0.4.1 (2026-10-14)
 
 ### 🚀 Features
