@@ -39,7 +39,7 @@ const records = createAlgoliaRecords(posts, {
 ```
 
 - `ignoreSlugs` excludes content by slug before the rest of its fields are validated.
-- `contentType` declares which Ghost Content API resource the batch came from, either `'post'` or `'page'`. When it is supplied, every derived record repeats the protected `contentId` (the stable Ghost ID) and `contentType` fields, and both count toward the record byte ceiling. Without it, records keep their existing shape, so current consumers are unaffected.
+- `contentType` declares which Ghost Content API resource the batch came from, either `'post'` or `'page'`. When it is supplied, every derived record repeats the protected `contentId` (the stable Ghost ID) and `contentType` fields, and both count toward the record byte ceiling. Without it, records keep their existing shape. The two names are protected either way: a projection or ranking alias named `contentId` or `contentType` is rejected and must be renamed before upgrading.
 - `contentProjection.fields` is required whenever `contentProjection` is supplied and is the complete optional field set; it replaces the default set rather than patching it, and `[]` selects no optional fields. Without `contentProjection`, the optional fields are `image`, `tags`, `authors`, and `excerpt`.
 - `contentProjection.customRanking` adds ranking siblings beside the package-owned `position` and `heading` values. Each sibling needs a validated alias.
 
