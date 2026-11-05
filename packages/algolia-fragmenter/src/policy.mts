@@ -37,10 +37,13 @@ export type ContentProjection = Readonly<{
 
 export type ExtractionMode = 'compatibility' | 'rich';
 
+export type GhostContentType = 'post' | 'page';
+
 export type CreateAlgoliaRecordsOptions = Readonly<{
     extraction?: ExtractionMode;
     ignoreSlugs?: readonly string[];
     contentProjection?: ContentProjection;
+    contentType?: GhostContentType;
 }>;
 
 export type ResolvedProjectionField = Readonly<{
@@ -58,6 +61,7 @@ export type ResolvedPolicy = Readonly<{
     ignoreSlugs: readonly string[];
     fields: readonly ResolvedProjectionField[];
     rankingFields: readonly ResolvedRankingField[];
+    contentType: GhostContentType | null;
 }>;
 
 export type PolicyResolution =
@@ -117,7 +121,9 @@ const PROTECTED_RECORD_FIELDS: readonly string[] = [
     'title',
     'html',
     'headings',
-    'anchor'
+    'anchor',
+    'contentId',
+    'contentType'
 ];
 
 const PROTECTED_RANKING_FIELDS: readonly string[] = ['heading', 'position'];
@@ -139,7 +145,12 @@ const ALGOLIA_RESERVED_NAMES: readonly string[] = [
 
 const RANKING_CONTAINER = 'customRanking';
 const ALIAS_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/u;
-const OPTIONS_PROPERTIES: readonly string[] = ['ignoreSlugs', 'contentProjection', 'extraction'];
+const OPTIONS_PROPERTIES: readonly string[] = [
+    'ignoreSlugs',
+    'contentProjection',
+    'extraction',
+    'contentType'
+];
 const CONTENT_PROJECTION_PROPERTIES: readonly string[] = ['fields', 'customRanking'];
 const PROJECTION_FIELD_PROPERTIES: readonly string[] = ['source', 'as'];
 
@@ -481,6 +492,17 @@ const resolveIgnoreSlugs = (value: unknown, issues: PolicyIssue[]): readonly str
     return slugs;
 };
 
+const resolveContentType = (value: unknown, issues: PolicyIssue[]): GhostContentType | null => {
+    if (value === undefined) {
+        return null;
+    }
+    if (value === 'post' || value === 'page') {
+        return value;
+    }
+    issues.push(invalidShape('contentType', '"post" or "page"'));
+    return null;
+};
+
 const resolveExtraction = (value: unknown, issues: PolicyIssue[]): ExtractionMode => {
     if (value === undefined || value === 'compatibility') {
         return 'compatibility';
@@ -498,23 +520,21 @@ const resolveExtraction = (value: unknown, issues: PolicyIssue[]): ExtractionMod
  * order rather than stopping at the first one.
  */
 export const resolvePolicy = (options: unknown): PolicyResolution => {
-    if (options === undefined) {
-        const projection = createDefaultProjection();
-        return {ok: true, policy: {ignoreSlugs: [], extraction: 'compatibility', ...projection}};
-    }
-    if (!isPlainObject(options)) {
+    const value = options === undefined ? {} : options;
+    if (!isPlainObject(value)) {
         return {ok: false, issues: [invalidShape('options', 'an object')]};
     }
 
     const issues: PolicyIssue[] = [];
-    collectUnknownProperties(options, OPTIONS_PROPERTIES, 'options', issues);
-    const ignoreSlugs = resolveIgnoreSlugs(options.ignoreSlugs, issues);
-    const projection = resolveContentProjection(options.contentProjection, issues);
-    const extraction = resolveExtraction(options.extraction, issues);
+    collectUnknownProperties(value, OPTIONS_PROPERTIES, 'options', issues);
+    const ignoreSlugs = resolveIgnoreSlugs(value.ignoreSlugs, issues);
+    const projection = resolveContentProjection(value.contentProjection, issues);
+    const extraction = resolveExtraction(value.extraction, issues);
+    const contentType = resolveContentType(value.contentType, issues);
 
     if (issues.length > 0) {
         return {ok: false, issues};
     }
 
-    return {ok: true, policy: {ignoreSlugs, extraction, ...projection}};
+    return {ok: true, policy: {ignoreSlugs, extraction, contentType, ...projection}};
 };

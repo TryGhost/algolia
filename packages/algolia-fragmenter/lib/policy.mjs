@@ -35,7 +35,9 @@ const PROTECTED_RECORD_FIELDS = [
     'title',
     'html',
     'headings',
-    'anchor'
+    'anchor',
+    'contentId',
+    'contentType'
 ];
 const PROTECTED_RANKING_FIELDS = ['heading', 'position'];
 const PROTECTED_RANKING_OUTPUT_NAMES = [
@@ -53,7 +55,12 @@ const ALGOLIA_RESERVED_NAMES = [
 ];
 const RANKING_CONTAINER = 'customRanking';
 const ALIAS_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/u;
-const OPTIONS_PROPERTIES = ['ignoreSlugs', 'contentProjection', 'extraction'];
+const OPTIONS_PROPERTIES = [
+    'ignoreSlugs',
+    'contentProjection',
+    'extraction',
+    'contentType'
+];
 const CONTENT_PROJECTION_PROPERTIES = ['fields', 'customRanking'];
 const PROJECTION_FIELD_PROPERTIES = ['source', 'as'];
 export const isPlainObject = (value) => {
@@ -246,6 +253,16 @@ const resolveIgnoreSlugs = (value, issues) => {
     }
     return slugs;
 };
+const resolveContentType = (value, issues) => {
+    if (value === undefined) {
+        return null;
+    }
+    if (value === 'post' || value === 'page') {
+        return value;
+    }
+    issues.push(invalidShape('contentType', '"post" or "page"'));
+    return null;
+};
 const resolveExtraction = (value, issues) => {
     if (value === undefined || value === 'compatibility') {
         return 'compatibility';
@@ -262,21 +279,19 @@ const resolveExtraction = (value, issues) => {
  * order rather than stopping at the first one.
  */
 export const resolvePolicy = (options) => {
-    if (options === undefined) {
-        const projection = createDefaultProjection();
-        return { ok: true, policy: { ignoreSlugs: [], extraction: 'compatibility', ...projection } };
-    }
-    if (!isPlainObject(options)) {
+    const value = options === undefined ? {} : options;
+    if (!isPlainObject(value)) {
         return { ok: false, issues: [invalidShape('options', 'an object')] };
     }
     const issues = [];
-    collectUnknownProperties(options, OPTIONS_PROPERTIES, 'options', issues);
-    const ignoreSlugs = resolveIgnoreSlugs(options.ignoreSlugs, issues);
-    const projection = resolveContentProjection(options.contentProjection, issues);
-    const extraction = resolveExtraction(options.extraction, issues);
+    collectUnknownProperties(value, OPTIONS_PROPERTIES, 'options', issues);
+    const ignoreSlugs = resolveIgnoreSlugs(value.ignoreSlugs, issues);
+    const projection = resolveContentProjection(value.contentProjection, issues);
+    const extraction = resolveExtraction(value.extraction, issues);
+    const contentType = resolveContentType(value.contentType, issues);
     if (issues.length > 0) {
         return { ok: false, issues };
     }
-    return { ok: true, policy: { ignoreSlugs, extraction, ...projection } };
+    return { ok: true, policy: { ignoreSlugs, extraction, contentType, ...projection } };
 };
 //# sourceMappingURL=policy.mjs.map

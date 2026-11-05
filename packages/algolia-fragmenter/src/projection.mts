@@ -10,6 +10,7 @@ export type PreparedContent = Readonly<{
     url: string;
     title: string;
     html: string;
+    identity: Readonly<Record<string, unknown>>;
     projected: Readonly<Record<string, unknown>>;
     rankingSiblings: Readonly<Record<string, unknown>>;
 }>;
@@ -330,6 +331,10 @@ const prepareItem = (value: unknown, index: number, policy: ResolvedPolicy): Ite
             url: url.value,
             title: title.value,
             html: html.value,
+            identity:
+                policy.contentType === null
+                    ? {}
+                    : {contentId: id.value, contentType: policy.contentType},
             projected: projectValues(policy.fields, enabled.values),
             rankingSiblings: projectValues(policy.rankingFields, enabled.values)
         }
