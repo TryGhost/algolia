@@ -188,8 +188,8 @@ importers:
         specifier: 1.89.0
         version: 1.89.0
       semver:
-        specifier: 7.8.5
-        version: 7.8.5
+        specifier: 7.8.6
+        version: 7.8.6
       vite:
         specifier: 8.3.5
         version: 8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(yaml@2.9.1)
@@ -5333,6 +5333,11 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  semver@7.8.6:
+    resolution: {integrity: sha512-9lpSSU4Mly3mrtruwLs1eLK6+gzbzqeBFwRNjIjE+9LuDpWdYctrQlQ3ej1Ilgi7gknpsTRnPoLP8DpCHqHIJw==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   send@1.2.1:
     resolution: {integrity: sha512-1gnZf7DFcoIcajTjTwjwuDjzuz4PPcY2StKPlsGAQ1+YH20IRVrBaXSWmdjowTJ6u8Rc01PoYOGHXfP1mYcZNQ==}
     engines: {node: '>= 18'}
@@ -7456,7 +7461,7 @@ snapshots:
       https-proxy-agent: 7.0.6(supports-color@11.0.0)
       node-fetch: 2.7.0
       nopt: 8.1.0
-      semver: 7.8.5
+      semver: 7.8.6
       tar: 7.5.22
     transitivePeerDependencies:
       - encoding
@@ -7496,7 +7501,7 @@ snapshots:
       lockparse: 0.5.2
       minimatch: 10.2.6
       read-pkg: 9.0.1
-      semver: 7.8.5
+      semver: 7.8.6
       smol-toml: 1.9.1
       yaml: 2.9.1
       yargs: 17.7.3
@@ -7536,7 +7541,7 @@ snapshots:
       resolve: 2.0.0-next.7
       rfdc: 1.4.1
       safe-json-stringify: 1.2.0
-      semver: 7.8.5
+      semver: 7.8.6
       supports-color: 11.0.0
       terminal-link: 4.0.0
       tinyps: 0.5.1
@@ -7609,7 +7614,7 @@ snapshots:
       empathic: 2.1.0
       env-paths: 3.0.0
       parse-gitignore: 2.0.0
-      semver: 7.8.5
+      semver: 7.8.6
 
   '@netlify/dev@5.1.12(@types/node@24.19.2)(supports-color@11.0.0)':
     dependencies:
@@ -7651,7 +7656,7 @@ snapshots:
       node-stream-zip: 1.16.0
       p-retry: 6.2.1
       parse-imports: 2.2.1
-      semver: 7.8.5
+      semver: 7.8.6
       tar: 7.5.22
       urlpattern-polyfill: 8.0.2
 
@@ -7684,7 +7689,7 @@ snapshots:
       jwt-decode: 4.0.0
       lambda-local: 2.2.0
       read-package-up: 12.0.0
-      semver: 7.8.5
+      semver: 7.8.6
       source-map-support: 0.5.21
       yauzl: 3.4.0
     transitivePeerDependencies:
@@ -7882,7 +7887,7 @@ snapshots:
       precinct: 12.3.2(supports-color@11.0.0)
       require-package-name: 2.0.1
       resolve: 2.0.0-next.7
-      semver: 7.8.5
+      semver: 7.8.6
       tmp-promise: 3.0.3
       toml: 5.0.1
       unixify: 1.0.0
@@ -7914,7 +7919,7 @@ snapshots:
       ejs: 5.0.1
       minimatch: 10.2.5
       nx: 24.0.3
-      semver: 7.8.5
+      semver: 7.8.6
       tslib: 2.9.1
       yargs-parser: 21.1.1
 
@@ -7945,7 +7950,7 @@ snapshots:
       npm-run-path: 4.0.1
       picocolors: 1.1.1
       picomatch: 4.0.4
-      semver: 7.8.5
+      semver: 7.8.6
       source-map-support: 0.5.19
       tinyglobby: 0.2.17
       tslib: 2.9.1
@@ -7993,7 +7998,7 @@ snapshots:
       chalk: 4.1.2
       nx: 24.0.3
       picomatch: 4.0.4
-      semver: 7.8.5
+      semver: 7.8.6
       tslib: 2.9.1
       yargs-parser: 21.1.1
     transitivePeerDependencies:
@@ -8338,7 +8343,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.72.1
       debug: 4.4.3(supports-color@11.0.0)
       minimatch: 10.2.6
-      semver: 7.8.5
+      semver: 7.8.6
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -9623,7 +9628,7 @@ snapshots:
       process-warning: 5.1.1
       rfdc: 1.4.1
       secure-json-parse: 4.1.1
-      semver: 7.8.5
+      semver: 7.8.6
       toad-cache: 3.7.4
 
   fastq@1.20.3:
@@ -10210,7 +10215,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.8.5
+      semver: 7.8.6
 
   junk@4.0.1: {}
 
@@ -10590,7 +10595,7 @@ snapshots:
       raw-body: 4.0.0
       read-package-up: 12.0.0
       readdirp: 5.1.1
-      semver: 7.8.5
+      semver: 7.8.6
       source-map-support: 0.5.21
       terminal-link: 5.0.0
       toml: 4.3.0
@@ -10658,19 +10663,19 @@ snapshots:
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.8.5
+      semver: 7.8.6
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@7.0.1:
     dependencies:
       hosted-git-info: 8.1.0
-      semver: 7.8.5
+      semver: 7.8.6
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@8.0.0:
     dependencies:
       hosted-git-info: 9.0.3
-      semver: 7.8.5
+      semver: 7.8.6
       validate-npm-package-license: 3.0.4
 
   normalize-path@2.1.1:
@@ -10955,7 +10960,7 @@ snapshots:
       ky: 1.14.3
       registry-auth-token: 5.1.1
       registry-url: 6.0.1
-      semver: 7.8.5
+      semver: 7.8.6
 
   parallel-transform@1.2.0:
     dependencies:
@@ -11452,6 +11457,8 @@ snapshots:
 
   semver@7.8.5: {}
 
+  semver@7.8.6: {}
+
   send@1.2.1(supports-color@11.0.0):
     dependencies:
       debug: 4.4.3(supports-color@11.0.0)
@@ -11511,7 +11518,7 @@ snapshots:
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
-      semver: 7.8.5
+      semver: 7.8.6
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.35.5
       '@img/sharp-darwin-x64': 0.35.5
@@ -12021,7 +12028,7 @@ snapshots:
       is-npm: 6.1.0
       latest-version: 9.0.0
       pupa: 3.3.0
-      semver: 7.8.5
+      semver: 7.8.6
       xdg-basedir: 5.1.0
 
   urlpattern-polyfill@10.1.0: {}
