@@ -39,7 +39,7 @@
     "access": "public"
   },
   "dependencies": {
-    "parse5": "8.0.1"
+    "parse5": "8.1.0"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
