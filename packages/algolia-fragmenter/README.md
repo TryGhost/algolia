@@ -96,6 +96,26 @@ Both operations are deprecated compatibility wrappers. They keep their existing 
 
 This package is ESM-only and requires Node.js 24 or later.
 
+## Maintainer differential smoke
+
+The `Live Ghost content smoke` workflow runs a differential record smoke every day at 04:17 UTC
+and on manual dispatch. It fetches the published posts of `main.ghost.is` once and builds records
+for each post twice: with this workspace's committed `lib/` output and with the latest fragmenter
+release on npm. It then compares hashed per-post outcomes covering record counts, object IDs,
+field names, record bytes, and whole-batch validation errors. Both builds see identical content,
+so editorial changes cancel out. A difference means record behavior on `main` has drifted from
+what deployed sites currently run, and the workflow fails without printing any content,
+identifier, or hash.
+
+A pull request that intentionally changes record output declares that in
+[`smoke/expected-drift.json`](smoke/) beside the harness, naming the currently published version
+and the reason. The declaration excuses every record difference while that exact version is the latest
+release, not only the intended one, so keep its window short. It goes inert on its own once the
+change ships; delete it in passing. The harness
+entry point is `smoke/cli.mts`, which the workflow runs directly with Node. It expects the
+workflow's URL, API version, Content API key, published-package path, and job-summary
+environment, and is not a general-purpose command.
+
 ## Development
 
 Install dependencies from the repository root with `pnpm install`. From the root, run this package's tests and lint checks with:

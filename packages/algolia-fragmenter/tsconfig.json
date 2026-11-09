@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["ES2023"],
@@ -18,5 +19,5 @@
     "types": ["node", "vitest/globals"],
     "verbatimModuleSyntax": true
   },
-  "include": ["src/**/*.ts", "src/**/*.mts", "test/**/*.ts", "test/**/*.mts"]
+  "include": ["src/**/*.ts", "src/**/*.mts", "smoke/**/*.mts", "test/**/*.ts", "test/**/*.mts"]
 }

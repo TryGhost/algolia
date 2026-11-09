@@ -27,7 +27,8 @@
       "ignorePatternsForPlanCheck": [
         "**/test/**",
         "**/*.md",
-        "**/vitest.config.mjs"
+        "**/vitest.config.mjs",
+        "**/smoke/**"
       ]
     }
   },
