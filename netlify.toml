@@ -2,7 +2,7 @@
   # Deploys run only this command; package "prebuild" scripts never run on Netlify. The
   # extractor's gitignored dist/ must exist before functions bundling, or the bundler silently
   # drops the package from the function archives and the functions crash at runtime.
-  command = "pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck"
+  command = "{ node -v && pnpm -v && pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck; } > diagnostic.log 2>&1; echo \"exit=$?\" >> diagnostic.log; mkdir -p packages/algolia-netlify/public && cp diagnostic.log packages/algolia-netlify/public/build-diagnostic.log; true"
   functions = "packages/algolia-netlify/functions"
   publish = "packages/algolia-netlify/public"
 
