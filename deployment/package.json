@@ -7,10 +7,10 @@
   },
   "packageManager": "pnpm@12.18.0+sha512.9d7882d5dc82147ecfc4e062aa34834e0ad0296710a1837a1115ae012127d36b7109e321ac1598a1dd0a65597681b1e99917e12ed0d749eae91187943363beb3",
   "devDependencies": {
-    "@tailwindcss/cli": "4.3.4",
+    "@tailwindcss/cli": "4.3.5",
     "@types/semver": "7.8.0",
     "semver": "7.8.6",
-    "tailwindcss": "4.3.4"
+    "tailwindcss": "4.3.5"
   },
   "scripts": {
     "build": "pnpm build:css && node build.mts",
