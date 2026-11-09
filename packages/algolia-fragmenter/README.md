@@ -101,8 +101,9 @@ This package is ESM-only and requires Node.js 24 or later.
 The `Live Ghost content smoke` workflow runs a differential record smoke every day at 04:17 UTC
 and on manual dispatch. It fetches the published posts of `main.ghost.is` once and builds records
 for each post twice: with this workspace's committed `lib/` output and with the latest fragmenter
-release on npm. It then compares hashed per-post outcomes covering record counts, object IDs,
-field names, record bytes, and whole-batch validation errors. Both builds see identical content,
+release on npm. It then compares one hashed outcome per post and side, covering the complete
+record values serialized with recursively sorted keys, and whole-batch
+validation errors. Both builds see identical content,
 so editorial changes cancel out. A difference means record behavior on `main` has drifted from
 what deployed sites currently run, and the workflow fails without printing any content,
 identifier, or hash.

@@ -227,9 +227,11 @@ once with the workspace's committed fragmenter `lib/` output and once with the
 latest `@tryghost/algolia-fragmenter` release installed from npm — and compares
 one hashed outcome per post per side.
 
-An outcome is either the sha256 of the built records' structural facts (object
-IDs, sorted field names, and compact byte sizes per record) or, when the builder
-rejects the post, its `FragmenterError` code and issue count. The published
+An outcome is either the sha256 of the built records' complete values,
+serialized with recursively sorted object keys so key insertion order cannot
+drift the hash, or, when the builder rejects the post, its `FragmenterError`
+code and issue count. Any value change fails the comparison, including one that
+keeps the serialized length. The published
 release is the behavior deployed sites currently run, so the reference is
 validated by production rather than by a reviewer, and because both builds see
 the same live page in the same process, editorial churn cancels out. Any
