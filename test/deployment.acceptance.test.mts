@@ -879,7 +879,8 @@ it('keeps existing root deployments on the source build without selecting a rele
     expect(await resolveSiteBuild()).toEqual({
         configPath: path.join(repositoryRoot, 'netlify.toml'),
         buildDir: repositoryRoot,
-        command: 'pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck',
+        command:
+            'rm -rf node_modules packages/*/node_modules && pnpm install --frozen-lockfile && pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck',
         publish: path.join(repositoryRoot, 'packages/algolia-netlify/public'),
         functions: path.join(repositoryRoot, 'packages/algolia-netlify/functions')
     });
@@ -902,7 +903,8 @@ it('keeps existing package-base deployments on their source functions', async ()
     expect(await resolveSiteBuild('packages/algolia-netlify')).toEqual({
         configPath: path.join(repositoryRoot, 'netlify.toml'),
         buildDir: repositoryRoot,
-        command: 'pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck',
+        command:
+            'rm -rf node_modules packages/*/node_modules && pnpm install --frozen-lockfile && pnpm --filter @tryghost/algolia-html-extractor build && pnpm typecheck',
         publish: path.join(repositoryRoot, 'packages/algolia-netlify/public'),
         functions: path.join(repositoryRoot, 'packages/algolia-netlify/functions')
     });
