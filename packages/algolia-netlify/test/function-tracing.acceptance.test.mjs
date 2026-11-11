@@ -1,5 +1,6 @@
 import {execFile} from 'node:child_process';
 import {readFile, rm} from 'node:fs/promises';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
@@ -17,6 +18,15 @@ const extractorDistDirectory = path.resolve(
 // The workspace root has no netlify binary; resolve the pinned CLI from this package so the
 // test does not depend on a globally installed netlify-cli.
 const netlifyBinary = path.join(packageDirectory, 'node_modules/.bin/netlify');
+// Resolve parse5 the way the extractor does, so the expected archive path tracks
+// the installed version instead of hard-coding one.
+const extractorRequire = createRequire(
+    path.join(workspaceDirectory, 'packages/algolia-html-extractor/package.json')
+);
+const parse5ArchivePath = path
+    .relative(workspaceDirectory, extractorRequire.resolve('parse5'))
+    .split(path.sep)
+    .join('/');
 
 describe('Netlify function dependency tracing', () => {
     beforeEach(async () => {
@@ -36,9 +46,7 @@ describe('Netlify function dependency tracing', () => {
 
             expect(archiveIndex).toContain('packages/algolia-fragmenter/lib/index.mjs');
             expect(archiveIndex).toContain('packages/algolia-html-extractor/dist/index.mjs');
-            expect(archiveIndex).toContain(
-                'node_modules/.pnpm/parse5@8.0.1/node_modules/parse5/dist/index.js'
-            );
+            expect(archiveIndex).toContain(parse5ArchivePath);
             expect(archiveIndex).not.toContain('algolia-html-extractor@0.0.1');
             expect(archiveIndex).not.toContain(workspaceDirectory);
         }
