@@ -29,7 +29,9 @@ jobs:
             deployment/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Check package release plans
-        if: github.event_name == 'pull_request'
+        # Renovate cannot author version plans; its dependency bumps ship with
+        # the next maintainer release that carries a plan.
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'renovate[bot]'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
