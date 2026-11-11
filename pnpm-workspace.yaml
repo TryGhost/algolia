@@ -19,7 +19,7 @@ overrides:
   # restores makeRe on this exact version as a wrapper over the safe v11
   # matcher. Keep the pin and the patch in sync, and drop both once nx ships
   # with minimatch >=11.0.1.
-  'nx>minimatch': 11.0.1
+  'nx>minimatch': 11.0.5
 
 # deepmerge has no patched release. This applies the upstream fix from
 # TehShrike/deepmerge#274 for CVE-2026-93753 (GHSA-gcqx-w48m-w2h4).
