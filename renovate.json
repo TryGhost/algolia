@@ -2,14 +2,5 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>TryGhost/renovate-config"
-  ],
-  "packageRules": [
-    {
-      "description": "The nx>minimatch override in pnpm-workspace.yaml is a documented exemption from GHSA-g3hv-75wg-m249: nx calls minimatch.makeRe, which minimatch 11 removed, so bumping it breaks nx release. Drop this rule once nx ships with minimatch >=11.0.1.",
-      "matchDepNames": ["minimatch"],
-      "matchDepTypes": ["overrides"],
-      "matchCurrentValue": "10.2.5",
-      "enabled": false
-    }
   ]
 }
