@@ -2,5 +2,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>TryGhost/renovate-config"
+  ],
+  "packageRules": [
+    {
+      "description": "The nx>minimatch override is pinned to exactly 11.0.1 to match patches/minimatch@11.0.1.patch (GHSA-g3hv-75wg-m249); bumping the pin alone breaks the patched resolution. Drop this rule together with the pin and the patch once nx ships with minimatch >=11.",
+      "matchDepNames": ["nx>minimatch"],
+      "enabled": false
+    }
   ]
 }
