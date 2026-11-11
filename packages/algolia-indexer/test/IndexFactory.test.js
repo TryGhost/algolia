@@ -476,9 +476,7 @@ describe('IndexFactory public contracts', function () {
                     .flatMap(({body}) => body.requests)
                     .every(({action}) => action === 'addObject')
             ).toBe(true);
-            if (stage === 'browse') {
-                expect(writes).toHaveLength(0);
-            }
+            expect(writes).toHaveLength(stage === 'browse' ? 0 : 1);
         }
     );
 
