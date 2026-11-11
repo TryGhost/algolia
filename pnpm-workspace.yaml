@@ -19,6 +19,11 @@ overrides:
   'minimatch@>=7.0.0 <11.0.1': ^11.0.1
   'nx>minimatch': 10.2.5
 
+# deepmerge has no patched release. This applies the upstream fix from
+# TehShrike/deepmerge#274 for CVE-2026-93753 (GHSA-gcqx-w48m-w2h4).
+patchedDependencies:
+  deepmerge@4.3.1: patches/deepmerge@4.3.1.patch
+
 allowBuilds:
   esbuild: true
   netlify-cli: false

@@ -168,6 +168,9 @@ overrides:
   minimatch@>=7.0.0 <11.0.1: ^11.0.1
   nx>minimatch: 10.2.5
 
+patchedDependencies:
+  deepmerge@4.3.1: dd98283e2a4c805398efbc0b9c33d58c78a3f3bed41d9fe0668835d5f4b79640
+
 importers:
 
   .:
@@ -7577,7 +7580,7 @@ snapshots:
       '@netlify/headers-parser': 10.1.1
       '@netlify/redirect-parser': 16.1.1
       cron-parser: 5.10.4
-      deepmerge: 4.3.1
+      deepmerge: 4.3.1(patch_hash=dd98283e2a4c805398efbc0b9c33d58c78a3f3bed41d9fe0668835d5f4b79640)
       dot-prop: 9.0.0
       execa: 8.0.1
       fast-safe-stringify: 2.1.1
@@ -9135,7 +9138,7 @@ snapshots:
 
   deep-extend@0.6.0: {}
 
-  deepmerge@4.3.1: {}
+  deepmerge@4.3.1(patch_hash=dd98283e2a4c805398efbc0b9c33d58c78a3f3bed41d9fe0668835d5f4b79640): {}
 
   default-browser-id@5.0.1: {}
 
