@@ -45,6 +45,16 @@ Mandatory authentication and non-production guards belong to the opt-in loader. 
 
 Builds must not contact Algolia or need customer credentials. The loader uses the build context to disable non-production functions; it does not depend on `CONTEXT` being available at function runtime. Keep production credentials scoped to production Functions. Use a separate Netlify site's production deployment and a separate index for upgrade acceptance.
 
+## Webhook versioning
+
+Source deployments build their connected revision of `main`, so for them the default behavior of each webhook URL is the compatibility contract. The bare function URLs — `/.netlify/functions/post-published` and `post-unpublished` today — permanently keep their current semantics: envelopes, authentication, slug-based replacement, and valid posts-only outcomes. Site owners of source deployments cannot be reached or enumerated, so nothing may change what a bare URL does.
+
+A breaking change to an existing event ships as a versioned sub-path on the same function, such as `/.netlify/functions/post-published/v2`. Netlify routes every sub-path of a function URL to that function, and the handler dispatches on the trailing segment. A site opts in by replacing the URL in its Ghost integration — the same hand-pasted setting that connected it, so the change is an explicit owner action. A handler rejects an unrecognized version segment with `404` instead of falling back, so a mistyped URL cannot index with unintended semantics. The webhook `key` guard is unchanged and runs before version dispatch.
+
+A new Ghost event gets a new basename, as the planned `page-published` and `page-unpublished` handlers do. Registering the event in Ghost is itself the opt-in, so a new basename starts unversioned at its current semantics.
+
+Version only breaking semantics; additive output-compatible improvements ship on the existing paths. Keep at most two live generations per event: the bare frozen path and one current versioned path. Each generation is a thin options wrapper over the shared packages, pinned end to end by native handler acceptance tests, while the daily differential record smoke pins the default fragmenter behavior that bare paths ride. A version whose semantics require an index migration is documented as selectable only after that migration completes; the URL names the semantics and the migration instructions below sequence the switch. Release-based deployments additionally gate incompatible majors behind `ALGOLIA_INTEGRATION_VERSION`; versioned paths behave identically there, so a site keeps its Ghost webhook URLs when it migrates between deployment styles.
+
 ## Index changes and recovery
 
 Code deployment must not migrate index data or settings. A release that changes the index contract needs explicit migration instructions: retain the old index, populate and verify a replacement, then coordinate the writer and search-UI switch. Roll back both consumers to the retained index if verification fails. Never restore delete-before-save as an upgrade or cleanup strategy.
