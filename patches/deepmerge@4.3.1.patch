@@ -1,0 +1,99 @@
+diff --git a/dist/cjs.js b/dist/cjs.js
+index 7c36cbdd06cc22c92d590be3f87a08a91ca06b40..60722f44c37afd8d24b16ba538971e260bda02f6 100644
+--- a/dist/cjs.js
++++ b/dist/cjs.js
+@@ -69,6 +69,12 @@ function propertyIsOnObject(object, property) {
+ 	}
+ }
+ 
++// Upstream fix for CVE-2026-93753 (TehShrike/deepmerge#274): never copy a
++// __proto__ key, whatever the shape of the target.
++function propertyIsForbidden(key) {
++	return key === '__proto__'
++}
++
+ // Protects from prototype poisoning and unexpected merging up the prototype chain.
+ function propertyIsUnsafe(target, key) {
+ 	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+@@ -80,11 +86,14 @@ function mergeObject(target, source, options) {
+ 	var destination = {};
+ 	if (options.isMergeableObject(target)) {
+ 		getKeys(target).forEach(function(key) {
++			if (propertyIsForbidden(key)) {
++				return
++			}
+ 			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+ 		});
+ 	}
+ 	getKeys(source).forEach(function(key) {
+-		if (propertyIsUnsafe(target, key)) {
++		if (propertyIsForbidden(key) || propertyIsUnsafe(target, key)) {
+ 			return
+ 		}
+ 
+diff --git a/dist/umd.js b/dist/umd.js
+index 4071e7c56ec8e5273fe166f6e723ac460fab8b72..4487fc5cc5069b417b7700350b1754fd71a84a61 100644
+--- a/dist/umd.js
++++ b/dist/umd.js
+@@ -73,6 +73,12 @@
+ 		}
+ 	}
+ 
++	// Upstream fix for CVE-2026-93753 (TehShrike/deepmerge#274): never copy a
++	// __proto__ key, whatever the shape of the target.
++	function propertyIsForbidden(key) {
++		return key === '__proto__'
++	}
++
+ 	// Protects from prototype poisoning and unexpected merging up the prototype chain.
+ 	function propertyIsUnsafe(target, key) {
+ 		return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+@@ -84,11 +90,14 @@
+ 		var destination = {};
+ 		if (options.isMergeableObject(target)) {
+ 			getKeys(target).forEach(function(key) {
++				if (propertyIsForbidden(key)) {
++					return
++				}
+ 				destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+ 			});
+ 		}
+ 		getKeys(source).forEach(function(key) {
+-			if (propertyIsUnsafe(target, key)) {
++			if (propertyIsForbidden(key) || propertyIsUnsafe(target, key)) {
+ 				return
+ 			}
+ 
+diff --git a/index.js b/index.js
+index 77968aed5d456cccc294f60912ef381fa1e52a7b..5636df07b561e24d67dd9a137c2c64157e6d6df8 100644
+--- a/index.js
++++ b/index.js
+@@ -44,6 +44,12 @@ function propertyIsOnObject(object, property) {
+ 	}
+ }
+ 
++// Upstream fix for CVE-2026-93753 (TehShrike/deepmerge#274): never copy a
++// __proto__ key, whatever the shape of the target.
++function propertyIsForbidden(key) {
++	return key === '__proto__'
++}
++
+ // Protects from prototype poisoning and unexpected merging up the prototype chain.
+ function propertyIsUnsafe(target, key) {
+ 	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+@@ -55,11 +61,14 @@ function mergeObject(target, source, options) {
+ 	var destination = {}
+ 	if (options.isMergeableObject(target)) {
+ 		getKeys(target).forEach(function(key) {
++			if (propertyIsForbidden(key)) {
++				return
++			}
+ 			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options)
+ 		})
+ 	}
+ 	getKeys(source).forEach(function(key) {
+-		if (propertyIsUnsafe(target, key)) {
++		if (propertyIsForbidden(key) || propertyIsUnsafe(target, key)) {
+ 			return
+ 		}
+ 
