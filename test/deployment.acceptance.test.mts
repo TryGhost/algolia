@@ -47,7 +47,6 @@ const resolveSiteBuild = async (base?: string) => {
     ]);
     return JSON.parse(stdout);
 };
-const pnpmVersion = (await exec('pnpm', ['--version'])).stdout.trim();
 const directories: string[] = [];
 const functionsDirectory = (directory: string) =>
     path.join(directory, 'runtime/packages/algolia-netlify/deployment-functions');
@@ -56,6 +55,12 @@ const temporaryDirectory = async () => {
     directories.push(directory);
     return directory;
 };
+// Release fixtures set `pmOnFail: ignore`, so their builds run the pnpm on PATH rather
+// than switching to a declared version. Run pnpm outside this repository, where the root
+// `packageManager` would switch to the pinned release and diverge from the PATH one.
+const execHostPnpm = async (args: string[]) =>
+    exec('pnpm', args, {cwd: await temporaryDirectory()});
+const pnpmVersion = (await execHostPnpm(['--version'])).stdout.trim();
 const createReleaseRepository = async (nestedDependency = false) => {
     const repository = await temporaryDirectory();
     await writeFile(
@@ -353,7 +358,7 @@ it('fetches the selected source without inheriting host Git URL rewrites', async
     const bin = await temporaryDirectory();
     // Use the installed executable so the isolated home needs no Corepack download.
     const executable = (
-        await exec('pnpm', ['exec', 'node', '-p', 'process.env.npm_execpath'])
+        await execHostPnpm(['exec', 'node', '-p', 'process.env.npm_execpath'])
     ).stdout.trim();
     await symlink(executable, path.join(bin, 'pnpm'));
     const config = `[url "${path.join(home, 'missing-private-repository')}"]\n\tinsteadOf = ${repository}\n`;
