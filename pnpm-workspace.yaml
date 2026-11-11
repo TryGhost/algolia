@@ -14,15 +14,18 @@ overrides:
   # Drop once netlify-cli and nx resolve a patched version on their own.
   'glob@>=9.0.0 <14.0.2': ^14.0.2
   # GHSA-g3hv-75wg-m249 (minimatch <11.0.1): globparts amplification DoS.
-  # nx is exempt: it calls minimatch.makeRe, which minimatch 11 removed, and
-  # even the latest nx still pins the vulnerable 10.x line.
   'minimatch@>=7.0.0 <11.0.1': ^11.0.1
-  'nx>minimatch': 10.2.5
+  # nx calls minimatch.makeRe, which minimatch 11 removed; the patch below
+  # restores makeRe on this exact version as a wrapper over the safe v11
+  # matcher. Keep the pin and the patch in sync, and drop both once nx ships
+  # with minimatch >=11.0.1.
+  'nx>minimatch': 11.0.1
 
 # deepmerge has no patched release. This applies the upstream fix from
 # TehShrike/deepmerge#274 for CVE-2026-93753 (GHSA-gcqx-w48m-w2h4).
 patchedDependencies:
   deepmerge@4.3.1: patches/deepmerge@4.3.1.patch
+  minimatch@11.0.1: patches/minimatch@11.0.1.patch
 
 allowBuilds:
   esbuild: true

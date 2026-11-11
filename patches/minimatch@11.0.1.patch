@@ -1,0 +1,51 @@
+diff --git a/dist/commonjs/index.js b/dist/commonjs/index.js
+index ec1981d9a738ecf28d63190e27506ff0e600bf79..9b6c908e56efa46052cb85a0d545525c1c33ba01 100644
+--- a/dist/commonjs/index.js
++++ b/dist/commonjs/index.js
+@@ -31,6 +31,21 @@ exports.minimatch.GLOBSTAR = exports.GLOBSTAR;
+ const filter = (pattern, options = {}) => (p) => (0, exports.minimatch)(p, pattern, options);
+ exports.filter = filter;
+ exports.minimatch.filter = exports.filter;
++// PATCHED (Ghost): makeRe was removed upstream in v11 together with the
++// vulnerable regex construction (GHSA-g3hv-75wg-m249). nx still calls
++// minimatch.makeRe(pattern, options) and only uses .test() on the result,
++// so restore it as a RegExp-like wrapper over the safe v11 matcher.
++const makeRe = (pattern, options = {}) => {
++    try {
++        const mm = new Minimatch(pattern, options);
++        return { test: (p) => mm.match(p) };
++    }
++    catch {
++        return false;
++    }
++};
++exports.makeRe = makeRe;
++exports.minimatch.makeRe = exports.makeRe;
+ const ext = (a, b = {}) => Object.assign({}, a, b);
+ const defaults = (def) => {
+     if (!def || typeof def !== 'object' || !Object.keys(def).length) {
+diff --git a/dist/esm/index.js b/dist/esm/index.js
+index ab804c2db6951836630594a59844233756d3957c..5584a891bfe88d74a490ae698a57f522ab968e62 100644
+--- a/dist/esm/index.js
++++ b/dist/esm/index.js
+@@ -26,6 +26,20 @@ export const GLOBSTAR = Symbol('globstar **');
+ minimatch.GLOBSTAR = GLOBSTAR;
+ export const filter = (pattern, options = {}) => (p) => minimatch(p, pattern, options);
+ minimatch.filter = filter;
++// PATCHED (Ghost): makeRe was removed upstream in v11 together with the
++// vulnerable regex construction (GHSA-g3hv-75wg-m249). nx still calls
++// minimatch.makeRe(pattern, options) and only uses .test() on the result,
++// so restore it as a RegExp-like wrapper over the safe v11 matcher.
++export const makeRe = (pattern, options = {}) => {
++    try {
++        const mm = new Minimatch(pattern, options);
++        return { test: (p) => mm.match(p) };
++    }
++    catch {
++        return false;
++    }
++};
++minimatch.makeRe = makeRe;
+ const ext = (a, b = {}) => Object.assign({}, a, b);
+ export const defaults = (def) => {
+     if (!def || typeof def !== 'object' || !Object.keys(def).length) {

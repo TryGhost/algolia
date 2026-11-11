@@ -166,10 +166,11 @@ overrides:
   sharp: ^0.35.3
   glob@>=9.0.0 <14.0.2: ^14.0.2
   minimatch@>=7.0.0 <11.0.1: ^11.0.1
-  nx>minimatch: 10.2.5
+  nx>minimatch: 11.0.1
 
 patchedDependencies:
   deepmerge@4.3.1: dd98283e2a4c805398efbc0b9c33d58c78a3f3bed41d9fe0668835d5f4b79640
+  minimatch@11.0.1: ce96449cb74bf8abf2ad14bbbd3b7422501edc99d8b9a97d6fc1d3fc3cb340b2
 
 importers:
 
@@ -4606,8 +4607,8 @@ packages:
     resolution: {integrity: sha512-VP79XUPxV2CigYP3jWwAUFSku2aKqBH7uTAapFWCBqutsbmDo96KY5o8uh6U+/YSIn5OxJnXp73beVkpqMIGhA==}
     engines: {node: '>=18'}
 
-  minimatch@10.2.5:
-    resolution: {integrity: sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==}
+  minimatch@11.0.1:
+    resolution: {integrity: sha512-t+Vn6DX4wPCxS23y03C0uhF7S1jpi1GfqPrnlEipCJaA2ykiNbMkVlDutZtmvLfRcUN6R8AYVlzTsQrT4RZoLQ==}
     engines: {node: 18 || 20 || >=22}
 
   minimatch@11.0.5:
@@ -10467,8 +10468,9 @@ snapshots:
 
   mimic-function@5.0.1: {}
 
-  minimatch@10.2.5:
+  minimatch@11.0.1(patch_hash=ce96449cb74bf8abf2ad14bbbd3b7422501edc99d8b9a97d6fc1d3fc3cb340b2):
     dependencies:
+      '@isaacs/nonrecursive-glob-match': 1.1.0
       brace-expansion: 5.0.12
 
   minimatch@11.0.5:
@@ -10753,7 +10755,7 @@ snapshots:
       lines-and-columns: 2.0.3
       log-symbols: 4.1.0
       mimic-fn: 2.1.0
-      minimatch: 10.2.5
+      minimatch: 11.0.1(patch_hash=ce96449cb74bf8abf2ad14bbbd3b7422501edc99d8b9a97d6fc1d3fc3cb340b2)
       minimist: 1.2.8
       npm-run-path: 4.0.1
       once: 1.4.0
