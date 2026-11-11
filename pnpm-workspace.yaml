@@ -17,7 +17,7 @@ overrides:
   # nx is exempt: it calls minimatch.makeRe, which minimatch 11 removed, and
   # even the latest nx still pins the vulnerable 10.x line.
   'minimatch@>=7.0.0 <11.0.1': ^11.0.1
-  'nx>minimatch': 10.2.5
+  'nx>minimatch': 11.0.1
 
 # deepmerge has no patched release. This applies the upstream fix from
 # TehShrike/deepmerge#274 for CVE-2026-93753 (GHSA-gcqx-w48m-w2h4).
