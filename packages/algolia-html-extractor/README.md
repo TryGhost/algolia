@@ -52,10 +52,16 @@ fragmenter's [`extraction: 'rich'` option](../algolia-fragmenter/README.md#rich-
 
 ## Maintainer smoke check
 
-Maintainers can run the `Live Ghost content smoke` workflow by hand to check published posts and
-pages from `main.ghost.is`. It runs only from this repository's `main` branch and writes a
-privacy-safe structural summary to the job. It does not save live content, write a baseline, run on
-pull requests, or publish the package.
+The `Live Ghost content smoke` workflow checks published posts and pages from `main.ghost.is`
+every day at 04:17 UTC, and maintainers can also run it by hand. It runs only from this
+repository's `main` branch and writes a privacy-safe structural summary to the job. It does not
+save live content, write a baseline, run on pull requests, or publish the package.
+
+A run fails on Content API schema or pagination drift, on transport problems, and on any extractor
+invariant violation over live content. The structural signature census in the summary is
+informational only: there is no reviewed baseline, and a new signature never fails the run.
+Behavioral regressions are caught by the differential record smoke in the same workflow; see the
+[fragmenter's maintainer section](../algolia-fragmenter/README.md#maintainer-differential-smoke).
 
 The workflow installs the workspace and then runs:
 

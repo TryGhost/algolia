@@ -50,6 +50,7 @@ export default defineConfig({
                 'packages/*/lib/**/*.js',
                 'packages/algolia/bin/**/*.js',
                 'packages/algolia-fragmenter/src/**/*.mts',
+                'packages/algolia-fragmenter/smoke/differential-record-smoke.mts',
                 'packages/algolia-indexer/dist/**/*.cjs',
                 'packages/algolia-html-extractor/index.mts',
                 'packages/algolia-html-extractor/smoke/live-ghost-content-smoke.mts',

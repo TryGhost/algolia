@@ -23,10 +23,12 @@ function stepContaining(workflow: string, value: string): string {
 }
 
 describe('live Ghost content smoke workflow', () => {
-    test('keeps authenticated live observation manual, upstream-only, and read-only', async () => {
+    test('keeps authenticated live observation scheduled, upstream-only, and read-only', async () => {
         const workflow = await readFile(workflowUrl, 'utf8');
 
-        expect(topLevelBlock(workflow, 'on')).toBe('on:\n  workflow_dispatch:');
+        expect(topLevelBlock(workflow, 'on')).toBe(
+            "on:\n  schedule:\n    - cron: '17 4 * * *'\n  workflow_dispatch:"
+        );
         expect(topLevelBlock(workflow, 'permissions')).toBe('permissions:\n  contents: read');
         expect(workflow).toMatch(
             /^ {4}if: github\.repository == 'TryGhost\/algolia' && github\.ref == 'refs\/heads\/main'$/m
@@ -48,21 +50,41 @@ describe('live Ghost content smoke workflow', () => {
             /^ {10}persist-credentials: false$/m
         );
 
-        const executionStep = stepContaining(workflow, 'smoke:live');
         const secretReferences = workflow.match(/\$\{\{\s*secrets\.[^}]+\}\}/g) ?? [];
+        expect(secretReferences).toEqual([
+            '${{ secrets.MAIN_GHOST_CONTENT_API_KEY }}',
+            '${{ secrets.MAIN_GHOST_CONTENT_API_KEY }}'
+        ]);
 
-        expect(secretReferences).toEqual(['${{ secrets.MAIN_GHOST_CONTENT_API_KEY }}']);
-        expect(executionStep).toContain(
-            'MAIN_GHOST_CONTENT_API_KEY: ${{ secrets.MAIN_GHOST_CONTENT_API_KEY }}'
-        );
-        expect(executionStep).toMatch(/^ {10}GHOST_URL: https:\/\/main\.ghost\.is$/m);
-        expect(executionStep).toMatch(/^ {10}GHOST_API_VERSION: v6\.0$/m);
-        expect(executionStep).toMatch(
+        for (const executionStep of [
+            stepContaining(workflow, 'smoke:live'),
+            stepContaining(workflow, 'differential record smoke')
+        ]) {
+            expect(executionStep).toContain(
+                'MAIN_GHOST_CONTENT_API_KEY: ${{ secrets.MAIN_GHOST_CONTENT_API_KEY }}'
+            );
+            expect(executionStep).toMatch(/^ {10}GHOST_URL: https:\/\/main\.ghost\.is$/m);
+            expect(executionStep).toMatch(/^ {10}GHOST_API_VERSION: v6\.0$/m);
+        }
+
+        expect(stepContaining(workflow, 'smoke:live')).toMatch(
             /^ {8}run: pnpm --filter @tryghost\/algolia-html-extractor smoke:live$/m
         );
 
+        const differentialStep = stepContaining(workflow, 'differential record smoke');
+        expect(differentialStep).toMatch(
+            /^ {10}PUBLISHED_FRAGMENTER_DIR: \$\{\{ runner\.temp \}\}\/published-fragmenter\/node_modules\/@tryghost\/algolia-fragmenter$/m
+        );
+        expect(differentialStep).toMatch(
+            /^ {8}run: node packages\/algolia-fragmenter\/smoke\/cli\.mts$/m
+        );
+
+        expect(stepContaining(workflow, 'Install the published fragmenter')).toMatch(
+            /^ {8}run: npm install --prefix "\$RUNNER_TEMP\/published-fragmenter" --ignore-scripts @tryghost\/algolia-fragmenter@latest$/m
+        );
+
         const prohibitedCapabilities = [
-            /^\s*(?:schedule|pull_request|pull_request_target|push|workflow_run):/m,
+            /^\s*(?:pull_request|pull_request_target|push|workflow_run):/m,
             /^\s*issues:\s*write\s*$/m,
             /actions\/(?:cache|upload-artifact|download-artifact)@/,
             /^\s*cache:/m,

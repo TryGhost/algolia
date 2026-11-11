@@ -126,7 +126,10 @@ For each of `/ghost/api/content/posts/` and `/ghost/api/content/pages/`:
 2. Validate a successful JSON response containing the named resource array and
    an object at `meta.pagination`.
 3. Process only each item's `html` string in memory. Ignore and immediately
-   discard any additional response fields.
+   discard any additional response fields. Amended on 2026-11-09: the
+   differential record read additionally requests and processes `id`, `slug`,
+   `url`, and `title` in memory, because the record builders require them. They
+   are discarded with the page and never reach a summary, log, or disk.
 4. Follow the integer `meta.pagination.next` page until it is `null`; reject a
    missing, invalid, or repeated next-page value.
 5. Discard each raw response page after its HTML has been normalized. Never
@@ -180,10 +183,15 @@ The smoke program has four layers of assertions:
 3. **Normalizer privacy and determinism:** parsing succeeds; two passes over the
    same in-memory HTML yield the same normalized signature; and emitted
    signatures contain only the structural allowlist above.
-4. **Drift:** every observed signature identifier is in the reviewed baseline.
-   A new identifier fails the live workflow. Missing identifiers and changed
-   occurrence counts are reported but do not fail, because mutable editorial
-   content can remove or duplicate structures without changing Ghost's renderer.
+4. **Drift:** amended on 2026-11-09. The original contract failed the workflow
+   on any signature missing from a two-maintainer-reviewed baseline. That
+   baseline was never bootstrapped: the review demanded recurring human
+   classification of editorial churn versus renderer change, which the
+   maintainers decided not to staff. No baseline exists. Observed signatures and
+   counts are reported in the summary as information only and never fail a run.
+   Automated behavioral drift detection moved to the
+   [differential record contract](#differential-record-contract), which needs no
+   human-judged reference.
 
 Amended on 2026-08-20. Layer 2 originally required a string `html` value for
 every item. Two manual dispatches failed `schema-drift` on that assertion alone
@@ -209,39 +217,53 @@ reviewed offline fixtures.
 ([public extractor contract](public-html-extractor-interface.md),
 [legacy compatibility contract](legacy-extraction-compatibility-contract.md))
 
-## First authenticated read and baseline bootstrap
+## Differential record contract
 
-The first authenticated read cannot safely run on the implementation pull
-request: the workflow file must first exist on the default branch for manual
-dispatch, and the repository secret must not be exposed to pull-request or fork
-code.
-([workflow-dispatch documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch),
-[GitHub secret guidance](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets))
+Added on 2026-11-09, replacing the superseded two-maintainer baseline bootstrap
+below. The same workflow run performs a second, fully automated check that needs
+no stored reference: it reads the published posts once with
+`fields=id,slug,url,title,html`, builds Algolia records for every post twice —
+once with the workspace's committed fragmenter `lib/` output and once with the
+latest `@tryghost/algolia-fragmenter` release installed from npm — and compares
+one hashed outcome per post per side.
 
-Bootstrap in two reviewed changes:
+An outcome is either the sha256 of the built records' complete values,
+serialized with recursively sorted object keys so key insertion order cannot
+drift the hash, or, when the builder rejects the post, its `FragmenterError`
+code and issue count. Any value change fails the comparison, including one that
+keeps the serialized length. The published
+release is the behavior deployed sites currently run, so the reference is
+validated by production rather than by a reviewer, and because both builds see
+the same live page in the same process, editorial churn cancels out. Any
+differing outcome fails the workflow. The summary reports aggregate counts only:
+pages, items, items without `html`, compared, equal, differing, and error
+outcomes per side. No signature, hash, identifier, or editorial value is
+printed.
 
-1. Merge the strict-TypeScript census/smoke program, deterministic offline tests,
-   and an upstream-`main`-guarded workflow with **manual dispatch only** and a
-   fixed `bootstrap` mode. The program must have no baseline-update or live-data
-   write path.
-2. Dispatch that workflow explicitly on `main`. This is the first authenticated
-   read using `MAIN_GHOST_CONTENT_API_KEY`. It should succeed only if target,
-   transport, schema, pagination, privacy, determinism, and extractor invariants
-   pass, then emit the sanitized aggregate described below.
-3. Have a maintainer other than the operator review the run summary. Record the
-   run URL, UTC observation time, API version, item/page totals, normalized
-   signature identifiers, and aggregate counts in a baseline/provenance change.
-   Record no response body, editorial field, or structural description derived
-   from live content.
-4. Merge a second change that adds the reviewed baseline, switches the program
-   to comparison mode, and enables `cron: '17 4 * * *'`. Manually dispatch the
-   final comparison workflow once to prove the baseline and scheduled path use
-   the same contract.
+A pull request that deliberately changes record output commits an expected-drift
+declaration beside the harness naming the then-current published version and a
+reason. The declaration excuses drift only while that exact version is the
+latest release; after the change ships, it is inert and gets deleted in passing.
+A drift the declaration does not cover, an invalid declaration, a builder
+failure outside the fragmenter error contract, and an empty comparison all fail
+the run.
 
-This sequence resolves the bootstrap dependency without weakening fork safety
-or pretending that mutable live data was reviewed in the implementation PR.
-The actual first read remains future implementation evidence; this research did
-not execute it because no live-smoke workflow exists on `main` yet.
+The census program keeps layers 1–3 above as fatal assertions. The cron
+schedule `'17 4 * * *'` is enabled together with this contract, and the
+failure-ownership and notification rules below apply to it unchanged.
+
+## Superseded: first authenticated read and baseline bootstrap
+
+Superseded on 2026-11-09. This section planned a two-step bootstrap: a reviewed
+first authenticated read, a second maintainer's review of its aggregate summary,
+a committed signature baseline, and only then the comparison mode and schedule.
+The maintainers rejected the recurring human classification this demanded —
+every genuinely new content signature would have required a judgment call — and
+no baseline was ever bootstrapped or committed. The census now runs without a
+baseline forever, and behavioral drift detection is the differential record
+contract above. The fork-safety reasoning stands: the workflow file must exist
+on the default branch for manual dispatch, the exact-repository guard keeps the
+secret away from forks, and no pull-request trigger may be added.
 
 ## Reporting and retention
 
@@ -326,8 +348,11 @@ revealing automation.
   does not prove every structure Ghost can render.
 - Scheduled runs may be delayed, dropped, or disabled by GitHub, which is why
   the manual path and notification owner are part of the contract.
-- A normalized-signature addition can be harmless content-mix churn. Failure is
-  a request for review, not proof of a Ghost regression.
+- A post published or deleted while a run walks the pages can fail that run as
+  `invalid-pagination`, because declared totals no longer reconcile. That is a
+  transient editorial race, not drift; rerun the workflow before investigating.
+- A normalized-signature addition can be harmless content-mix churn, which is
+  why the census reports it without failing the run.
 - Absence and frequency of a signature are not compatibility promises.
 - The smoke proves public Content API access and live rendered-HTML handling. It
   does not prove Algolia indexing, webhook delivery, Admin API access, private

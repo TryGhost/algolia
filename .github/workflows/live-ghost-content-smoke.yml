@@ -1,6 +1,8 @@
 name: Live Ghost content smoke
 
 on:
+  schedule:
+    - cron: '17 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -28,3 +30,14 @@ jobs:
           GHOST_API_VERSION: v6.0
           MAIN_GHOST_CONTENT_API_KEY: ${{ secrets.MAIN_GHOST_CONTENT_API_KEY }}
         run: pnpm --filter @tryghost/algolia-html-extractor smoke:live
+      - name: Build the workspace extraction chain
+        run: pnpm --filter @tryghost/algolia-html-extractor build
+      - name: Install the published fragmenter
+        run: npm install --prefix "$RUNNER_TEMP/published-fragmenter" --ignore-scripts @tryghost/algolia-fragmenter@latest
+      - name: Run differential record smoke
+        env:
+          GHOST_URL: https://main.ghost.is
+          GHOST_API_VERSION: v6.0
+          MAIN_GHOST_CONTENT_API_KEY: ${{ secrets.MAIN_GHOST_CONTENT_API_KEY }}
+          PUBLISHED_FRAGMENTER_DIR: ${{ runner.temp }}/published-fragmenter/node_modules/@tryghost/algolia-fragmenter
+        run: node packages/algolia-fragmenter/smoke/cli.mts
