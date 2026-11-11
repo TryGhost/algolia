@@ -1,3 +1,9 @@
+## 0.4.3 (2026-11-11)
+
+### 🩹 Fixes
+
+- Added a maintainer differential record smoke harness beside the package source. It compares the workspace's record output with the latest published release over live Ghost content in a scheduled workflow. Nothing changes for package consumers: records, options, exports, and the published build output are identical.
+
 ## 0.4.2 (2026-11-05)
 
 ### 🚀 Features
