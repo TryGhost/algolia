@@ -10,6 +10,14 @@ publishWaitTimeout: 300000
 # libvips CVEs (GHSA-f88m-g3jw-g9cj); force the patched 0.35 line until ipx@4 ships.
 overrides:
   sharp: ^0.35.3
+  # GHSA-3g3m-2fjr-6pw4 (glob <=14.0.1): aborted async walks keep traversing.
+  # Drop once netlify-cli and nx resolve a patched version on their own.
+  'glob@>=9.0.0 <14.0.2': ^14.0.2
+  # GHSA-g3hv-75wg-m249 (minimatch <11.0.1): globparts amplification DoS.
+  # nx is exempt: it calls minimatch.makeRe, which minimatch 11 removed, and
+  # even the latest nx still pins the vulnerable 10.x line.
+  'minimatch@>=7.0.0 <11.0.1': ^11.0.1
+  'nx>minimatch': 10.2.5
 
 allowBuilds:
   esbuild: true
