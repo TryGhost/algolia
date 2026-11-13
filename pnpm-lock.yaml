@@ -213,8 +213,8 @@ importers:
         specifier: workspace:^
         version: link:../algolia-indexer
       '@tryghost/content-api':
-        specifier: 1.12.14
-        version: 1.12.14(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
+        specifier: 1.12.15
+        version: 1.12.15(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
       '@tryghost/errors':
         specifier: 3.4.8
         version: 3.4.8
@@ -2455,8 +2455,8 @@ packages:
   '@so-ric/colorspace@1.1.6':
     resolution: {integrity: sha512-/KiKkpHNOBgkFJwu9sh48LkHSMYGyuTcSFK/qMBdnOAlrRJzRSXAOFB5qwzaVQuDl8wAvHVMkaASQDReTahxuw==}
 
-  '@tryghost/content-api@1.12.14':
-    resolution: {integrity: sha512-kOoclqwIJK33ZlDvvwdBTZ9pFeE3+qdtJZf71h6GTJ+fJTKS6iRaYd1/9SSL3LdRP3uwmSZQVT0go1JA4ZGygg==}
+  '@tryghost/content-api@1.12.15':
+    resolution: {integrity: sha512-R0sHW50CtaKEKnmvLcaej8MNY86NgipNqDbIIwcb017kHPAaqUzE6C3d6x3d0PhqtVS60wBR7Z+FGqCbcXSypA==}
 
   '@tryghost/errors@3.4.8':
     resolution: {integrity: sha512-wRQPjb0TuTW6ROexYKEevbePGHQTY443pTJO3/3EDZlxzWLizdP64EkL0pVh+9Y9E/wfRdyqIjzECc5+rxhTDQ==}
@@ -2903,8 +2903,8 @@ packages:
   avvio@9.3.1:
     resolution: {integrity: sha512-QyTKW61/qlba+cUQBm/sT9X8lri4UdomqSDwCnrnj1IvLVDRRiXRkz4CgBRWB+/cmfC7SK5WQc8T1vSdGvaUcQ==}
 
-  axios@1.21.0:
-    resolution: {integrity: sha512-YCzXMB53Q9PZBsh7yN7wtapit4WepwcHS2fP8QhGsBxSz5YtgYobV7GGlWlAJi+RxfU77GQTQi2DSLUma42EYA==}
+  axios@1.21.1:
+    resolution: {integrity: sha512-6eI5Q/Y4u/Um9dDlsRoq5pY2rxnUTv+L4PpLitnbk/i4jb3MxLZ5CsN5Ih3IysbeRYK4pR+P7qfMsOQl9fwwFQ==}
 
   b4a@1.9.0:
     resolution: {integrity: sha512-dpfcF9fDNR6++cthXR67iyhgqWy9CBouAvIWhIntzBG6cvK/cnIPiZQjBwi/ZqjjBEDGfoNDtmB0kTjroOJ3pQ==}
@@ -8321,9 +8321,9 @@ snapshots:
       color: 5.0.3
       text-hex: 1.0.0
 
-  '@tryghost/content-api@1.12.14(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)':
+  '@tryghost/content-api@1.12.15(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)':
     dependencies:
-      axios: 1.21.0(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
+      axios: 1.21.1(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -8762,7 +8762,7 @@ snapshots:
       '@fastify/error': 4.2.1
       fastq: 1.20.3
 
-  axios@1.21.0(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0):
+  axios@1.21.1(debug@4.4.3(supports-color@11.0.0))(supports-color@11.0.0):
     dependencies:
       follow-redirects: 1.16.2(debug@4.4.3(supports-color@11.0.0))
       form-data: 4.0.6
