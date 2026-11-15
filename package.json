@@ -30,8 +30,8 @@
     "@types/semver": "7.8.0",
     "@vitest/coverage-v8": "5.1.0",
     "nx": "24.0.6",
-    "oxfmt": "0.77.0",
-    "oxlint": "1.92.0",
+    "oxfmt": "0.78.0",
+    "oxlint": "1.93.0",
     "semver": "7.8.6",
     "vite": "8.3.8",
     "vitest": "5.1.0"
