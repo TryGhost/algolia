@@ -33,7 +33,7 @@
     "access": "public"
   },
   "dependencies": {
-    "algoliasearch": "5.64.0"
+    "algoliasearch": "5.65.0"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
